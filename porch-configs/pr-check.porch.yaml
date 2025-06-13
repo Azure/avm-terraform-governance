@@ -7,6 +7,7 @@ commands:
     command_line: |
       if [ -n "$(git status --porcelain)" ]; then
         echo "Uncommitted changes found. Please commit or stash them before running the checks." 1>&2
+        git status --porcelain 1>&2
         exit 1
       fi
 
@@ -79,7 +80,6 @@ commands:
     # grept
   - type: serial
     name: check grept
-    runs_on_condition: always
     commands:
       - type: copycwdtotemp
         name: Copy to temp
@@ -103,7 +103,6 @@ commands:
     # Check mapotf transforms have been applied
   - type: serial
     name: check mapotf
-    runs_on_condition: always
     commands:
       - type: copycwdtotemp
         name: Copy to temp
