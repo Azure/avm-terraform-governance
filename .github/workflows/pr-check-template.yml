@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 env:
-  CONTAINER_IMAGE: ghcr.io/avm-terraform-governance/avm-terraform-governance:main
+  CONTAINER_IMAGE: ghcr.io/azure/avm-terraform-governance:main
 
 jobs:
   pr-check:
