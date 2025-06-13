@@ -6,6 +6,7 @@ on:
 
 env:
   CONTAINER_IMAGE: ghcr.io/azure/avm-terraform-governance:main
+  FORCE_COLOR: 1
 
 jobs:
   pr-check:

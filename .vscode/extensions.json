@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "oderwat.indent-rainbow",
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-containers"
+  ]
+}

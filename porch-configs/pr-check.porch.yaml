@@ -11,6 +11,7 @@ commands:
         exit 1
       fi
 
+    # all linting checks go here, they all use a unique directory
   - type: parallel
     name: linting
     commands:
@@ -21,7 +22,7 @@ commands:
           - type: copycwdtotemp
             name: Copy current working directory to temp
 
-            # tflint
+          # tflint
           - type: shell
             name: download configs
             command_line: |
@@ -32,7 +33,7 @@ commands:
                 curl -H 'Cache-Control: no-cache, no-store' -sSL "$TFLINT_CONFIG_URL/$file" -o "./$file"
               done
 
-            # tflint
+          # tflint
           - type: shell
             name: overrides
             command_line: |
@@ -44,7 +45,7 @@ commands:
                 fi
               done
 
-            # tflint
+          # tflint
           - type: serial
             name: run
             commands:
@@ -54,7 +55,7 @@ commands:
                   tflint --init --config="avm.tflint.hcl"
                   tflint --config="avm.tflint.hcl" --minimum-failure-severity=warning 1>&2
 
-                # tflint
+              # tflint
               - type: foreachdirectory
                 name: examples
                 working_directory: "./examples"
@@ -68,7 +69,7 @@ commands:
                       tflint --init --config="../avm.tflint_example.hcl" && \
                       tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
-                # tflint
+              # tflint
               - type: foreachdirectory
                 name: modules
                 working_directory: "./modules"
@@ -82,7 +83,7 @@ commands:
                       tflint --init --config="../avm.tflint_module.hcl" && \
                       tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
-        # grept
+      # grept
       - type: serial
         name: check grept
         commands:
@@ -181,7 +182,7 @@ commands:
                 exit 1
               fi
 
-  # Run conftest checks
+    # Run conftest checks
   - type: serial
     name: well architected
     commands:
