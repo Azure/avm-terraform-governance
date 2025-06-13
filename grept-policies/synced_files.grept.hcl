@@ -1,3 +1,6 @@
+# "avm.bat",
+# "Makefile",
+# Add in new workflows once template updated
 locals {
   synced_files = toset([
     "_footer.md",
@@ -15,11 +18,8 @@ locals {
     "CONTRIBUTING.md",
     "examples/.terraform-docs.yml",
     "LICENSE",
-    "SECURITY.md",scheduledSearches
-    "SUPPORT.md",
-    # "avm.bat",
-    # "Makefile",
-    # Add in new workflows once template updated
+    "SECURITY.md",
+    "SUPPORT.md"
   ])
 }
 
