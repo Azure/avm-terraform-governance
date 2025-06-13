@@ -180,14 +180,14 @@ jobs:
         working-directory: ${{ env.WORKING_DIRECTORY }}
 
       - name: Upload Issue Logs Json
-        if: always() && hashFiles('issue.log.json') != ''
+        if: always() && hashFiles('${{ env.WORKING_DIRECTORY }}/issue.log.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.repoId }}.issue.log.json
           path: ${{ env.WORKING_DIRECTORY }}/issue.log.json
 
       - name: Issue Error
-        if: always() && hashFiles('issue.log.json') != ''
+        if: always() && hashFiles('${{ env.WORKING_DIRECTORY }}/issue.log.json') != ''
         run: |
           $issueLogJson = Get-Content -Path "issue.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
