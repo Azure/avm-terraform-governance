@@ -102,6 +102,7 @@ commands:
             command_line: |
               if [ -n "$(git status --porcelain)" ]; then
                 echo "Grept changes found, run pre-commit" 1>&2
+                git status --porcelain 1>&2
                 exit 1
               fi
 
@@ -131,6 +132,7 @@ commands:
             command_line: |
               if [ -n "$(git status --porcelain)" ]; then
                 echo "Mapotf changes found, run pre-commit" 1>&2
+                git status --porcelain 1>&2
                 exit 1
               fi
 
@@ -175,6 +177,7 @@ commands:
             command_line: |
               if [ -n "$(git status --porcelain)" ]; then
                 echo "Documents not up to date, run pre-commit" 1>&2
+                git status --porcelain 1>&2
                 exit 1
               fi
 
