@@ -39,6 +39,14 @@ commands:
         skip_exit_codes: [99]
 
       - type: shell
+        name: run pre.sh if exists
+        command_line: |
+          if [ -f pre.sh ]; then
+            chmod +x pre.sh && \
+            ./pre.sh
+          fi
+
+      - type: shell
         name: Clean Terraform
         command_line: |
           echo $(pwd) && \
@@ -75,6 +83,14 @@ commands:
         name: Terraform Destroy
         command_line: terraform destroy -auto-approve
         runs_on_condition: always
+
+      - type: shell
+        name: run post.sh if exists
+        command_line: |
+          if [ -f post.sh ]; then
+            chmod +x post.sh && \
+            ./post.sh
+          fi
 
   - type: shell
     name: Clean up
