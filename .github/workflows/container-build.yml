@@ -10,7 +10,7 @@ on:
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.io # remove this once migrated to ACR
   IMAGE_NAME: ${{ github.repository }}
   PLATFORMS: linux/amd64,linux/arm64
   ##ACR_REPO: ${{ secrets.ACR_SERVER_URL }}/public/azterraform

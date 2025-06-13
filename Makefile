@@ -19,6 +19,12 @@ test-examples:
 	@echo "Testing examples..."
 	porch run -f "$(PORCH_BASE_URL)/test-examples.porch.yaml?ref=$(PORCH_REF)"
 
-terraform-test:
-	@echo "Running terraform test..."
+tf-unit-test:
+	@echo "Running terraform unit test..."
+	export TEST_TYPE="unit"
+	porch run -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+
+tf-integration-test:
+	@echo "Running terraform integration test..."
+	export TEST_TYPE="integration"
 	porch run -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
