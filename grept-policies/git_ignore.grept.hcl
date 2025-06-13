@@ -22,6 +22,7 @@ locals {
     ".DS_Store",
     "*.md.tmp",
     "examples/*/policy",
+    "*.mptfbackup",
   ])
 }
 

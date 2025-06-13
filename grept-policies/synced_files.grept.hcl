@@ -1,27 +1,25 @@
 locals {
   synced_files = toset([
     "_footer.md",
+    ".editorconfig",
     ".github/CODEOWNERS",
     ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
     ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
     ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/policies/avmrequiredfiles.yml",
     ".github/policies/eventResponder.yml",
     ".github/policies/scheduledSearches.yml",
-    ".github/workflows/e2e.yml",
-    ".github/workflows/linting.yml",
-    ".github/workflows/version-check.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
     ".terraform-docs.yml",
-    # "avm.bat",
     "CODE_OF_CONDUCT.md",
     "CONTRIBUTING.md",
     "examples/.terraform-docs.yml",
     "LICENSE",
-    # "Makefile",
-    "SECURITY.md",
-    ".editorconfig",
+    "SECURITY.md",scheduledSearches
     "SUPPORT.md",
+    # "avm.bat",
+    # "Makefile",
+    # Add in new workflows once template updated
   ])
 }
 
