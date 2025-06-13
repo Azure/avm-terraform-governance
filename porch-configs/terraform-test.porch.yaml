@@ -1,0 +1,63 @@
+name: Terraform test
+description: |
+  Terraform tests for root module and submodules, please set $TEST_TYPE to "unit" to run unit tests.
+  Set $TEST_TYPE to "integration" to run integration tests.
+command_groups:
+  - name: terraform_unit_tests
+    description: Run Terraform tests for root module and submodules
+    commands:
+      - type: shell
+        name: Check for TEST_TYPE env
+        command_line: |
+          if [ -z "$TEST_TYPE" ]; then
+            echo "TEST_TYPE is not set. Please set TEST_TYPE to 'unit' or 'integration'."
+            exit 1
+          fi
+      - type: shell
+        name: Check for tests
+        command_line: |
+          if [ ! -d ./tests/$TEST_TYPE ]; then
+            echo "No $TEST_TYPE tests found in $(pwd)"
+            exit 99
+          fi
+        skip_exit_codes: [99]
+      - type: shell
+        name: "Terraform Init"
+        command_line: "terraform init -test-directory ./tests/$TEST_TYPE"
+      - type: shell
+        name: "Terraform Test"
+        command_line: "terraform test -test-directory ./tests/$TEST_TYPE"
+
+commands:
+  - type: copycwdtotemp
+    name: Copy current working directory to temp
+    cwd: "."
+
+  - type: shell
+    name: Clean Terraform
+    command_line: |
+      echo $(pwd) && \
+      find . -type d -name .terraform | xargs -n1 rm -rf && \
+      find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+      find . -type f -name *.tfstate* | xargs -n1 rm -f
+
+  - type: parallel
+    name: Unit tests
+    env:
+      TF_IN_AUTOMATION: "1"
+    commands:
+      - type: foreachdirectory
+        name: submodules
+        working_directory: "./modules"
+        mode: parallel
+        command_group: terraform_unit_tests
+
+      - type: serial
+        name: root module
+        command_group: terraform_unit_tests
+
+  - type: shell
+    name: Clean up
+    command_line: |
+      rm -fr $(pwd)
+    runs_on_condition: always

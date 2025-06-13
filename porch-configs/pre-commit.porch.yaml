@@ -1,0 +1,80 @@
+name: Precommit
+description: |
+  This configuration file is used to run pre-commit checks for Azure Verified Modules.
+
+command_groups:
+  - name: avmfix
+    commands:
+      - type: shell
+        name: avmfix
+        command_line: avmfix -folder .
+
+commands:
+  - type: shell
+    name: mapotf transform
+    command_line: |
+      if [ -z "$MPTF_DIR" ]; then
+        MPTF_DIR="git::https://github.com/Azure/tfmod-scaffold.git//avm_mapotf/pre_commit"
+      fi
+      mapotf transform --mptf-dir "$MPTF_DIR" --tf-dir .
+
+  - type: shell
+    name: Grept apply
+    command_line: |
+      if [ -z "$GREPT_REPO" ]; then
+        GREPT_REPO="git::https://github.com/matt-FFFFFF/avm-governance-refactor.git//grept-policies"
+      fi
+      grept apply -a "$GREPT_REPO"
+
+  - type: parallel
+    name: avmfix
+    commands:
+      - type: serial
+        name: root module
+        command_group: avmfix
+
+      - type: foreachdirectory
+        name: submodules
+        working_directory: "./modules"
+        mode: parallel
+        working_directory_strategy: "item_relative"
+        command_group: avmfix
+
+      - type: foreachdirectory
+        name: examples
+        working_directory: "./examples"
+        mode: parallel
+        working_directory_strategy: "item_relative"
+        command_group: avmfix
+
+  - type: shell
+    name: mapotf clean
+    command_line: mapotf clean-backup --tf-dir .
+
+  - type: parallel
+    name: Generate docs
+    commands:
+      - type: shell
+        name: Generate root module docs
+        command_line: |
+          terraform-docs -c ".terraform-docs.yml" .
+
+      - type: foreachdirectory
+        name: Generate example docs
+        working_directory: "./examples"
+        mode: parallel
+        commands:
+          - type: shell
+            name: Generate example docs
+            command_line: |
+              terraform-docs -c ".terraform-docs.yml" $ITEM
+
+      - type: foreachdirectory
+        name: Generate module docs
+        working_directory: "./modules"
+        mode: parallel
+        commands:
+          - type: shell
+            name: Generate module docs
+            command_line: |
+              terraform-docs -c ".terraform-docs.yml" $ITEM
