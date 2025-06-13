@@ -1,0 +1,181 @@
+name: PR Check
+description: |
+  This configuration file is used to run checks for Azure Verified Modules during pull requests.
+commands:
+  - type: shell
+    name: Check for uncommitted changes
+    command_line: |
+      if [ -n "$(git status --porcelain)" ]; then
+        echo "Uncommitted changes found. Please commit or stash them before running the checks." 1>&2
+        exit 1
+      fi
+
+    # Run tflint on root, modules and examples
+  - type: serial
+    name: tflint
+    commands:
+      - type: copycwdtotemp
+        name: Copy current working directory to temp
+
+        # tflint
+      - type: shell
+        name: download configs
+        command_line: |
+          if [ -z "$TFLINT_CONFIG_URL" ]; then
+            TFLINT_CONFIG_URL="https://raw.githubusercontent.com/matt-FFFFFF/avm-governance-refactor/main/tflint-configs"
+          fi
+          for file in avm.tflint.hcl avm.tflint_example.hcl avm.tflint_module.hcl; do
+            curl -H 'Cache-Control: no-cache, no-store' -sSL "$TFLINT_CONFIG_URL/$file" -o "./$file"
+          done
+
+        # tflint
+      - type: shell
+        name: overrides
+        command_line: |
+          for file in avm.tflint avm.tflint_example avm.tflint_module; do
+            if [ -f "./${file}.override.hcl" ]; then
+              echo "Overriding ${file}"
+              hclmerge -1 "./$file.override.hcl" -2 "./${file}.hcl" -d "./${file}.merged.hcl"
+              mv "./${file}.merged.hcl" "./${file}.hcl"
+            fi
+          done
+
+        # tflint
+      - type: serial
+        name: run
+        commands:
+          - type: shell
+            name: root module
+            command_line: |
+              tflint --init --config="avm.tflint.hcl"
+              tflint --config="avm.tflint.hcl" --minimum-failure-severity=warning 1>&2
+
+            # tflint
+          - type: foreachdirectory
+            name: examples
+            working_directory: "./examples"
+            mode: parallel
+            runs_on_condition: always
+            commands:
+              - type: shell
+                name: run example
+                command_line: |
+                  tflint --init --config="../avm.tflint_example.hcl" && \
+                  tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+
+            # tflint
+          - type: foreachdirectory
+            name: modules
+            working_directory: "./modules"
+            mode: parallel
+            runs_on_condition: always
+            commands:
+              - type: shell
+                name: run module
+                command_line: |
+                  tflint --init --config="../avm.tflint_module.hcl" && \
+                  tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+
+    # grept
+  - type: serial
+    name: check grept
+    runs_on_condition: always
+    commands:
+      - type: copycwdtotemp
+        name: Copy to temp
+
+      - type: shell
+        name: Grept apply
+        command_line: |
+          if [ -z "$GREPT_REPO" ]; then
+            GREPT_REPO="git::https://github.com/matt-FFFFFF/avm-governance-refactor.git//grept-policies"
+          fi
+          grept apply -a "$GREPT_REPO"
+
+      - type: shell
+        name: Check for grept changes
+        command_line: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Grept changes found, run pre-commit" 1>&2
+            exit 1
+          fi
+
+    # Check mapotf transforms have been applied
+  - type: serial
+    name: check mapotf
+    runs_on_condition: always
+    commands:
+      - type: copycwdtotemp
+        name: Copy to temp
+
+      - type: shell
+        name: mapotf transform
+        command_line: |
+          if [ -z "$MPTF_DIR" ]; then
+            MPTF_DIR="git::https://github.com/Azure/tfmod-scaffold.git//avm_mapotf/pre_commit"
+          fi
+          mapotf transform --mptf-dir "$MPTF_DIR" --tf-dir .
+
+      - type: shell
+        name: mapotf clean
+        command_line: mapotf clean-backup --tf-dir .
+        runs_on_condition: always
+
+        # mapotf
+      - type: shell
+        name: Check for mapotf changes
+        command_line: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Mapotf changes found, run pre-commit" 1>&2
+            exit 1
+          fi
+
+    # Check docs are up to date
+  - type: serial
+    name: Check docs
+    commands:
+      - type: parallel
+        name: Generate docs
+        commands:
+          - type: shell
+            name: Generate root module docs
+            command_line: |
+              terraform-docs -c ".terraform-docs.yml" .
+
+            # docs
+          - type: foreachdirectory
+            name: examples
+            working_directory: "./examples"
+            mode: parallel
+            commands:
+              - type: shell
+                name: Generate example docs
+                command_line: |
+                  terraform-docs -c ".terraform-docs.yml" $ITEM
+
+            # docs
+          - type: foreachdirectory
+            name: modules
+            working_directory: "./modules"
+            mode: parallel
+            commands:
+              - type: shell
+                name: Generate module docs
+                command_line: |
+                  terraform-docs -c ".terraform-docs.yml" $ITEM
+
+      - type: shell
+        name: Check for docs changes
+        command_line: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Documents not up to date, run pre-commit" 1>&2
+            exit 1
+          fi
+
+  # Run conftest checks
+  - type: foreachdirectory
+    name: well architected
+    working_directory: "./examples"
+    mode: parallel
+    working_directory_strategy: "item_relative"
+    commands:
