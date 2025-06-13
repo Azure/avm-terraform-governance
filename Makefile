@@ -10,6 +10,11 @@ pre-commit:
 	@echo "Running pre-commit..."
 	porch run -f "$(PORCH_BASE_URL)/pre-commit.porch.yaml?ref=$(PORCH_REF)"
 
+.PHONY: pr-check
+pr-check:
+	@echo "Running PR check..."
+	porch run -f "$(PORCH_BASE_URL)/pr-check.porch.yaml?ref=$(PORCH_REF)"
+
 test-examples:
 	@echo "Testing examples..."
 	porch run -f "$(PORCH_BASE_URL)/test-examples.porch.yaml?ref=$(PORCH_REF)"
