@@ -22,7 +22,7 @@ commands:
         name: download configs
         command_line: |
           if [ -z "$TFLINT_CONFIG_URL" ]; then
-            TFLINT_CONFIG_URL="https://raw.githubusercontent.com/matt-FFFFFF/avm-governance-refactor/main/tflint-configs"
+            TFLINT_CONFIG_URL="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs"
           fi
           for file in avm.tflint.hcl avm.tflint_example.hcl avm.tflint_module.hcl; do
             curl -H 'Cache-Control: no-cache, no-store' -sSL "$TFLINT_CONFIG_URL/$file" -o "./$file"
@@ -88,7 +88,7 @@ commands:
         name: Grept apply
         command_line: |
           if [ -z "$GREPT_REPO" ]; then
-            GREPT_REPO="git::https://github.com/matt-FFFFFF/avm-governance-refactor.git//grept-policies"
+            GREPT_REPO="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
           fi
           grept apply -a "$GREPT_REPO"
 
@@ -112,7 +112,7 @@ commands:
         name: mapotf transform
         command_line: |
           if [ -z "$MPTF_DIR" ]; then
-            MPTF_DIR="git::https://github.com/Azure/tfmod-scaffold.git//avm_mapotf/pre_commit"
+            MPTF_DIR="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
           fi
           mapotf transform --mptf-dir "$MPTF_DIR" --tf-dir .
 
