@@ -24,6 +24,13 @@ commands:
     working_directory_strategy: "item_relative"
     commands:
       - type: shell
+        name: Clean Terraform
+        command_line: |
+          find . -type d -name .terraform | xargs -n1 rm -rf && \
+          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+          find . -type f -name *.tfstate* | xargs -n1 rm -f
+
+      - type: shell
         name: Check AVM_EXAMPLE
         command_line: |
           if [ -z "$AVM_EXAMPLE" ]; then
@@ -45,14 +52,6 @@ commands:
             chmod +x pre.sh && \
             ./pre.sh
           fi
-
-      - type: shell
-        name: Clean Terraform
-        command_line: |
-          echo $(pwd) && \
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: shell
         name: Terraform Init
@@ -81,7 +80,11 @@ commands:
 
       - type: shell
         name: Terraform Destroy
-        command_line: terraform destroy -auto-approve
+        command_line: |
+          if [ ! -d ".terraform" ]; then
+            exit 0
+          fi
+          terraform destroy -auto-approve
         runs_on_condition: always
 
       - type: shell
