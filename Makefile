@@ -1,6 +1,5 @@
 PORCH_BASE_URL := git::https://github.com/Azure/avm-terraform-governance//porch-configs
 PORCH_REF := main
-TUI := ""
 
 .PHONY: help
 help:
