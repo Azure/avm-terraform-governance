@@ -44,7 +44,7 @@
         {
             "name": "moduleType",
             "description": "Type of module, e.g., 'pattern', 'resource', or 'utility'",
-            "source": "calculated.moduleType",
+            "source": "repo.moduleType",
             "mapsTo": []
         },
         {
@@ -154,7 +154,7 @@
         {
             "name": "moduleID",
             "description": "The name of the module",
-            "source": "calculated.repoId",
+            "source": "calculated.moduleID",
             "mapsTo": [
                 {
                     "output": "resourceModulesCsv",
@@ -210,7 +210,7 @@
         {
             "name": "repositoryUrl",
             "description": "The GitHub repository url for the module",
-            "source": "calculated.repositoryUrl",
+            "source": "repo.repositoryUrl",
             "mapsTo": [
                 {
                     "output": "resourceModulesCsv",
@@ -232,7 +232,7 @@
         {
             "name": "registryUrl",
             "description": "The Terraform Registry URL for the module",
-            "source": "calculated.registryUrl",
+            "source": "registry.registryUrl",
             "mapsTo": [
                 {
                     "output": "resourceModulesCsv",

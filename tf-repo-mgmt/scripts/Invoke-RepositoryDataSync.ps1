@@ -21,11 +21,11 @@ $warnings = @()
 
 foreach($repository in $repositories) {
     $repositoryDataMap = @{}
-    $repositoryDataMap["calculated.moduleID"] = $repository.repoId
-    $repositoryDataMap["calculated.repositoryUrl"] = $repository.repoUrl
-    $repositoryDataMap["calculated.moduleType"] = $repository.repoSubType
-    $repositoryDataMap["calculated.repoOwnerTeam"] = $repository.repoOwnerTeam
-    $repositoryDataMap["calculated.repoContributorTeam"] = $repository.repoContributorTeam
+    $repositoryDataMap["repo.moduleID"] = $repository.repoId
+    $repositoryDataMap["repo.repositoryUrl"] = $repository.repoUrl
+    $repositoryDataMap["repo.moduleType"] = $repository.repoSubType
+    $repositoryDataMap["repo.repoOwnerTeam"] = $repository.repoOwnerTeam
+    $repositoryDataMap["repo.repoContributorTeam"] = $repository.repoContributorTeam
 
     $repoSplit = $repository.repoUrl.Split("/")
 
@@ -46,6 +46,7 @@ foreach($repository in $repositories) {
     $registryEntry = Invoke-RestMethod $url -StatusCodeVariable statusCode -SkipHttpErrorCheck
 
     if($statusCode -ne 404) {
+        $repositoryDataMap["registry.registryUrl"] = "https://registry.terraform.io/modules/$orgName/$($repository.repoId)/$providerName/latest"
         foreach($registryEntryProperty in $registryEntry.PSObject.Properties) {
             $repositoryDataMap["registry.$($registryEntryProperty.Name)"] = $registryEntryProperty.Value
         }
@@ -96,26 +97,13 @@ foreach($output in $metaDataConfig.outputs) {
         $outputItem = [ordered]@{}
         foreach($fieldMap in $fieldMapping) {
             $outputItem[$fieldMap.name] = $dataItem[$fieldMap.source]
+            if($null -eq $outputItem[$fieldMap.name]) {
+                $outputItem[$fieldMap.name] = ""
+            } 
         }
         $outputData += $outputItem
     }
-    $outputData | Sort-Object | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath $fileName -Force -Encoding utf8
-}
-
-
-foreach($repositoryType in $repositoryTypes) {
-    $filteredRepositoryData = $repositoryData | Where-Object { $_.moduleType -eq $repositoryType }
-    foreach($repository in $filteredRepositoryData) {
-        $repository.Remove("moduleType")
-        $repository.Remove("registryFirstPublishedDate")
-        $repository.Remove("registryCurrentVersion")
-        $repository.Remove("registryModuleOwner")
-        $repository.Remove("PublishedStatus")
-        $repository.Remove("IsOrphaned")
-    }
-
-
-    $filteredRepositoryData | Sort-Object { $_.ProviderNamespace, $_.ResourceType } | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath "Terraform$($repositoryTypeTitleCase)Modules.csv" -Force -Encoding utf8
+    $outputData | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath $fileName -Force -Encoding utf8
 }
 
 if($warnings.Count -eq 0) {
