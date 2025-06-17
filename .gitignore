@@ -1,2 +1,6 @@
 .vscode/*
 !.vscode/extensions.json
+tf-repo-mgmt/TerraformPatternModules.csv
+tf-repo-mgmt/TerraformResourceModules.csv
+tf-repo-mgmt/repositoryData.json
+tf-repo-mgmt/TerraformUtilityModules.csv

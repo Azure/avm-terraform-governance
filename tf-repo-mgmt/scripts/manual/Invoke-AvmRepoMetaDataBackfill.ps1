@@ -13,7 +13,7 @@ param(
 $repositories = ./scripts/Invoke-RepoSyncGenerateMatrix.ps1
 
 $resourceModulesCSVData = Import-Csv -Path "./temp/TerraformResourceModules.csv"
-$patternModulesCSVData = Import-Csv -Path "./temp/TerraformPatternModules.csv" 
+$patternModulesCSVData = Import-Csv -Path "./temp/TerraformPatternModules.csv"
 $utilityModulesCSVData = Import-Csv -Path "./temp/TerraformUtilityModules.csv"
 
 $metaDataVariables = @(
@@ -81,7 +81,7 @@ foreach($repository in $repositories) {
       continue
     }
     $metaDataItem = $repositoryCSVData.($item.key)
-    
+
     Write-Host "Meta data item $($item.name) found for: $($repository.repoId)"
 
     if($null -eq $metaDataItem -or $metaDataItem -eq "") {

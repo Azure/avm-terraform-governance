@@ -1,0 +1,2 @@
+moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
+avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,

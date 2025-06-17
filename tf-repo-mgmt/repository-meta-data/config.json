@@ -1,0 +1,435 @@
+{
+    "outputs": [
+        {
+            "name": "resourceModulesCsv",
+            "description": "A CSV file containing metadata about Terraform resource modules",
+            "fileType": "csv",
+            "fileName": "TerraformResourceModules.csv",
+            "filters": [
+                {
+                    "name": "moduleType",
+                    "value": "resource",
+                    "match": "equals"
+                }
+            ]
+        },
+        {
+            "name": "patternModulesCsv",
+            "description": "A CSV file containing metadata about Terraform pattern modules",
+            "fileType": "csv",
+            "fileName": "TerraformPatternModules.csv",
+            "filters": [
+                {
+                    "name": "moduleType",
+                    "value": "pattern",
+                    "match": "equals"
+                }
+            ]
+        },
+        {
+            "name": "utilityModulesCsv",
+            "description": "A CSV file containing metadata about Terraform utility modules",
+            "fileType": "csv",
+            "fileName": "TerraformUtilityModules.csv",
+            "filters": [
+                {
+                    "name": "moduleType",
+                    "value": "utility",
+                    "match": "equals"
+                }
+            ]
+        }
+    ],
+    "metaData": [
+        {
+            "name": "moduleType",
+            "description": "Type of module, e.g., 'pattern', 'resource', or 'utility'",
+            "source": "calculated.moduleType",
+            "mapsTo": []
+        },
+        {
+            "name": "registryFirstPublishedDate",
+            "description": "Date when the module was first published to the registry",
+            "source": "registry.firstVersion.published_at",
+            "mapsTo": []
+        },
+        {
+            "name": "registryCurrentVersion",
+            "description": "Current version of the module in the registry",
+            "source": "registry.currentVersion.version",
+            "mapsTo": []
+        },
+        {
+            "name": "registryCurrentVersionPublishedDate",
+            "description": "Date when the current version of the module was published to the registry",
+            "source": "registry.currentVersion.published_at",
+            "mapsTo": []
+        },
+        {
+            "name": "registryModuleOwner",
+            "description": "The GitHub handle of the owner in Terraform Registry",
+            "source": "registry.owner",
+            "mapsTo": []
+        },
+        {
+            "name": "providerNamespace",
+            "description": "The Azure Resource Manager provider namespace",
+            "source": "metadata.providerNamespace",
+            "requiredFilters": [{
+                "name": "moduleType",
+                "value": "resource",
+                "match": "equals"
+            }],
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ProviderNamespace",
+                    "outputColumnOrder": 1
+                }
+            ]
+        },
+        {
+            "name": "providerResourceType",
+            "description": "The Azure Resource Manager provider resource type",
+            "source": "metadata.providerResourceType",
+            "requiredFilters": [{
+                "name": "moduleType",
+                "value": "resource",
+                "match": "equals"
+            }],
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ResourceType",
+                    "outputColumnOrder": 2
+                }
+            ]
+        },
+        {
+            "name": "moduleDisplayName",
+            "description": "A display name for the module",
+            "source": "metadata.moduleDisplayName",
+            "required": true,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleDisplayName",
+                    "outputColumnOrder": 3
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleDisplayName",
+                    "outputColumnOrder": 2
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleDisplayName",
+                    "outputColumnOrder": 2
+                }
+            ]
+        },
+        {
+            "name": "alternativeNames",
+            "description": "A comma separated list of alternative names for the module",
+            "source": "metadata.alternativeNames",
+            "required": false,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "AlternativeNames",
+                    "outputColumnOrder": 4
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "AlternativeNames",
+                    "outputColumnOrder": 3
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "AlternativeNames",
+                    "outputColumnOrder": 3
+                }
+            ]
+        },
+        {
+            "name": "moduleID",
+            "description": "The name of the module",
+            "source": "calculated.repoId",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleName",
+                    "outputColumnOrder": 5
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleName",
+                    "outputColumnOrder": 3
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleName",
+                    "outputColumnOrder": 3
+                }
+            ]
+        },
+        {
+            "name": "publishedStatus",
+            "description": "Indicates if the module is published to the Terraform Registry",
+            "source": "calculated.publishedStatus",
+            "mapsTo": []
+        },
+        {
+            "name": "moduleStatus",
+            "description": "Indicates if the module is published to the Terraform Registry or orphaned",
+            "source": "calculated.moduleStatus",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleStatus",
+                    "outputColumnOrder": 6
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleStatus",
+                    "outputColumnOrder": 4
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleStatus",
+                    "outputColumnOrder": 4
+                }
+            ]
+        },
+        {
+            "name": "isOrphaned",
+            "description": "Indicates if the module is orphaned",
+            "source": "calculated.isOrphaned",
+            "mapsTo": []
+        },
+        {
+            "name": "repositoryUrl",
+            "description": "The GitHub repository url for the module",
+            "source": "calculated.repositoryUrl",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 7
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 5
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 5
+                }
+            ]
+        },
+        {
+            "name": "registryUrl",
+            "description": "The Terraform Registry URL for the module",
+            "source": "calculated.registryUrl",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "PublicRegistryReference",
+                    "outputColumnOrder": 8
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "PublicRegistryReference",
+                    "outputColumnOrder": 6
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "PublicRegistryReference",
+                    "outputColumnOrder": 6
+                }
+            ]
+        },
+        {
+            "name": "primaryOwnerGitHubHandle",
+            "description": "The GitHub handle of the primary module owner",
+            "source": "metadata.primaryOwnerGitHubHandle",
+            "required": true,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 9
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 7
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 7
+                }
+            ]
+        },
+        {
+            "name": "primaryOwnerDisplayName",
+            "description": "The display name of the primary module owner",
+            "source": "metadata.primaryOwnerDisplayName",
+            "required": true,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 10
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 8
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "PrimaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 8
+                }
+            ]
+        },
+        {
+            "name": "secondaryOwnerGitHubHandle",
+            "description": "The GitHub handle of the secondary module owner",
+            "source": "metadata.secondaryOwnerGitHubHandle",
+            "required": false,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 11
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 9
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerGHHandle",
+                    "outputColumnOrder": 9
+                }
+            ]
+        },
+        {
+            "name": "secondaryOwnerDisplayName",
+            "description": "The display name of the secondary module owner",
+            "source": "metadata.secondaryOwnerDisplayName",
+            "required": false,
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 12
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 10
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "SecondaryModuleOwnerDisplayName",
+                    "outputColumnOrder": 10
+                }
+            ]
+        },
+        {
+            "name": "repoOwnerTeam",
+            "description": "The GitHub Team for the module owners",
+            "source": "repo.repoOwnerTeam",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleOwnersGHTeam",
+                    "outputColumnOrder": 13
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleOwnersGHTeam",
+                    "outputColumnOrder": 11
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleOwnersGHTeam",
+                    "outputColumnOrder": 11
+                }
+            ]
+        },
+        {
+            "name": "repoContributorTeam",
+            "description": "The GitHub Team for the module contributors",
+            "source": "repo.repoContributorTeam",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleContributorsGHTeam",
+                    "outputColumnOrder": 13
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleContributorsGHTeam",
+                    "outputColumnOrder": 11
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleContributorsGHTeam",
+                    "outputColumnOrder": 11
+                }
+            ]
+        },
+        {
+            "name": "moduleDescription",
+            "description": "A description of the module",
+            "source": "calculated.moduleDescription",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 14
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 12
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "ModuleDescription",
+                    "outputColumnOrder": 12
+                }
+            ]
+        },
+        {
+            "name": "firstPublishedMonthAndYear",
+            "description": "The month and year when the module was first published",
+            "source": "calculated.firstPublishedMonthAndYear",
+            "mapsTo": [
+                {
+                    "output": "resourceModulesCsv",
+                    "outputColumnName": "FirstPublishedIn",
+                    "outputColumnOrder": 15
+                },
+                {
+                    "output": "patternModulesCsv",
+                    "outputColumnName": "FirstPublishedIn",
+                    "outputColumnOrder": 13
+                },
+                {
+                    "output": "utilityModulesCsv",
+                    "outputColumnName": "FirstPublishedIn",
+                    "outputColumnOrder": 13
+                }
+            ]
+        }
+    ]
+}
