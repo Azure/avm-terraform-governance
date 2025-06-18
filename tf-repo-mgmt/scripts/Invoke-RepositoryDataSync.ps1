@@ -92,7 +92,7 @@ foreach($repository in $repositories) {
 }
 
 $repositoryData | ConvertTo-Json -Depth 100 | Out-File -FilePath "repositoryData.json" -Force -Encoding utf8
-
+Write-Host "Repository data written to $(Get-Location)/repositoryData.json"
 
 foreach($output in $metaDataConfig.outputs) {
     $fileName = $output.fileName
@@ -181,6 +181,7 @@ foreach($output in $metaDataConfig.outputs) {
         $outputData += $outputItem
     }
     $outputData | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath $fileName -Force -Encoding utf8
+    Write-Host "Output written to $(Get-Location)/$fileName"
 }
 
 if($warnings.Count -eq 0) {
@@ -189,4 +190,5 @@ if($warnings.Count -eq 0) {
     Write-Host "Issues found ($($warnings.Count))"
     $warningsJson = ConvertTo-Json $warnings -Depth 100
     $warningsJson | Out-File "warning.log.json"
+    Write-Host "Warnings written to $(Get-Location)/warning.log.json"
 }
