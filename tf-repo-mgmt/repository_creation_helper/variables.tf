@@ -4,9 +4,9 @@ variable "github_repository_owner" {
   default     = "Azure"
 }
 
-variable "module_owner_github_handle" {
-  type        = string
-  description = "GitHub handle of the module owner."
+variable "module_owner_github_handles" {
+  type        = map(string)
+  description = "GitHub handles of the module owners."
 }
 
 variable "module_provider" {
@@ -44,9 +44,4 @@ variable "maintainer_teams" {
     avm_core      = "avm-core-team-technical-terraform"
     terraform_avm = "terraform-avm"
   }
-}
-
-variable "github_repository_metadata" {
-  type        = map(string)
-  description = "Metadata for the GitHub repository."
 }

@@ -1,5 +1,5 @@
 ---
-name: Repository Sync For App
+name: Repository Sync
 
 on:
   workflow_dispatch:
@@ -180,7 +180,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.repoId }}.issue.log.json
-          path: ${{ env.WORKING_DIRECTORY }}/issue.log.json
+          path: issue.log.json
 
       - name: Issue Error
         if: always() && hashFiles('issue.log.json') != ''
