@@ -190,11 +190,11 @@ commands:
       - type: copycwdtotemp
         name: Copy to temp
 
-        # This kicks off the tflintenv installer
+        # This kicks off the tfenv installer
       - type: shell
-        name: install tflint
+        name: install terraform
         command_line: |
-          tflint
+          terraform
 
       - type: foreachdirectory
         name: well architected
