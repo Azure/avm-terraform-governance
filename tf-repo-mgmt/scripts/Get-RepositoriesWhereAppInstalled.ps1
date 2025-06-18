@@ -18,7 +18,8 @@ param(
       "avm-container-images-cicd-agents-and-runners",
       "Azure-Verified-Modules-Workflows",
       "avm-terraform-governance"
-    )
+    ),
+    [string]$outputDirectory = "."
 )
 
 Write-Host "Generating matrix for AVM repositories"
@@ -137,7 +138,7 @@ if($warnings.Count -eq 0) {
 } else {
   Write-Host "Issues found for"
   $warningsJson = ConvertTo-Json $warnings -Depth 100
-  $warningsJson | Out-File "warning.log.json"
+  $warningsJson | Out-File "$outputDirectory/warning.log.json"
 }
 
 Write-Host "Filtering repositories"

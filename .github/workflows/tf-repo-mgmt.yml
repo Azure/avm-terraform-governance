@@ -72,7 +72,7 @@ jobs:
           } else {
             $repositories = $repositories -split ','
           }
-          $matrix = @(../scripts/Get-RepositoriesWhereAppInstalled.ps1 -repoFilter $repositories)
+          $matrix = @(../scripts/Get-RepositoriesWhereAppInstalled.ps1 -repoFilter $repositories -outputDirectory "${{ github.workspace }}")
           $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
           Write-Host (ConvertTo-Json $matrix -Depth 10)
           Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
@@ -165,7 +165,8 @@ jobs:
             -repoSubType "${{ matrix.repoSubType }}" `
             -repoOwnerTeam "${{ matrix.repoOwnerTeam }}" `
             -repoContributorTeam "${{ matrix.repoContributorTeam }}" `
-            -repoIsProtected ("${{ matrix.repoIsProtected }}" -eq "true")
+            -repoIsProtected ("${{ matrix.repoIsProtected }}" -eq "true") `
+            -outputDirectory "${{ github.workspace }}"
         shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

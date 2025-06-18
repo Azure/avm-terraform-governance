@@ -21,7 +21,8 @@ param(
     [string]$repoSubType,
     [string]$repoOwnerTeam,
     [string]$repoContributorTeam,
-    [bool]$repoIsProtected
+    [bool]$repoIsProtected,
+    [string]$outputDirectory = "."
 )
 
 Write-Host "Running repo sync script"
@@ -180,5 +181,5 @@ if($issueLog.Count -eq 0) {
 } else {
     Write-Host "Issues found for $repoId"
     $issueLogJson = ConvertTo-Json $issueLog -Depth 100
-    $issueLogJson | Out-File "issue.log.json"
+    $issueLogJson | Out-File "$outputDirectory/issue.log.json"
 }

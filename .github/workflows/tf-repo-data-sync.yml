@@ -34,10 +34,10 @@ jobs:
 
       - name: Get Repository Data
         run: |
-          $repositories = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1)
+          $repositories = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1 -outputDirectory "${{ github.workspace }}")
           Write-Host (ConvertTo-Json $repositories -Depth 10)
 
-          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputFolder "${{ github.workspace }}"
+          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputDirectory "${{ github.workspace }}"
 
         shell: pwsh
         env:
