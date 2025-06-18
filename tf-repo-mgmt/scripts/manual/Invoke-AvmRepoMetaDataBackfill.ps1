@@ -1,5 +1,5 @@
 param(
-  $client_id = "Iv23lihQ3SvHOms4F7ym", # This is the Client ID of the GitHub App
+  $client_id, # This is the Client ID of the GitHub App
   $private_key_path = "azure-verified-modules.pem", # This is the path to the private key for the GitHub App
   $metaDataFilePath = "./repository-meta-data/meta-data.csv" # This is the path to the meta data CSV file
 )

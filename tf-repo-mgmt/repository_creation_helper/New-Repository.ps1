@@ -14,16 +14,16 @@ param (
   [string]$ownerSecondaryDisplayName = ""
 )
 
-$metaDataVariables = [ordered]@{
-  "moduleId" = $moduleName
-  "providerNamespace" = $resourceProviderNamespace
-  "providerResourceType" = $resourceType
-  "moduleDisplayName" = $moduleDisplayName
-  "alternativeNames" = $moduleAlternativeNames
-  "primaryOwnerGitHubHandle" = $ownerPrimaryGitHubHandle
-  "primaryOwnerDisplayName" = $ownerPrimaryDisplayName
-  "secondaryOwnerGitHubHandle" = $ownerSecondaryGitHubHandle
-  "secondaryOwnerDisplayName" = $ownerSecondaryDisplayName
+$metaDataVariables = [PSCustomObject]@{
+  moduleId = $moduleName
+  providerNamespace = $resourceProviderNamespace
+  providerResourceType = $resourceType
+  moduleDisplayName = $moduleDisplayName
+  alternativeNames = $moduleAlternativeNames
+  primaryOwnerGitHubHandle = $ownerPrimaryGitHubHandle
+  primaryOwnerDisplayName = $ownerPrimaryDisplayName
+  secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
+  secondaryOwnerDisplayName = $ownerSecondaryDisplayName
 }
 
 $currentPath = Get-Location
@@ -47,7 +47,7 @@ $prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR 
 Write-Host "Created PR for repo meta data: $prUrl"
 
 Set-Location $tempPath
-Remove-Item -Path $tempRepoFolderName -Force -Recurse
+Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
 
 Set-Location $currentPath
 
