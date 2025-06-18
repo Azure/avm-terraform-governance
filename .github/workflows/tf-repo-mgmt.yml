@@ -25,7 +25,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: ./tf-repo-mgmt/respository_sync
+    working-directory: ./tf-repo-mgmt/repository_sync
 
 jobs:
   generate-matrix:
