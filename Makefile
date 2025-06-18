@@ -27,4 +27,4 @@ tf-unit-test:
 tf-integration-test:
 	@echo "Running terraform integration test..."
 	export TEST_TYPE="integration"
-	porch run -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+	porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
