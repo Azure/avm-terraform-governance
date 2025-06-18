@@ -193,3 +193,66 @@ if($warnings.Count -eq 0) {
     $warningsJson | Out-File "$outputDirectory/warning.log.json"
     Write-Host "Warnings written to $outputDirectory/warning.log.json"
 }
+
+# PR
+$currentPath = Get-Location
+$outputDirectoryAbsolute = (Resolve-Path $outputDirectory).Path
+$tempFolder = "$outputDirectory/temp"
+$tempRepoFolderName = "repository-data-sync"
+
+New-Item -Path $tempFolder -ItemType Directory -Force | Out-Null
+Set-Location -Path $tempFolder
+$avmDocsRepositoryName = "https://github.com/Azure/Azure-Verified-Modules"
+git clone $avmDocsRepositoryName $tempRepoFolderName
+Set-Location -Path $tempRepoFolderName
+
+Copy-Item -Path "$outputDirectoryAbsolute/*.csv" -Destination "./docs/static/module-indexes" -Force
+
+git add .
+$gitStatus = git status --porcelain
+
+if(!$gitStatus) {
+    Write-Host "No changes to commit. Exiting..."
+    exit 0
+}
+
+git reset --hard HEAD
+
+$existingPR = gh pr list --state open --search "chore: terraform csv update" --json number,title,url,headRefName --repo $avmDocsRepositoryName | ConvertFrom-Json
+
+$dateStamp = (Get-Date).ToString("yyyyMMddHHmmss")
+
+$isNewBranch = $false
+if($existingPR.Count -gt 0) {
+    $existingBranch = $existingPR[0].headRefName.Replace("refs/heads/", "")
+    git switch $existingBranch
+} else {
+    git checkout -b "chore/repository-data-sync/$dateStamp"
+    $isNewBranch = $true
+}
+
+Copy-Item -Path "$outputDirectoryAbsolute/*.csv" -Destination "./docs/static/module-indexes" -Force
+
+git add .
+$gitStatus = git status --porcelain
+
+if(!$gitStatus) {
+    Write-Host "No changes to commit. Exiting..."
+    exit 0
+}
+
+git commit -m "chore: terraform csv update $dateStamp"
+
+if($isNewBranch) {
+    $branchName = "chore/repository-data-sync/$dateStamp"
+    git push --set-upstream origin "chore/repository-data-sync/$dateStamp"
+    $prUrl = gh pr create --title "chore: terraform csv update $dateStamp" --body "This PR updates the Terraform CSV files with the latest data." --base main --head $branchName
+    Write-Host "Created PR for repository data sync: $prUrl"
+} else {
+    git push
+    $prUrl = $existingPR[0].url
+    Write-Host "Updated existing PR for repository data sync: $prUrl"
+}
+
+Set-Location -Path $currentPath
+Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
