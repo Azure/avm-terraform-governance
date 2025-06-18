@@ -13,18 +13,18 @@ commands:
   - type: shell
     name: mapotf transform
     command_line: |
-      if [ -z "$MPTF_DIR" ]; then
-        MPTF_DIR="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
+      if [ -z "$MPTF_URL" ]; then
+        MPTF_URL="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
       fi
-      mapotf transform --mptf-dir "$MPTF_DIR" --tf-dir .
+      mapotf transform --mptf-dir "$MPTF_URL" --tf-dir .
 
   - type: shell
     name: Grept apply
     command_line: |
-      if [ -z "$GREPT_REPO" ]; then
-        GREPT_REPO="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
+      if [ -z "$GREPT_URL" ]; then
+        GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
       fi
-      grept apply -a "$GREPT_REPO"
+      grept apply -a "$GREPT_URL"
 
   - type: parallel
     name: avmfix
