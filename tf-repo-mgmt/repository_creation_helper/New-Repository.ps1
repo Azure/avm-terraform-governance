@@ -1,28 +1,55 @@
 param (
+  [string]$tempPath = "~/temp-avm-repo-creation",
+  [string]$tempRepoFolderName = "avm-terraform-governance",
+  [string]$governanceRepoUrl = "https://github.com/Azure/avm-terraform-governance",
   [string]$moduleProvider = "azurerm",
   [string]$moduleName,
   [string]$moduleDisplayName,
   [string]$resourceProviderNamespace,
   [string]$resourceType,
   [string]$moduleAlternativeNames = "",
-  [string]$moduleComments = "",
   [string]$ownerPrimaryGitHubHandle,
   [string]$ownerPrimaryDisplayName,
   [string]$ownerSecondaryGitHubHandle = "",
   [string]$ownerSecondaryDisplayName = ""
 )
 
-$metaDataVariables = @{
-  "AVM_RESOURCE_PROVIDER_NAMESPACE" = $resourceProviderNamespace
-  "AVM_RESOURCE_TYPE" = $resourceType
-  "AVM_MODULE_DISPLAY_NAME" = $moduleDisplayName
-  "AVM_MODULE_ALTERNATIVE_NAMES" = $moduleAlternativeNames
-  "AVM_COMMENTS" = $moduleComments
-  "AVM_OWNER_PRIMARY_GITHUB_HANDLE" = $ownerPrimaryGitHubHandle
-  "AVM_OWNER_PRIMARY_DISPLAY_NAME" = $ownerPrimaryDisplayName
-  "AVM_OWNER_SECONDARY_GITHUB_HANDLE" = $ownerSecondaryGitHubHandle
-  "AVM_OWNER_SECONDARY_DISPLAY_NAME" = $ownerSecondaryDisplayName
+$metaDataVariables = [ordered]@{
+  "moduleId" = $moduleName
+  "providerNamespace" = $resourceProviderNamespace
+  "providerResourceType" = $resourceType
+  "moduleDisplayName" = $moduleDisplayName
+  "alternativeNames" = $moduleAlternativeNames
+  "primaryOwnerGitHubHandle" = $ownerPrimaryGitHubHandle
+  "primaryOwnerDisplayName" = $ownerPrimaryDisplayName
+  "secondaryOwnerGitHubHandle" = $ownerSecondaryGitHubHandle
+  "secondaryOwnerDisplayName" = $ownerSecondaryDisplayName
 }
+
+$currentPath = Get-Location
+New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
+Set-Location -Path $tempPath
+git clone $governanceRepoUrl $tempRepoFolderName
+Set-Location -Path $tempRepoFolderName
+git checkout -b "chore/add/$moduleName"
+
+$csvData = Get-Content -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" | ConvertFrom-Csv
+$csvData += $metaDataVariables
+$csvData = $csvData | Sort-Object -Property moduleId
+$csvData | Export-Csv -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" -NoTypeInformation -Force
+
+git add "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+git commit -m "chore: add $moduleName metadata"
+git push --set-upstream origin "chore/add/$moduleName"
+
+$prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR adds metadata for the $moduleName module." --base main --head "chore/add/$moduleName" -a "@me" --repo $governanceRepoUrl
+
+Write-Host "Created PR for repo meta data: $prUrl"
+
+Set-Location $tempPath
+Remove-Item -Path $tempRepoFolderName -Force -Recurse
+
+Set-Location $currentPath
 
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
@@ -50,8 +77,10 @@ $tfvars = @{
   module_provider = $moduleProvider
   module_id = $moduleName
   module_name = $moduleDisplayName
-  module_owner_github_handle = $ownerPrimaryGitHubHandle
-  github_repository_metadata = $metaDataVariables
+  module_owner_github_handles = @{
+    primary = $ownerPrimaryGitHubHandle
+    secondary = $ownerSecondaryGitHubHandle
+  }
 }
 
 $tfvars | ConvertTo-Json | Out-File -FilePath "terraform.tfvars.json" -Force
@@ -68,3 +97,5 @@ if(Test-Path ".terraform.lock.hcl") {
 
 terraform init
 terraform apply -auto-approve
+
+Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl"

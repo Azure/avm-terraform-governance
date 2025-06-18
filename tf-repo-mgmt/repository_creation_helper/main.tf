@@ -3,10 +3,7 @@ locals {
   module_type                   = split("-", var.module_id)[1]
   module_type_name              = local.module_type == "res" ? "Resource" : (local.module_type == "ptn" ? "Pattern" : "Utility")
   github_reposisory_description = "Terraform Azure Verified ${local.module_type_name} Module for ${var.module_name}"
-  secondary_owner_github_handle = var.github_repository_metadata["AVM_OWNER_SECONDARY_GITHUB_HANDLE"]
-  team_maintainers = merge({
-    primary = var.module_owner_github_handle
-  }, local.secondary_owner_github_handle != "" ? { secondary = local.secondary_owner_github_handle } : {})
+  team_maintainers = { for k, v in var.module_owner_github_handles : k => v if v != "" }
 }
 
 import {
@@ -100,11 +97,4 @@ resource "github_team_repository" "contributors_team" {
   team_id    = github_team.contributors.id
   repository = github_repository.this.name
   permission = "push"
-}
-
-resource "github_actions_variable" "meta_date" {
-  for_each      = { for key, value in var.github_repository_metadata : key => value if value != "" }
-  repository    = github_repository.this.name
-  variable_name = each.key
-  value         = each.value
 }

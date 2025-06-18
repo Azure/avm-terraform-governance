@@ -139,7 +139,8 @@ id = "$($repoName):test"
         -backend-config="container_name=$stateContainerName" `
         -backend-config="key=$($repoId).tfstate"
 
-    terraform plan -out="$($repoId).tfplan" `
+    terraform plan `
+        -out="$($repoId).tfplan" `
         -var="github_repository_owner=$orgName" `
         -var="github_repository_name=$repoName" `
         -var="github_owner_team_name=$($ownerTeamName)" `
