@@ -42,7 +42,6 @@ jobs:
             $(pwd):/src \
             -e \
             TF_VAR_enable_telemetry \
-            -e AVM_EXAMPLE=${{ matrix.example }} \
             -e ARM_SUBSCRIPTION_ID \
             -e ARM_TENANT_ID \
             -e ARM_CLIENT_ID \
