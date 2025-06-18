@@ -72,6 +72,7 @@
 "avm-res-documentdb-databaseaccount","Microsoft.DocumentDB","databaseAccount","CosmosDB Database Account","","bryansan-msft","Bryan Sanchez Pernia","",""
 "avm-res-edge-site","Microsoft.Edge","sites","Azure Arc Site manager","","xhy8759","Hangyu Xu","",""
 "avm-res-eventhub-namespace","Microsoft.EventHub","namespaces","Event Hub Namespace","","mbilalamjad","Bilal Amjad","",""
+"avm-res-example","","","","","","","",""
 "avm-res-hybridcontainerservice-provisionedclusterinstance","Microsoft.HybridContainerService","provisionedClusterInstances","AKS Arc","","xhy8759","Hangyu Xu","",""
 "avm-res-insights-autoscalesetting","Microsoft.Insights","autoscalesettings","Auto scale settings","","chianw","Chian Wong","",""
 "avm-res-insights-component","Microsoft.Insights","components","Application Insight","","Jfolberth","John Folberth","",""
