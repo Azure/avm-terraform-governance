@@ -68,7 +68,7 @@ jobs:
       - name: Repo Error
         if: always() && hashFiles('warning.log.json') != ''
         run: |
-          $issueLogJson = Get-Content -Path "warning.log.json" -Raw
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
           $issueLog | ForEach-Object {
             echo "::error title=$($_.repoId) has issues::$($_.message)"
