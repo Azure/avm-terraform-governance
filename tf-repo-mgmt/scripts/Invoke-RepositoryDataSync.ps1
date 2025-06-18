@@ -223,13 +223,14 @@ git reset --hard HEAD
 $existingPR = gh pr list --state open --search "chore: terraform csv update" --json number,title,url,headRefName --repo $avmDocsRepositoryName | ConvertFrom-Json
 
 $dateStamp = (Get-Date).ToString("yyyyMMddHHmmss")
+$branchName = "chore/repository-data-sync/$dateStamp"
 
 $isNewBranch = $false
 if($existingPR.Count -gt 0) {
     $existingBranch = $existingPR[0].headRefName.Replace("refs/heads/", "")
     git switch $existingBranch
 } else {
-    git checkout -b "chore/repository-data-sync/$dateStamp"
+    git checkout -b $branchName
     $isNewBranch = $true
 }
 
@@ -250,7 +251,6 @@ git config user.email "$applicationId+$applicationName[bot]@users.noreply.github
 git commit -m "chore: terraform csv update $dateStamp"
 
 if($isNewBranch) {
-    $branchName = "chore/repository-data-sync/$dateStamp"
     git push --set-upstream origin "chore/repository-data-sync/$dateStamp"
     $prUrl = gh pr create --title "chore: terraform csv update $dateStamp" --body "This PR updates the Terraform CSV files with the latest data." --base main --head $branchName
     Write-Host "Created PR for repository data sync: $prUrl"
