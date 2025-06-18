@@ -19,7 +19,8 @@ param(
       "Azure-Verified-Modules-Workflows",
       "avm-terraform-governance"
     ),
-    [string]$outputDirectory = "."
+    [string]$outputDirectory = ".",
+    [string]$protectedReposFilePath = "./protected_repos/ProtectedRepos.csv"
 )
 
 Write-Host "Generating matrix for AVM repositories"
@@ -120,7 +121,7 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
     continue
   }
 
-  $protectedRepos = Import-Csv "./protected_repos/ProtectedRepos.csv"
+  $protectedRepos = Import-Csv $protectedReposFilePath
 
   $repos += @{
     repoId              = $moduleName
