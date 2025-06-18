@@ -97,4 +97,4 @@ foreach($repository in $repositories) {
 }
 
 # Write the updated meta data to the CSV file
-$csvData | Export-Csv -Path $metaDataFilePath -NoTypeInformation -Encoding UTF8
+$csvData | Export-Csv -Path $metaDataFilePath -NoTypeInformation -UseQuotes AsNeeded -Encoding UTF8

@@ -183,7 +183,7 @@ foreach($output in $metaDataConfig.outputs) {
         }
         $outputData += $outputItem
     }
-    $outputData | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath "$outputDirectory/$fileName" -Force -Encoding utf8
+    $outputData | ConvertTo-Csv -NoTypeInformation -UseQuotes AsNeeded | Out-File -FilePath "$outputDirectory/$fileName" -Force -Encoding utf8
     Write-Host "Output written to $outputDirectory/$fileName"
 }
 
