@@ -1,5 +1,5 @@
 ---
-name: pr check
+name: managed pr check and test examples
 
 on:
   workflow_call:
