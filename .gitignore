@@ -4,3 +4,4 @@ tf-repo-mgmt/TerraformPatternModules.csv
 tf-repo-mgmt/TerraformResourceModules.csv
 tf-repo-mgmt/repositoryData.json
 tf-repo-mgmt/TerraformUtilityModules.csv
+tf-repo-mgmt/warning.log.json

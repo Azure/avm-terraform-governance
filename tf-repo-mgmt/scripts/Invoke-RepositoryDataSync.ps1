@@ -35,9 +35,23 @@ foreach($repository in $repositories) {
     $repoSplit = $repoName.Split("-")
     $providerName = $repoSplit[1]
 
-    $metaData | Where-Object { $_.moduleId -eq $repository.repoId }
-    $repositoryDataMap["calculated.moduleDescription"] = "AVM $($repository.repoSubType) Module for $($metaData.moduleDisplayName)"
-    foreach($metaDataObject in $metaData.PSObject.Properties) {
+    $filteredMetaData = $metaData | Where-Object { $_.moduleId -eq $repository.repoId }
+
+    if($filteredMetaData.Count -eq 0) {
+        $warning = @{
+            repoId = $repository.repoId
+            message = "No metadata found for repository $($repository.repoId). Skipping..."
+        }
+        Write-Warning $warning.message
+        $warnings += $warning
+        continue
+    }
+
+    $isOrphaned = ($null -eq $filteredMetaData.primaryOwnerGitHubHandle -or $filteredMetaData.primaryOwnerGitHubHandle -eq "")
+    $repositoryDataMap["calculated.isOrphaned"] = $isOrphaned
+
+    $repositoryDataMap["calculated.moduleDescription"] = "AVM $($repository.repoSubType) Module for $($filteredMetaData.moduleDisplayName)"
+    foreach($metaDataObject in $filteredMetaData.PSObject.Properties) {
         $repositoryDataMap["metadata.$($metaDataObject.Name)"] = $metaDataObject.Value
     }
 
@@ -67,12 +81,17 @@ foreach($repository in $repositories) {
             }
             $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published_at.ToString("yyyy-MM")
         }
+        $repositoryDataMap["calculated.publishedStatus"] = "Published"
+        $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
+    } else {
+        $repositoryDataMap["calculated.publishedStatus"] = "Not Published"
+        $repositoryDataMap["calculated.moduleStatus"] = "Proposed"
     }
 
     $repositoryData += $repositoryDataMap
 }
 
-$repositoryData | ConvertTo-Json -Depth 10 | Out-File -FilePath "repositoryData.json" -Force -Encoding utf8
+$repositoryData | ConvertTo-Json -Depth 100 | Out-File -FilePath "repositoryData.json" -Force -Encoding utf8
 
 
 foreach($output in $metaDataConfig.outputs) {
@@ -83,10 +102,13 @@ foreach($output in $metaDataConfig.outputs) {
 
     foreach($filteredField in $filteredFields) {
         $fieldMappingData = $filteredField.mapsTo | Where-Object { $_.output -eq $output.name }
+
         $fieldMapping += @{
             order = $fieldMappingData.outputColumnOrder
             name = $fieldMappingData.outputColumnName
             source = $filteredField.source
+            required = $null -eq $filteredField.required ? $false : $filteredField.required
+            requiredFilters = $filteredField.requiredFilters
         }
     }
 
@@ -94,12 +116,67 @@ foreach($output in $metaDataConfig.outputs) {
 
     $outputData = @()
     foreach($dataItem in $repositoryData) {
+
+        if($output.filters) {
+            $meetsAllFilters = $true
+
+            foreach($filter in $output.filters) {
+                $field = $metaDataConfig.metaData | Where-Object { $_.name -eq $filter.name }
+                if($null -eq $field) {
+                    Write-Warning "Filter field '$($filter.name)' not found in metadata configuration."
+                    continue
+                }
+
+                if($filter.match -eq "equals") {
+                    if($dataItem[$field.source] -ne $filter.value) {
+                        $meetsAllFilters = $false
+                        break
+                    }
+                }
+            }
+
+            if(!$meetsAllFilters) {
+                continue
+            }
+        }
+
         $outputItem = [ordered]@{}
         foreach($fieldMap in $fieldMapping) {
             $outputItem[$fieldMap.name] = $dataItem[$fieldMap.source]
             if($null -eq $outputItem[$fieldMap.name]) {
                 $outputItem[$fieldMap.name] = ""
-            } 
+            }
+
+            if($outputItem[$fieldMap.name] -eq "") {
+                if($fieldMap.required) {
+                    $warning = @{
+                        repoId = $dataItem["repo.moduleID"]
+                        message = "Required field '$($fieldMap.name)' is missing for repository $($dataItem["repo.moduleID"])."
+                    }
+                    Write-Warning $warning.message
+                    $warnings += $warning
+                }
+                if($fieldMap.requiredFilters -and $fieldMap.requiredFilters.Count -gt 0) {
+                    $required = $false
+                    foreach($filter in $fieldMap.requiredFilters) {
+                        if($filter.match -eq "equals") {
+                            $field = $metaDataConfig.metaData | Where-Object { $_.name -eq $filter.name }
+                            if($dataItem[$field.source] -eq $filter.value) {
+                                $required = $true
+                                break
+                            }
+                        }
+                    }
+                    if($required) {
+                        $warning = @{
+                            repoId = $dataItem["repo.moduleID"]
+                            message = "Required field '$($fieldMap.name)' is missing for repository $($dataItem["repo.moduleID"]) as required filters are not met."
+                        }
+                        Write-Warning $warning.message
+                        $warnings += $warning
+                    }
+                }
+            }
         }
         $outputData += $outputItem
     }

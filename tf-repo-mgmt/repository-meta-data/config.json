@@ -154,7 +154,7 @@
         {
             "name": "moduleID",
             "description": "The name of the module",
-            "source": "calculated.moduleID",
+            "source": "repo.moduleID",
             "mapsTo": [
                 {
                     "output": "resourceModulesCsv",
