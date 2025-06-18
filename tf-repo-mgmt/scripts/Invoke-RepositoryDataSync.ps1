@@ -10,7 +10,9 @@ param(
     ),
     [string]$metaDataConfigFilePath = "./repository-meta-data/config.json",
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
-    [string]$outputDirectory = "."
+    [string]$outputDirectory = ".",
+    [string]$applicationName = "azure-verified-modules",
+    [string]$applicationId = "1049636"
 )
 
 # Meta Data
@@ -241,6 +243,8 @@ if(!$gitStatus) {
     exit 0
 }
 
+git config user.name "$applicationName[bot]"
+git config user.email "$applicationId+$applicationName[bot]@users.noreply.github.com"
 git commit -m "chore: terraform csv update $dateStamp"
 
 if($isNewBranch) {
