@@ -18,7 +18,9 @@ param(
       "avm-container-images-cicd-agents-and-runners",
       "Azure-Verified-Modules-Workflows",
       "avm-terraform-governance"
-    )
+    ),
+    [string]$outputDirectory = ".",
+    [string]$protectedReposFilePath = "./protected_repos/ProtectedRepos.csv"
 )
 
 Write-Host "Generating matrix for AVM repositories"
@@ -119,7 +121,7 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
     continue
   }
 
-  $protectedRepos = Import-Csv "./protected_repos/ProtectedRepos.csv"
+  $protectedRepos = Import-Csv $protectedReposFilePath
 
   $repos += @{
     repoId              = $moduleName
@@ -137,7 +139,7 @@ if($warnings.Count -eq 0) {
 } else {
   Write-Host "Issues found for"
   $warningsJson = ConvertTo-Json $warnings -Depth 100
-  $warningsJson | Out-File "warning.log.json"
+  $warningsJson | Out-File "$outputDirectory/warning.log.json"
 }
 
 Write-Host "Filtering repositories"

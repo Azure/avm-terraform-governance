@@ -25,7 +25,7 @@ permissions:
 
 defaults:
   run:
-    working-directory: ./tf-repo-mgmt/respository_sync
+    working-directory: ./tf-repo-mgmt/repository_sync
 
 jobs:
   generate-matrix:
@@ -72,7 +72,7 @@ jobs:
           } else {
             $repositories = $repositories -split ','
           }
-          $matrix = @(../scripts/Get-RepositoriesWhereAppInstalled.ps1 -repoFilter $repositories)
+          $matrix = @(../scripts/Get-RepositoriesWhereAppInstalled.ps1 -repoFilter $repositories -outputDirectory "${{ github.workspace }}" -protectedReposFilePath "../protected_repos/ProtectedRepos.csv")
           $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
           Write-Host (ConvertTo-Json $matrix -Depth 10)
           Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
@@ -90,7 +90,7 @@ jobs:
       - name: Repo Error
         if: always() && hashFiles('warning.log.json') != ''
         run: |
-          $issueLogJson = Get-Content -Path "warning.log.json" -Raw
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
           $issueLog | ForEach-Object {
             echo "::error title=$($_.repoId) has issues::$($_.message)"
@@ -165,7 +165,8 @@ jobs:
             -repoSubType "${{ matrix.repoSubType }}" `
             -repoOwnerTeam "${{ matrix.repoOwnerTeam }}" `
             -repoContributorTeam "${{ matrix.repoContributorTeam }}" `
-            -repoIsProtected ("${{ matrix.repoIsProtected }}" -eq "true")
+            -repoIsProtected ("${{ matrix.repoIsProtected }}" -eq "true") `
+            -outputDirectory "${{ github.workspace }}"
         shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -185,7 +186,7 @@ jobs:
       - name: Issue Error
         if: always() && hashFiles('issue.log.json') != ''
         run: |
-          $issueLogJson = Get-Content -Path "issue.log.json" -Raw
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/issue.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
           $issueLog | ForEach-Object {
             echo "::error title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."

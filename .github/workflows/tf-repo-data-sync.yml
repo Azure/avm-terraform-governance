@@ -28,16 +28,16 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v1.11.0
         with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       - name: Get Repository Data
         run: |
-          $repositories = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1)
+          $repositories = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1 -outputDirectory "${{ github.workspace }}")
           Write-Host (ConvertTo-Json $repositories -Depth 10)
 
-          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories
+          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputDirectory "${{ github.workspace }}"
 
         shell: pwsh
         env:
@@ -68,7 +68,7 @@ jobs:
       - name: Repo Error
         if: always() && hashFiles('warning.log.json') != ''
         run: |
-          $issueLogJson = Get-Content -Path "warning.log.json" -Raw
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
           $issueLog | ForEach-Object {
             echo "::error title=$($_.repoId) has issues::$($_.message)"

@@ -9,7 +9,10 @@ param(
         }
     ),
     [string]$metaDataConfigFilePath = "./repository-meta-data/config.json",
-    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv"
+    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
+    [string]$outputDirectory = ".",
+    [string]$applicationName = "azure-verified-modules",
+    [string]$applicationId = "1049636"
 )
 
 # Meta Data
@@ -91,8 +94,8 @@ foreach($repository in $repositories) {
     $repositoryData += $repositoryDataMap
 }
 
-$repositoryData | ConvertTo-Json -Depth 100 | Out-File -FilePath "repositoryData.json" -Force -Encoding utf8
-
+$repositoryData | ConvertTo-Json -Depth 100 | Out-File -FilePath "$outputDirectory/repositoryData.json" -Force -Encoding utf8
+Write-Host "Repository data written to $outputDirectory/repositoryData.json"
 
 foreach($output in $metaDataConfig.outputs) {
     $fileName = $output.fileName
@@ -180,7 +183,8 @@ foreach($output in $metaDataConfig.outputs) {
         }
         $outputData += $outputItem
     }
-    $outputData | ConvertTo-Csv -NoTypeInformation | Out-File -FilePath $fileName -Force -Encoding utf8
+    $outputData | ConvertTo-Csv -NoTypeInformation -UseQuotes AsNeeded | Out-File -FilePath "$outputDirectory/$fileName" -Force -Encoding utf8
+    Write-Host "Output written to $outputDirectory/$fileName"
 }
 
 if($warnings.Count -eq 0) {
@@ -188,5 +192,73 @@ if($warnings.Count -eq 0) {
 } else {
     Write-Host "Issues found ($($warnings.Count))"
     $warningsJson = ConvertTo-Json $warnings -Depth 100
-    $warningsJson | Out-File "warning.log.json"
+    $warningsJson | Out-File "$outputDirectory/warning.log.json"
+    Write-Host "Warnings written to $outputDirectory/warning.log.json"
 }
+
+# PR
+$currentPath = Get-Location
+$outputDirectoryAbsolute = (Resolve-Path $outputDirectory).Path
+$tempFolder = "$outputDirectory/temp"
+$tempRepoFolderName = "repository-data-sync"
+
+New-Item -Path $tempFolder -ItemType Directory -Force | Out-Null
+Set-Location -Path $tempFolder
+$avmDocsRepositoryName = "https://github.com/Azure/Azure-Verified-Modules"
+git clone $avmDocsRepositoryName $tempRepoFolderName
+Set-Location -Path $tempRepoFolderName
+
+Copy-Item -Path "$outputDirectoryAbsolute/*.csv" -Destination "./docs/static/module-indexes" -Force
+
+git add .
+$gitStatus = git status --porcelain
+
+if(!$gitStatus) {
+    Write-Host "No changes to commit. Exiting..."
+    exit 0
+}
+
+git reset --hard HEAD
+
+$existingPR = gh pr list --state open --search "chore: terraform csv update" --json number,title,url,headRefName --repo $avmDocsRepositoryName | ConvertFrom-Json
+
+$dateStamp = (Get-Date).ToString("yyyyMMddHHmmss")
+$branchName = "chore/repository-data-sync/$dateStamp"
+
+$isNewBranch = $false
+if($existingPR.Count -gt 0) {
+    $existingBranch = $existingPR[0].headRefName.Replace("refs/heads/", "")
+    git switch $existingBranch
+} else {
+    git checkout -b $branchName
+    $isNewBranch = $true
+}
+
+Copy-Item -Path "$outputDirectoryAbsolute/*.csv" -Destination "./docs/static/module-indexes" -Force
+
+git add .
+$gitStatus = git status --porcelain
+
+if(!$gitStatus) {
+    Write-Host "No changes to commit. Exiting..."
+    exit 0
+}
+
+gh auth setup-git
+git config user.name "$applicationName[bot]"
+git config user.email "$applicationId+$applicationName[bot]@users.noreply.github.com"
+
+git commit -m "chore: terraform csv update $dateStamp"
+
+if($isNewBranch) {
+    git push --set-upstream origin "chore/repository-data-sync/$dateStamp"
+    $prUrl = gh pr create --title "chore: terraform csv update $dateStamp" --body "This PR updates the Terraform CSV files with the latest data." --base main --head $branchName
+    Write-Host "Created PR for repository data sync: $prUrl"
+} else {
+    git push
+    $prUrl = $existingPR[0].url
+    Write-Host "Updated existing PR for repository data sync: $prUrl"
+}
+
+Set-Location -Path $currentPath
+Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
