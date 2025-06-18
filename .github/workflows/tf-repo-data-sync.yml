@@ -37,7 +37,7 @@ jobs:
           $repositories = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1)
           Write-Host (ConvertTo-Json $repositories -Depth 10)
 
-          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories
+          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputFolder "${{ github.workspace }}"
 
         shell: pwsh
         env:
