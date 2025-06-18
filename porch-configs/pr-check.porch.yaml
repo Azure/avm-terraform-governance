@@ -190,6 +190,12 @@ commands:
       - type: copycwdtotemp
         name: Copy to temp
 
+        # This kicks off the tflintenv installer
+      - type: shell
+        name: install tflint
+        command_line: |
+          tflint
+
       - type: foreachdirectory
         name: well architected
         working_directory: "./examples"
