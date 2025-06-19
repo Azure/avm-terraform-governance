@@ -107,3 +107,4 @@ jobs:
           echo "Running governance tests..."
           # Add your governance test commands here
           echo "Governance tests completed successfully."
+          env | sort
