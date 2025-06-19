@@ -12,9 +12,9 @@ on:
 env:
   REGISTRY: ghcr.io # remove this once migrated to ACR
   IMAGE_NAME: ${{ github.repository }}
+  ACR_IMAGE_NAME: public/azterraform
   PLATFORMS: linux/amd64,linux/arm64
-  ##ACR_REPO: ${{ secrets.ACR_SERVER_URL }}/public/azterraform
-  ACR_REPO: ${{ github.repository}}
+  ##ACR_REPO: ${{ secrets.ACR_SERVER_URL }}
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -48,16 +48,24 @@ jobs:
         with:
           path: ./container/version.env
 
-      - name: Generate App Version
-        run: echo APP_VERSION=`git describe --tags --always` >> $GITHUB_ENV
-
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
+          # Add this image below when using ACR
+          # ${{ secrets.ACR_SERVER_URL }}/${{ env.ACR_IMAGE_NAME }}
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=auto
+            prefix=avm-,onlatest=true
+          tags: |
+              type=semver,pattern={{version}}
+              type=semver,pattern={{major}}.{{minor}}
+              type=semver,pattern={{major}}
+              type=sha
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0

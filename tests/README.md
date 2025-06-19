@@ -14,3 +14,8 @@ All of the workflows that we use have substitution variables that can be set to 
 | PORCH_BASE_URL | The base go-getter URL for the porch configs. | `git::https://github.com/Azure/avm-terraform-governance//porch-configs` |
 | PORCH_REF | The git ref to use for the porch configs. | `main` |
 | TFLINT_CONFIG_URL | The URL to the TFLint config files. | `https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs` |
+
+## Mock modules
+
+We are in the process of designing two mock modules that can be used to test the workflows and policies in this repository.
+They are located in the `mock-module-azapi` and `mock-module-azurerm` directories.
