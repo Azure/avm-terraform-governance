@@ -1,23 +1,14 @@
 ---
-name: container - test
+name: governance - test
 
-# Configures this workflow to run every time a change is pushed to the branch called `release`.
 on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'container/**'
   workflow_dispatch:
 
-# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
-env:
-  REGISTRY: localhost
-  IMAGE_NAME: test
-
-# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
-  test-image:
+  build-image:
     runs-on: ubuntu-latest
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
@@ -38,10 +29,9 @@ jobs:
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            avm
           tags: |
             type=raw,value=test
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
@@ -61,17 +51,19 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ${{ steps.readenv.outputs.content }}
-          load: true
-          cache-from: type=registry,ref=user/app:latest
-          cache-to: type=inline
+          outputs: type=docker,dest=${{ runner.temp }}/test.tar
 
-      - name: List images
-        run: docker images
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: image
+          path: ${{ runner.temp }}/test.tar
+          retention-days: 2
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
         with:
-          image-ref: '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test'
+          image-ref: 'avm:test'
           exit-code: '1'
           ignore-unfixed: true
           scanners: vuln
