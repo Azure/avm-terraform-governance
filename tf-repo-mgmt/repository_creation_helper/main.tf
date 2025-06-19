@@ -2,8 +2,12 @@ locals {
   github_repository_name        = "terraform-${var.module_provider}-${var.module_id}"
   module_type                   = split("-", var.module_id)[1]
   module_type_name              = local.module_type == "res" ? "Resource" : (local.module_type == "ptn" ? "Pattern" : "Utility")
-  github_reposisory_description = "Terraform Azure Verified ${local.module_type_name} Module for ${var.module_name}"
-  team_maintainers = { for k, v in var.module_owner_github_handles : k => v if v != "" }
+  github_repository_description = "Terraform Azure Verified ${local.module_type_name} Module for ${var.module_name}"
+  avm_core_team_members = { for final_members in flatten([for value in data.github_team.avm_core : [for member in value.members : {
+    composite_key = "${value.slug}-${member}"
+    username      = member
+  }]]) : final_members.composite_key => final_members.username }
+  team_maintainers = merge(local.avm_core_team_members, { for k, v in var.module_owner_github_handles : k => v if v != "" })
 }
 
 import {
@@ -13,7 +17,7 @@ import {
 
 resource "github_repository" "this" {
   name        = local.github_repository_name
-  description = local.github_reposisory_description
+  description = local.github_repository_description
   auto_init   = false
 
   visibility   = "public"

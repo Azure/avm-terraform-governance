@@ -11,7 +11,8 @@ param (
   [string]$ownerPrimaryGitHubHandle,
   [string]$ownerPrimaryDisplayName,
   [string]$ownerSecondaryGitHubHandle = "",
-  [string]$ownerSecondaryDisplayName = ""
+  [string]$ownerSecondaryDisplayName = "",
+  [switch]$metaDataOnly
 )
 
 $metaDataVariables = [PSCustomObject]@{
@@ -33,12 +34,13 @@ git clone $governanceRepoUrl $tempRepoFolderName
 Set-Location -Path $tempRepoFolderName
 git checkout -b "chore/add/$moduleName"
 
-$csvData = Get-Content -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" | ConvertFrom-Csv
+$csvPath = "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+$csvData = Get-Content -Path $csvPath | ConvertFrom-Csv
 $csvData += $metaDataVariables
 $csvData = $csvData | Sort-Object -Property moduleId
-$csvData | Export-Csv -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" -NoTypeInformation -Force
+$csvData | Export-Csv -Path $csvPath -NoTypeInformation -UseQuotes AsNeeded -Force
 
-git add "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+git add $csvPath
 git commit -m "chore: add $moduleName metadata"
 git push --set-upstream origin "chore/add/$moduleName"
 
@@ -50,6 +52,11 @@ Set-Location $tempPath
 Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
 
 Set-Location $currentPath
+
+if($metaDataOnly) {
+  Write-Host "Metadata only creation completed. Exiting."
+  return
+}
 
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
