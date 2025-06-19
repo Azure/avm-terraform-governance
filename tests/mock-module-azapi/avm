@@ -37,6 +37,10 @@ if [ -z "$GITHUB_RUN_ID" ]; then
   export FORCE_COLOR=1
 fi
 
+if [ -n "$PORCH_BASE_URL" ]; then
+  PORCH_MAKE_ADD="PORCH_BASE_URL=$PORCH_BASE_URL"
+fi
+
 # Check if we are running in a container
 # If we are then just run make directly
 if [ -z "$AVM_IN_CONTAINER" ]; then
@@ -68,9 +72,9 @@ if [ -z "$AVM_IN_CONTAINER" ]; then
     make \
     TUI="$TUI" \
     MAKEFILE_REF="$MAKEFILE_REF" \
-    PORCH_BASE_URL="$PORCH_BASE_URL" \
+    $PORCH_MAKE_ADD \
     PORCH_REF="${PORCH_REF:-main}" \
     "$1"
 else
-  make TUI="$TUI" MAKEFILE_REF="$MAKEFILE_REF" "$1"
+  make TUI="$TUI" "$PORCH_MAKE_ADD" "$1"
 fi
