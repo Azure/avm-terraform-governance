@@ -1,4 +1,6 @@
 moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
+avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,
+avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,
 avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,
 avm-ptn-aks-economy,,,AKS economy,,ms-henglu,Heng Lu,,
 avm-ptn-aks-enterprise,,,AKS Enterprise,,ms-henglu,Heng Lu,,
@@ -9,6 +11,7 @@ avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones
 avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-taylor,Luke Taylor,,
 avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
+avm-ptn-avd-sessionhost,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
 avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,
@@ -71,13 +74,17 @@ avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msf
 avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
+avm-res-eventgrid-topic,Microsoft.EventGrid,topics,EventGrid Topic,,fafriha,Farouk Friha,,
 avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mbilalamjad,Bilal Amjad,,
+avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot,,,,,
+avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,
 avm-res-hybridcontainerservice-provisionedclusterinstance,Microsoft.HybridContainerService,provisionedClusterInstances,AKS Arc,,xhy8759,Hangyu Xu,,
 avm-res-insights-autoscalesetting,Microsoft.Insights,autoscalesettings,Auto scale settings,,chianw,Chian Wong,,
 avm-res-insights-component,Microsoft.Insights,components,Application Insight,,Jfolberth,John Folberth,,
 avm-res-insights-datacollectionendpoint,Microsoft.Insights,dataCollectionEndpoints,Data Collection Endpoint,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-datacollectionrule,Microsoft.Insights,dataCollectionRules,Data Collection Rule,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-logprofile,Microsoft.Insights,logProfiles,Log profile,,sharmilamusunuru,Sharmila Musunuru,,
+avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,
 avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,
 avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,
@@ -86,6 +93,7 @@ avm-res-logic-workflow,Microsoft.Logic,workflows,Logic Apps (Workflow),,bakrish,
 avm-res-machinelearningservices-workspace,Microsoft.MachineLearningServices,workspaces,Machine Learning Services Workspace,ML Workspace,Nepomuceno,Gabriel Monteiro Nepomuceno,,
 avm-res-maintenance-maintenanceconfiguration,Microsoft.Maintenance,maintenanceConfigurations,Maintenance Configuration,,ASHR4,Rhys Ash,,
 avm-res-managedidentity-userassignedidentity,Microsoft.ManagedIdentity,userAssignedIdentities,User Assigned Identity,MSI,Jfolberth,John Folberth,,
+avm-res-managedservices-registrationdefinition,Microsoft.ManagedServices,registrationDefinitions,Managed Services Registration Definition,,,,,
 avm-res-netapp-netappaccount,Microsoft.NetApp,netAppAccounts,Azure NetApp File,,jtracey93,Jack Tracey,,
 avm-res-network-applicationgateway,Microsoft.Network,applicationGateways,Application Gateway,App GW,mofaizal,Mohamed Faizal,,
 avm-res-network-applicationgatewaywebapplicationfirewallpolicy,Microsoft.Network,ApplicationGatewayWebApplicationFirewallPolicies,Application Gateway Web Application Firewall (WAF) Policy,,mofaizal,Mohamed Faizal,,
@@ -113,6 +121,7 @@ avm-res-network-privatelinkservice,Microsoft.Network,privateLinkServices,Private
 avm-res-network-publicipaddress,Microsoft.Network,publicIPAddresses,Public IP Address,PIP,,,,
 avm-res-network-publicipprefix,Microsoft.Network,publicIPPrefixes,Public IP Prefix,,PmeshramPM,Pankaj Meshram,,
 avm-res-network-routetable,Microsoft.Network,routeTables,Route Table,UDR,adammontlake,Adam Montlake,,
+avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,Service Endpoint Policies,,,,,
 avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,
 avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
