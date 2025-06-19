@@ -1,4 +1,5 @@
 moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
+avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,
 avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,
 avm-ptn-aks-economy,,,AKS economy,,ms-henglu,Heng Lu,,
 avm-ptn-aks-enterprise,,,AKS Enterprise,,ms-henglu,Heng Lu,,
