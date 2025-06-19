@@ -62,9 +62,9 @@ jobs:
             latest=auto
             prefix=${{ env.TAG_PREFIX }},onlatest=true
           tags: |
-              type=semver,pattern={{version}},prefix=v${{ env.TAG_PREFIX }}
-              type=semver,pattern={{major}}.{{minor}},prefix=v${{ env.TAG_PREFIX }}
-              type=semver,pattern={{major}},prefix=v${{ env.TAG_PREFIX }}
+              type=semver,pattern={{version}},prefix=${{ env.TAG_PREFIX }}v
+              type=semver,pattern={{major}}.{{minor}},prefix=${{ env.TAG_PREFIX }}v
+              type=semver,pattern={{major}},prefix=${{ env.TAG_PREFIX }}v
               type=sha,format=long
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
