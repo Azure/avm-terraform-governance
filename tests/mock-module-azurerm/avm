@@ -4,9 +4,11 @@ usage () {
   echo "Usage: avm <make target>"
 }
 
-CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
-CONTAINER_IMAGE=${CONTAINER_IMAGE:-ghcr.io/azure/avm-terraform-governance:avm-latest}
-MAKEFILE_REF=${MAKEFILE_REF:-main}
+# Default values for environment variables
+CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"docker"}
+CONTAINER_IMAGE=${CONTAINER_IMAGE:-"ghcr.io/azure/avm-terraform-governance:avm-latest"}
+CONTAINER_PULL_POLICY=${CONTAINER_PULL_POLICY:-"always"}
+MAKEFILE_REF=${MAKEFILE_REF:-"main"}
 
 if [ ! "$(command -v "$CONTAINER_RUNTIME")" ]; then
     echo "Error: $CONTAINER_RUNTIME is not installed. Please install $CONTAINER_RUNTIME first."
@@ -19,7 +21,6 @@ if [ -z "$1" ]; then
     usage
     exit 1
 fi
-
 # Check if AZURE_CONFIG_DIR is set, if not, set it to ~/.azure
 if [ -z "$AZURE_CONFIG_DIR" ]; then
   AZURE_CONFIG_DIR="$HOME/.azure"
@@ -40,7 +41,7 @@ fi
 # If we are then just run make directly
 if [ -z "$AVM_IN_CONTAINER" ]; then
   $CONTAINER_RUNTIME run \
-    --pull always \
+    --pull "${CONTAINER_PULL_POLICY}" \
     --user "$(id -u):$(id -g)" \
     --rm \
     ${DOCKER_INTERACTIVE:-} \

@@ -16,7 +16,7 @@ jobs:
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
       contents: read
-
+    environment: avm
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -25,6 +25,13 @@ jobs:
         id: readenv
         with:
           path: ./container/version.env
+
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+        with:
+          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels)
@@ -55,6 +62,9 @@ jobs:
           build-args: |
             ${{ steps.readenv.outputs.content }}
           outputs: type=docker
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          github-token: ${{ steps.app-token.outputs.token }}
 
       - name: Export image
         run: |
@@ -81,11 +91,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-image
     environment: avm
+    env:
+        CONTAINER_PULL_POLICY: never
     defaults:
       run:
         working-directory: ${{ matrix.module }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         module:
           - tests/mock-module-azapi
