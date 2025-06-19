@@ -68,7 +68,6 @@ jobs:
 
       - name: Export image
         run: |
-          echo "Exporting image to file..."
           docker image save --output ${{ runner.temp }}/test.tar ${{ env.CONTAINER_IMAGE }}
 
       - name: Upload artifact

@@ -41,7 +41,7 @@ fi
 # If we are then just run make directly
 if [ -z "$AVM_IN_CONTAINER" ]; then
   $CONTAINER_RUNTIME run \
-    --pull "${CONTAINER_PULL_POLICY}" \
+    --pull "$CONTAINER_PULL_POLICY" \
     --user "$(id -u):$(id -g)" \
     --rm \
     ${DOCKER_INTERACTIVE:-} \
@@ -61,15 +61,15 @@ if [ -z "$AVM_IN_CONTAINER" ]; then
     -e GREPT_URL \
     -e MPTF_URL \
     -e NO_COLOR \
-    -e PORCH_BASE_URL \
     -e PORCH_LOG_LEVEL \
-    -e PORCH_REF \
     -e TEST_TYPE \
     -e TFLINT_CONFIG_URL \
     $CONTAINER_IMAGE \
     make \
     TUI="$TUI" \
     MAKEFILE_REF="$MAKEFILE_REF" \
+    PORCH_BASE_URL="$PORCH_BASE_URL" \
+    PORCH_REF="${PORCH_REF:-main}" \
     "$1"
 else
   make TUI="$TUI" MAKEFILE_REF="$MAKEFILE_REF" "$1"
