@@ -11,7 +11,8 @@ param (
   [string]$ownerPrimaryGitHubHandle,
   [string]$ownerPrimaryDisplayName,
   [string]$ownerSecondaryGitHubHandle = "",
-  [string]$ownerSecondaryDisplayName = ""
+  [string]$ownerSecondaryDisplayName = "",
+  [switch]$metaDataOnly
 )
 
 $metaDataVariables = [PSCustomObject]@{
@@ -33,12 +34,13 @@ git clone $governanceRepoUrl $tempRepoFolderName
 Set-Location -Path $tempRepoFolderName
 git checkout -b "chore/add/$moduleName"
 
-$csvData = Get-Content -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" | ConvertFrom-Csv
+$csvPath = "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+$csvData = Get-Content -Path $csvPath | ConvertFrom-Csv
 $csvData += $metaDataVariables
 $csvData = $csvData | Sort-Object -Property moduleId
-$csvData | Export-Csv -Path "./tf-repo-mgmt/repository-meta-data/meta-data.csv" -NoTypeInformation -Force
+$csvData | Export-Csv -Path $csvPath -NoTypeInformation -UseQuotes AsNeeded -Force
 
-git add "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+git add $csvPath
 git commit -m "chore: add $moduleName metadata"
 git push --set-upstream origin "chore/add/$moduleName"
 
@@ -51,6 +53,11 @@ Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
 
 Set-Location $currentPath
 
+if($metaDataOnly) {
+  Write-Host "Metadata only creation completed. Exiting."
+  return
+}
+
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
 if($moduleName -notmatch $moduleNameRegex) {
@@ -60,17 +67,37 @@ if($moduleName -notmatch $moduleNameRegex) {
 
 $repositoryName = "terraform-$moduleProvider-$moduleName"
 
-Write-Host "Creating repository $moduleName"
+Write-Host "Creating repository $moduleName" -ForegroundColor Yellow
 
 gh repo create "Azure/$repositoryName" --public --template "Azure/terraform-azurerm-avm-template"
 
-Write-Host "Created repository $moduleName"
-Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
-Write-Host "Click 'Complete Setup' to finish the repository configuration"
-Write-Host "Elevate your permissions with JIT and then come back here to continue"
+Write-Host ""
+Write-Host "Created repository $moduleName" -ForegroundColor Green
+Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
+Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
+Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
+Read-Host "Hit any key to open the open source portal in your browser and complete the setup"
+Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
+Write-Host ""
+Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Project name:" -ForegroundColor Cyan
+Write-Host "Azure Verified Module (Terraform) for '$moduleName'"
+Write-Host ""
+Write-Host "Project description:" -ForegroundColor Cyan
+Write-Host "Azure Verified Module (Terraform) for '$moduleName'. Part of AVM project - https://aka.ms/avm"
+Write-Host ""
+Write-Host "Business goals:" -ForegroundColor Cyan
+Write-Host "Create IaC module that will accelerate deployment on Azure using Microsoft best practice."
+Write-Host ""
+Write-Host "Will this be used in a Microsoft product or service?:" -ForegroundColor Cyan
+Write-Host "This is open source project and can be leveraged in Microsoft service and product."
+Write-Host ""
+
+
 $response = ""
 while($response -ne "yes") {
-  $response = Read-Host "Type 'yes' Enter to continue..."
+  $response = Read-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue..."
 }
 
 $tfvars = @{
@@ -98,4 +125,29 @@ if(Test-Path ".terraform.lock.hcl") {
 terraform init
 terraform apply -auto-approve
 
-Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl"
+Write-Host ""
+Write-Host "Terraform apply completed successfully." -ForegroundColor Green
+Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
+Read-Host "Hit any key to open the Pull Request in your browser and merge it"
+Start-Process $prUrl
+
+$ownerMention = ""
+
+if($primaryOwnerGitHubHandle -ne "") {
+  $ownerMention = "@$ownerPrimaryGitHubHandle "
+}
+
+$issueComment = @"
+$($ownerMention)The module repository has now been created. You can find it at https://github.com/Azure/$repositoryName.
+
+The final step of repository configuration is still in progress, but you will be able to start developing your code immediately.
+
+The final step is to create the environment and credentials require to run the end to end tests. If the environment called ``test`` is not available in 48 hours, please let me know.
+
+Thanks
+"@
+
+Write-Host ""
+Write-Host "Here is some text for the GitHub issue comment to notify the module owner about the repository creation:" -ForegroundColor Yellow
+Write-Host $issueComment
+Write-Host ""
