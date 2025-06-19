@@ -1,0 +1,75 @@
+#!/usr/bin/env sh
+
+usage () {
+  echo "Usage: avm <make target>"
+}
+
+CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-docker}
+CONTAINER_IMAGE=${CONTAINER_IMAGE:-ghcr.io/azure/avm-terraform-governance:avm-latest}
+MAKEFILE_REF=${MAKEFILE_REF:-main}
+
+if [ ! "$(command -v "$CONTAINER_RUNTIME")" ]; then
+    echo "Error: $CONTAINER_RUNTIME is not installed. Please install $CONTAINER_RUNTIME first."
+    exit 1
+fi
+
+if [ -z "$1" ]; then
+    echo "Error: Please provide a make target. See https://github.com/Azure/avm-terraform-governance/blob/main/Makefile for available targets."
+    echo
+    usage
+    exit 1
+fi
+
+# Check if AZURE_CONFIG_DIR is set, if not, set it to ~/.azure
+if [ -z "$AZURE_CONFIG_DIR" ]; then
+  AZURE_CONFIG_DIR="$HOME/.azure"
+fi
+
+if [ -d "$AZURE_CONFIG_DIR" ]; then
+  AZURE_CONFIG_MOUNT="-v $AZURE_CONFIG_DIR:/home/runtimeuser/.azure"
+fi
+
+# If we are not in GitHub Actions, we want to use TUI and interactive mode
+if [ -z "$GITHUB_RUN_ID" ]; then
+  TUI="--tui"
+  DOCKER_INTERACTIVE="-it"
+  export FORCE_COLOR=1
+fi
+
+# Check if we are running in a container
+# If we are then just run make directly
+if [ -z "$AVM_IN_CONTAINER" ]; then
+  $CONTAINER_RUNTIME run \
+    --pull always \
+    --user "$(id -u):$(id -g)" \
+    --rm \
+    ${DOCKER_INTERACTIVE:-} \
+    -v "$(pwd)":/src \
+    ${AZURE_CONFIG_MOUNT:-} \
+    -e ARM_CLIENT_ID \
+    -e ARM_OIDC_REQUEST_TOKEN \
+    -e ARM_OIDC_REQUEST_URL \
+    -e ARM_SUBSCRIPTION_ID \
+    -e ARM_TENANT_ID \
+    -e ARM_USE_OIDC \
+    -e CONFTEST_APRL_URL \
+    -e CONFTEST_AVMSEC_URL \
+    -e CONFTEST_EXCEPTIONS_URL \
+    -e FORCE_COLOR \
+    -e GITHUB_TOKEN \
+    -e GREPT_URL \
+    -e MPTF_URL \
+    -e NO_COLOR \
+    -e PORCH_BASE_URL \
+    -e PORCH_LOG_LEVEL \
+    -e PORCH_REF \
+    -e TEST_TYPE \
+    -e TFLINT_CONFIG_URL \
+    $CONTAINER_IMAGE \
+    make \
+    TUI="$TUI" \
+    MAKEFILE_REF="$MAKEFILE_REF" \
+    "$1"
+else
+  make TUI="$TUI" MAKEFILE_REF="$MAKEFILE_REF" "$1"
+fi
