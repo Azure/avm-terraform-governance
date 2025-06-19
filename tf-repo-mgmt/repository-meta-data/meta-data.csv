@@ -74,6 +74,7 @@ avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Po
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
 avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mbilalamjad,Bilal Amjad,,
+avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot ,,,,,
 avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,
 avm-res-hybridcontainerservice-provisionedclusterinstance,Microsoft.HybridContainerService,provisionedClusterInstances,AKS Arc,,xhy8759,Hangyu Xu,,
 avm-res-insights-autoscalesetting,Microsoft.Insights,autoscalesettings,Auto scale settings,,chianw,Chian Wong,,
