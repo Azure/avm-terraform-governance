@@ -7,6 +7,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: governance-test-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CONTAINER_IMAGE: avm:test
 
