@@ -62,9 +62,9 @@ jobs:
             latest=auto
             prefix=avm-,onlatest=true
           tags: |
-              type=semver,pattern={{version}},prefix=v
-              type=semver,pattern={{major}}.{{minor}},prefix=v
-              type=semver,pattern={{major}},prefix=v
+              type=semver,pattern={{version}},prefix=avm-v
+              type=semver,pattern={{major}}.{{minor}},prefix=avm-v
+              type=semver,pattern={{major}},prefix=avm-v
               type=sha,format=long
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
