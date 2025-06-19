@@ -1,3 +1,4 @@
+---
 name: container - test
 
 # Configures this workflow to run every time a change is pushed to the branch called `release`.
