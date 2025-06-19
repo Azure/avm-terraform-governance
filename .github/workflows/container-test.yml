@@ -62,8 +62,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             ${{ steps.readenv.outputs.content }}
+          load: true
           cache-from: type=registry,ref=user/app:latest
           cache-to: type=inline
+
+      - name: List images
+        run: docker images
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
