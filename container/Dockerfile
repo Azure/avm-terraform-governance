@@ -5,8 +5,8 @@ ARG GREPT_VERSION=60c71b2d8554c7ec562168a1ffd46a695a73322d
 ARG HCLEDIT_VERSION=0.2.17
 ARG HCLMERGE_VERSION=2dff14bd831a6f696d6572f03a5a61a11e4e3d66
 ARG MAPOTF_VERSION=1a50a9033189df84e72f32c94fe88ab4ff70a0a9
-ARG PORCH_VERSION=0.0.3
-ARG TERRAFORM_DOCS_VERSION=v0.18.0
+ARG PORCH_VERSION=0.0.10
+ARG TERRAFORM_DOCS_VERSION=v0.20.0
 ARG TFENV=v3.0.0
 ARG GOBUILDARGS='-trimpath'
 # The below is set by Buildx for cross-platform builds
@@ -16,10 +16,23 @@ ENV GOARCH=${TARGETARCH}
 RUN mkdir /src && \
   cd /src && \
   export CGO_ENABLED=0 && \
+  echo "Build conftest" && \
+  git clone https://github.com/open-policy-agent/conftest.git && \
+  cd conftest && \
+  git checkout ${CONFTEST_VERSION} && \
+  go get go@1.24.4 && \
+  go mod tidy && \
+  go build ${GOBUILDARGS} -o /go/bin/conftest . && \
+  cd /src && \
   echo "Build hcledit" && \
-  curl -sL https://github.com/minamijoyo/hcledit/releases/download/v${HCLEDIT_VERSION}/hcledit_${HCLEDIT_VERSION}_linux_${TARGETARCH}.tar.gz -o hcledit.tar.gz && \
-  tar -xzf hcledit.tar.gz && \
-  mv hcledit /go/bin && \
+  git clone https://github.com/minamijoyo/hcledit.git && \
+  cd hcledit && \
+  git checkout v${HCLEDIT_VERSION} && \
+  go get go@1.24.4 && \
+  go get gopkg.in/yaml.v2@v2.2.8 && \
+  go mod tidy && \
+  go build ${GOBUILDARGS} -o /go/bin/hcledit . && \
+  cd /src && \
   echo "Build hclgrep" && \
   git clone https://github.com/magodo/hclgrep && \
   cd hclgrep && \
@@ -44,9 +57,13 @@ RUN mkdir /src && \
   git checkout ${HCLMERGE_VERSION} && \
   go build ${GOBUILDARGS} -o /go/bin/hclmerge . && \
   echo "Build terraform-docs" && \
-  curl -sL https://github.com/terraform-docs/terraform-docs/releases/download/${TERRAFORM_DOCS_VERSION}/terraform-docs-${TERRAFORM_DOCS_VERSION}-linux-${TARGETARCH}.tar.gz -o terraform-docs.tar.gz && \
-  tar -xzf terraform-docs.tar.gz && \
-  mv terraform-docs /go/bin && \
+  git clone https://github.com/terraform-docs/terraform-docs.git && \
+  cd terraform-docs && \
+  git checkout ${TERRAFORM_DOCS_VERSION} && \
+  go get go@1.24.4 && \
+  go get golang.org/x/net@v0.38.0 && \
+  go mod tidy && \
+  go build ${GOBUILDARGS} -o /go/bin/terraform-docs . && \
   echo "Build mapotf" && \
   git clone https://github.com/Azure/mapotf && \
   cd mapotf && \
@@ -106,10 +123,6 @@ RUN tdnf install --security -y ca-certificates azure-cli gawk git jq less make p
   chmod a+x ${HOME_DIR}/tfenv/bin/* && \
   rm -r /tmp/* && \
   cd /root && \
-  echo "Install conftest" && \
-  curl -sL https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}/conftest_${CONFTEST_VERSION}_linux_${TARGETARCH}.rpm -o conftest.rpm && \
-  rpm -i conftest.rpm && \
-  rm conftest.rpm && \
   mkdir /src && \
   chmod a+rwX /src
 COPY .terraformrc ${HOME_DIR}/.terraformrc

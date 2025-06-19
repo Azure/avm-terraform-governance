@@ -61,10 +61,10 @@ jobs:
             latest=auto
             prefix=avm-,onlatest=true
           tags: |
-              type=semver,pattern={{version}}
-              type=semver,pattern={{major}}.{{minor}}
-              type=semver,pattern={{major}}
-              type=sha
+              type=semver,pattern={{version}},prefix=v
+              type=semver,pattern={{major}}.{{minor}},prefix=v
+              type=semver,pattern={{major}},prefix=v
+              type=sha,format=long
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
