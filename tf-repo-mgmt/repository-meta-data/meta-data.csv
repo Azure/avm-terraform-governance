@@ -115,6 +115,7 @@ avm-res-network-privatelinkservice,Microsoft.Network,privateLinkServices,Private
 avm-res-network-publicipaddress,Microsoft.Network,publicIPAddresses,Public IP Address,PIP,,,,
 avm-res-network-publicipprefix,Microsoft.Network,publicIPPrefixes,Public IP Prefix,,PmeshramPM,Pankaj Meshram,,
 avm-res-network-routetable,Microsoft.Network,routeTables,Route Table,UDR,adammontlake,Adam Montlake,,
+avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,Service Endpoint Policies,,,,,
 avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,
 avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
