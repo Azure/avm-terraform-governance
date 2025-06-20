@@ -17,6 +17,13 @@ param (
   [switch]$skipMetaDataCreation
 )
 
+$moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
+
+if($moduleName -notmatch $moduleNameRegex) {
+  Write-Error "Module name must be in the format '$moduleNameRegex'" -Category InvalidArgument
+  return
+}
+
 if(!$skipMetaDataCreation) {
 
   $metaDataVariables = [PSCustomObject]@{
@@ -61,13 +68,6 @@ if(!$skipMetaDataCreation) {
     Write-Host "Metadata only creation completed. Exiting."
     return
   }
-}
-
-$moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
-
-if($moduleName -notmatch $moduleNameRegex) {
-  Write-Error "Module name must be in the format '$moduleNameRegex'" -Category InvalidArgument
-  return
 }
 
 $repositoryName = "terraform-$moduleProvider-$moduleName"
