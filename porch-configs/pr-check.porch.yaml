@@ -11,6 +11,11 @@ commands:
         exit 1
       fi
 
+  - type: shell
+    name: install terraform
+    command_line: |
+      terraform
+
     # all linting checks go here, they all use a unique directory
   - type: parallel
     name: linting
@@ -45,10 +50,23 @@ commands:
                 fi
               done
 
+          - type: shell
+            name: clean terraform
+            command_line: |
+              echo $(pwd) && \
+              find . -type d -name .terraform | xargs -n1 rm -rf && \
+              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+              find . -type f -name *.tfstate* | xargs -n1 rm -f
+
           # tflint
           - type: serial
             name: run
             commands:
+              - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
+
               - type: shell
                 name: root module
                 command_line: |
@@ -64,6 +82,11 @@ commands:
             runs_on_condition: always
             commands:
               - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
+
+              - type: shell
                 name: run example
                 command_line: |
                   echo $(pwd) 1>&2
@@ -78,6 +101,11 @@ commands:
             skip_on_not_exist: true
             runs_on_condition: always
             commands:
+              - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
+
               - type: shell
                 name: run module
                 command_line: |
@@ -195,11 +223,14 @@ commands:
       - type: copycwdtotemp
         name: Copy to temp
 
-        # This kicks off the tfenv installer
+      # conftest
       - type: shell
-        name: install terraform
+        name: Clean Terraform
         command_line: |
-          terraform
+          echo $(pwd) && \
+          find . -type d -name .terraform | xargs -n1 rm -rf && \
+          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: foreachdirectory
         name: well architected
@@ -208,15 +239,6 @@ commands:
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         commands:
-          # conftest
-          - type: shell
-            name: Clean Terraform
-            command_line: |
-              echo $(pwd) && \
-              find . -type d -name .terraform | xargs -n1 rm -rf && \
-              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-              find . -type f -name *.tfstate* | xargs -n1 rm -f
-
           # conftest
           - type: shell
             name: terraform init
