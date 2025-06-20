@@ -22,8 +22,8 @@ All of the workflows that we use have substitution variables that can be set to 
 
 There are two mock modules that are used in the tests:
 
-- `mock-module-azurerm`: A mock module that simulates AzureRM resources.
-- `mock-module-azapi`: A mock module that simulates AzAPI resources.
+- `terraform-azure-avm-res-mock`: A mock module that simulates AzAPI resources.
+- `terraform-azurerm-avm-res-mock`: A mock module that simulates AzureRM resources.
 
 ## Test harness
 

@@ -129,8 +129,8 @@ jobs:
       fail-fast: false
       matrix:
         module:
-          - tests/mock-module-azapi
-          - tests/mock-module-azurerm
+          - tests/terraform-azure-avm-res-mock
+          - tests/terraform-azurerm-avm-res-mock
 
     steps:
       - name: Checkout repository
