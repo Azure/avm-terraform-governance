@@ -5,7 +5,7 @@ on:
   workflow_call:
 
 env:
-  CONTAINER_IMAGE: ghcr.io/azure/avm-terraform-governance:latest
+  CONTAINER_IMAGE: ghcr.io/azure/avm-terraform-governance:avm-latest
   FORCE_COLOR: 1
 
 jobs:
