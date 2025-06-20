@@ -23,6 +23,7 @@ avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoi
 avm-ptn-hci-ad-provisioner,,,Arc for AD registration,,xhy8759,Hangyu Xu,,
 avm-ptn-hci-server-provisioner,,,Arc for Server registration,,xhy8759,Hangyu Xu,,
 avm-ptn-hubnetworking,,,Hub Networking,,jaredfholgate,Jared Holgate,,
+avm-ptn-lbvmss,,,VMSS Flex Deployment,,terrymandin,Terry Mandin,,
 avm-ptn-monitoring-amba-alz,,,AMBA ALZ Pattern,Azure Monitor Baseline Alerts - Azure Landing Zones Pattern,arjenhuitema,Arjen Huitema,,
 avm-ptn-network-private-link-private-dns-zones,,,Private Link Private DNS Zones,,jtracey93,Jack Tracey,,
 avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,,
