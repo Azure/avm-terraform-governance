@@ -12,51 +12,10 @@ param (
   [string]$ownerPrimaryDisplayName,
   [string]$ownerSecondaryGitHubHandle = "",
   [string]$ownerSecondaryDisplayName = "",
-  [switch]$metaDataOnly
+  [switch]$metaDataOnly,
+  [switch]$skipRepoCreation,
+  [switch]$skipMetaDataCreation
 )
-
-$metaDataVariables = [PSCustomObject]@{
-  moduleId = $moduleName
-  providerNamespace = $resourceProviderNamespace
-  providerResourceType = $resourceType
-  moduleDisplayName = $moduleDisplayName
-  alternativeNames = $moduleAlternativeNames
-  primaryOwnerGitHubHandle = $ownerPrimaryGitHubHandle
-  primaryOwnerDisplayName = $ownerPrimaryDisplayName
-  secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
-  secondaryOwnerDisplayName = $ownerSecondaryDisplayName
-}
-
-$currentPath = Get-Location
-New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
-Set-Location -Path $tempPath
-git clone $governanceRepoUrl $tempRepoFolderName
-Set-Location -Path $tempRepoFolderName
-git checkout -b "chore/add/$moduleName"
-
-$csvPath = "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
-$csvData = Get-Content -Path $csvPath | ConvertFrom-Csv
-$csvData += $metaDataVariables
-$csvData = $csvData | Sort-Object -Property moduleId
-$csvData | Export-Csv -Path $csvPath -NoTypeInformation -UseQuotes AsNeeded -Force
-
-git add $csvPath
-git commit -m "chore: add $moduleName metadata"
-git push --set-upstream origin "chore/add/$moduleName"
-
-$prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR adds metadata for the $moduleName module." --base main --head "chore/add/$moduleName" -a "@me" --repo $governanceRepoUrl
-
-Write-Host "Created PR for repo meta data: $prUrl"
-
-Set-Location $tempPath
-Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
-
-Set-Location $currentPath
-
-if($metaDataOnly) {
-  Write-Host "Metadata only creation completed. Exiting."
-  return
-}
 
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
@@ -65,39 +24,87 @@ if($moduleName -notmatch $moduleNameRegex) {
   return
 }
 
+if(!$skipMetaDataCreation) {
+
+  $metaDataVariables = [PSCustomObject]@{
+    moduleId = $moduleName
+    providerNamespace = $resourceProviderNamespace
+    providerResourceType = $resourceType
+    moduleDisplayName = $moduleDisplayName
+    alternativeNames = $moduleAlternativeNames
+    primaryOwnerGitHubHandle = $ownerPrimaryGitHubHandle
+    primaryOwnerDisplayName = $ownerPrimaryDisplayName
+    secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
+    secondaryOwnerDisplayName = $ownerSecondaryDisplayName
+  }
+
+  $currentPath = Get-Location
+  New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
+  Set-Location -Path $tempPath
+  git clone $governanceRepoUrl $tempRepoFolderName
+  Set-Location -Path $tempRepoFolderName
+  git checkout -b "chore/add/$moduleName"
+
+  $csvPath = "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
+  $csvData = Get-Content -Path $csvPath | ConvertFrom-Csv
+  $csvData += $metaDataVariables
+  $csvData = $csvData | Sort-Object -Property moduleId
+  $csvData | Export-Csv -Path $csvPath -NoTypeInformation -UseQuotes AsNeeded -Force
+
+  git add $csvPath
+  git commit -m "chore: add $moduleName metadata"
+  git push --set-upstream origin "chore/add/$moduleName"
+
+  $prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR adds metadata for the $moduleName module." --base main --head "chore/add/$moduleName" -a "@me" --repo $governanceRepoUrl
+
+  Write-Host "Created PR for repo meta data: $prUrl"
+
+  Set-Location $tempPath
+  Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
+
+  Set-Location $currentPath
+
+  if($metaDataOnly) {
+    Write-Host "Metadata only creation completed. Exiting."
+    return
+  }
+}
+
 $repositoryName = "terraform-$moduleProvider-$moduleName"
 
-Write-Host "Creating repository $moduleName" -ForegroundColor Yellow
+if(!$skipRepoCreation) {
+  Write-Host "Creating repository $moduleName" -ForegroundColor Yellow
 
-gh repo create "Azure/$repositoryName" --public --template "Azure/terraform-azurerm-avm-template"
+  gh repo create "Azure/$repositoryName" --public --template "Azure/terraform-azurerm-avm-template"
 
-Write-Host ""
-Write-Host "Created repository $moduleName" -ForegroundColor Green
-Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
-Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
-Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
-Read-Host "Hit any key to open the open source portal in your browser and complete the setup"
-Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
-Write-Host ""
-Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Project name:" -ForegroundColor Cyan
-Write-Host "Azure Verified Module (Terraform) for '$moduleName'"
-Write-Host ""
-Write-Host "Project description:" -ForegroundColor Cyan
-Write-Host "Azure Verified Module (Terraform) for '$moduleName'. Part of AVM project - https://aka.ms/avm"
-Write-Host ""
-Write-Host "Business goals:" -ForegroundColor Cyan
-Write-Host "Create IaC module that will accelerate deployment on Azure using Microsoft best practice."
-Write-Host ""
-Write-Host "Will this be used in a Microsoft product or service?:" -ForegroundColor Cyan
-Write-Host "This is open source project and can be leveraged in Microsoft service and product."
-Write-Host ""
+  Write-Host ""
+  Write-Host "Created repository $moduleName" -ForegroundColor Green
+  Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
+  Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
+  Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
+  Read-Host "Hit any key to open the open source portal in your browser and complete the setup"
+  Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
+  Write-Host ""
+  Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Project name:" -ForegroundColor Cyan
+  Write-Host "Azure Verified Module (Terraform) for '$moduleName'"
+  Write-Host ""
+  Write-Host "Project description:" -ForegroundColor Cyan
+  Write-Host "Azure Verified Module (Terraform) for '$moduleName'. Part of AVM project - https://aka.ms/avm"
+  Write-Host ""
+  Write-Host "Business goals:" -ForegroundColor Cyan
+  Write-Host "Create IaC module that will accelerate deployment on Azure using Microsoft best practice."
+  Write-Host ""
+  Write-Host "Will this be used in a Microsoft product or service?:" -ForegroundColor Cyan
+  Write-Host "This is open source project and can be leveraged in Microsoft service and product."
+  Write-Host ""
 
 
-$response = ""
-while($response -ne "yes") {
-  $response = Read-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue..."
+  $response = ""
+  while($response -ne "yes") {
+    $response = Read-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue..."
+  }
 }
 
 $tfvars = @{
