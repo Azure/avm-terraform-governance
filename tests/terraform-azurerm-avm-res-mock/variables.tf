@@ -1,12 +1,12 @@
-variable "enable_telemetry" {
-  description = "Enable telemetry for the module"
-  type        = bool
-  default     = true
+variable "location" {
+  type        = string
+  description = "The Azure location where resources will be created"
   nullable    = false
 }
 
-variable "location" {
-  description = "The Azure location where resources will be created"
-  type        = string
+variable "enable_telemetry" {
+  type        = bool
+  default     = true
+  description = "Enable telemetry for the module"
   nullable    = false
 }
