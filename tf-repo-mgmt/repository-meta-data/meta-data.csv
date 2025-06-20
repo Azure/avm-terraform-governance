@@ -72,6 +72,7 @@ avm-res-databricks-accessconnector,Microsoft.Databricks,accessConnectors,Azure D
 avm-res-databricks-workspace,Microsoft.Databricks,workspaces,Azure Databricks Workspace,,segraef,Sebastian Graef,,
 avm-res-datafactory-factory,Microsoft.DataFactory,factories,Data Factory,,asishr,Asish R,,
 avm-res-dataprotection-backupvault,Microsoft.DataProtection,backupVaults,Data Protection Backup Vault,,ethanjenkins1,Ethan Jenkins,,
+avm-res-dataprotection-resourceguard,Microsoft.DataProtection,resourceGuards,Data Protection Resource Guard,,WenAI2020,Wen Tian,,
 avm-res-dbformysql-flexibleserver,Microsoft.DBforMySQL,flexibleServers,DB for MySQL Flexible Server,,mbilalamjad,Bilal Amjad,,
 avm-res-dbforpostgresql-flexibleserver,Microsoft.DBforPostgreSQL,flexibleServers,DB for Postgre SQL Flexible Server,,mbilalamjad,Bilal Amjad,,
 avm-res-desktopvirtualization-applicationgroup,Microsoft.DesktopVirtualization,applicationGroups,Azure Virtual Desktop (AVD) Application Group,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
