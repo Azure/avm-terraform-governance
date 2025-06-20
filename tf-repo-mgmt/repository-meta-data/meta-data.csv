@@ -63,6 +63,7 @@ avm-res-containerinstance-containergroup,Microsoft.ContainerInstance,containerGr
 avm-res-containerregistry-registry,Microsoft.ContainerRegistry,registries,Azure Container Registry (ACR),,Akashc0807,Akash Choudhary,,
 avm-res-containerservice-managedcluster,Microsoft.ContainerService,managedClusters,AKS managed clusters,,ibersanoMS,Isabelle Bersano,,
 avm-res-dashboard-grafana,Microsoft.Dashboard,grafana,Azure Managed Grafana,,khajour,Abdelaziz Khajour,,
+avm-res-databricks-accessconnector,Microsoft.Databricks,accessConnectors,Azure Databricks Access Connector,,,,,
 avm-res-databricks-workspace,Microsoft.Databricks,workspaces,Azure Databricks Workspace,,segraef,Sebastian Graef,,
 avm-res-datafactory-factory,Microsoft.DataFactory,factories,Data Factory,,asishr,Asish R,,
 avm-res-dataprotection-backupvault,Microsoft.DataProtection,backupVaults,Data Protection Backup Vault,,ethanjenkins1,Ethan Jenkins,,
