@@ -14,6 +14,15 @@ on:
       - tflint-configs/**
       - tests/**
   workflow_dispatch:
+    inputs:
+      conftest-aprl-url:
+        description: The go-getter URL for the Azure Proactive Resiliency Library policies.
+        required: false
+        default: 'git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2?ref=main'
+      conftest-avmsec-url:
+        description: The go-getter URL for the Azure AVMSec policies.
+        required: false
+        default: 'git::https://github.com/Azure/policy-library-avm.git//policy/avmsec?ref=main'
 
 concurrency:
   group: governance-test-${{ github.ref }}
@@ -149,6 +158,12 @@ jobs:
           echo "PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
 
+      - name: Set conftest URLs (if workflow_dispatch)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "CONFTEST_APRL_URL=${{ github.event.inputs.conftest-aprl-url }}" >> $GITHUB_ENV
+          echo "CONFTEST_AVMSEC_URL=${{ github.event.inputs.conftest-avmsec-url }}" >> $GITHUB_ENV
+
       - name: pre-commit
         run: |
           ./avm pre-commit
@@ -156,6 +171,10 @@ jobs:
 
       - name: commit
         run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to commit."
+            exit 0
+          fi
           git config --global user.name "GitHub Actions"
           git config --global user.email "github-actions@github.com"
           git checkout -b avm-test${{ github.run_id }}
