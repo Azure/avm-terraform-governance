@@ -59,6 +59,7 @@ avm-res-compute-proximityplacementgroup,Microsoft.Compute,proximityPlacementGrou
 avm-res-compute-sshpublickey,Microsoft.Compute,sshPublicKeys,Public SSH Key,,ChrisSidebotham,Chris Sidebotham,,
 avm-res-compute-virtualmachine,Microsoft.Compute,virtualMachines,Virtual Machine,VM,jchancellor-ms,Jon Chancellor,,
 avm-res-compute-virtualmachinescaleset,Microsoft.Compute,virtualMachineScaleSets,Virtual Machine Scale Set,VMSS,terrymandin,Terry Mandin,marcelkmfst,Marcel Keller
+avm-res-consumption-budget,Microsoft.Consumption,budgets,Consumption Budget,,Akashc0807,Akash Choudhary,,
 avm-res-containerinstance-containergroup,Microsoft.ContainerInstance,containerGroups,Container Instance,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-containerregistry-registry,Microsoft.ContainerRegistry,registries,Azure Container Registry (ACR),,Akashc0807,Akash Choudhary,,
 avm-res-containerservice-managedcluster,Microsoft.ContainerService,managedClusters,AKS managed clusters,,ibersanoMS,Isabelle Bersano,,
