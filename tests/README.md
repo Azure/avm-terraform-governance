@@ -20,5 +20,22 @@ All of the workflows that we use have substitution variables that can be set to 
 
 ## Mock modules
 
-We are in the process of designing two mock modules that can be used to test the workflows and policies in this repository.
-They are located in the `mock-module-azapi` and `mock-module-azurerm` directories.
+There are two mock modules that are used in the tests:
+
+- `mock-module-azurerm`: A mock module that simulates AzureRM resources.
+- `mock-module-azapi`: A mock module that simulates AzAPI resources.
+
+## Test harness
+
+There is a test workflow that will run the governance framework against the mock modules. You can run this workflow manually or as part of a pull request.
+
+The workflow will:
+
+- Build the container image and store as an artifact.
+- Use the above container to run all future steps.
+- Override the default URLs for all the policies and configs to use the specific commit of branch you are testing.
+- Execute the following:
+  - `avm pre-commit`: Runs the pre-commit hooks (and git commit if needed).
+  - `avm pr-check`: Runs the tests against the mock modules.
+
+This allows you to ensure that any policy changes you make will not break the existing tests and that the governance framework works as expected.
