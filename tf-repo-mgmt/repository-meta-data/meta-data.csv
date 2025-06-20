@@ -102,6 +102,7 @@ avm-res-machinelearningservices-workspace,Microsoft.MachineLearningServices,work
 avm-res-maintenance-maintenanceconfiguration,Microsoft.Maintenance,maintenanceConfigurations,Maintenance Configuration,,ASHR4,Rhys Ash,,
 avm-res-managedidentity-userassignedidentity,Microsoft.ManagedIdentity,userAssignedIdentities,User Assigned Identity,MSI,Jfolberth,John Folberth,,
 avm-res-managedservices-registrationdefinition,Microsoft.ManagedServices,registrationDefinitions,Managed Services Registration Definition,,,,,
+avm-res-management-managementgroup,Microsoft.Management,managementGroups,Management Groups,,herms14,Hermes Miraflor II,,
 avm-res-netapp-netappaccount,Microsoft.NetApp,netAppAccounts,Azure NetApp File,,jtracey93,Jack Tracey,,
 avm-res-network-applicationgateway,Microsoft.Network,applicationGateways,Application Gateway,App GW,mofaizal,Mohamed Faizal,,
 avm-res-network-applicationgatewaywebapplicationfirewallpolicy,Microsoft.Network,ApplicationGatewayWebApplicationFirewallPolicies,Application Gateway Web Application Firewall (WAF) Policy,,mofaizal,Mohamed Faizal,,
