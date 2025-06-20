@@ -13,8 +13,8 @@ commands:
 
   - type: shell
     name: install terraform
-    command_line: |
-      terraform
+    command_line: terraform -version
+    cwd: "."
 
     # all linting checks go here, they all use a unique directory
   - type: parallel

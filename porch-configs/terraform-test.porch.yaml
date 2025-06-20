@@ -35,6 +35,11 @@ commands:
     cwd: "."
 
   - type: shell
+    name: install terraform
+    command_line: terraform -version
+    cwd: "."
+
+  - type: shell
     name: Clean Terraform
     command_line: |
       echo $(pwd) && \
