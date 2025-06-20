@@ -74,6 +74,7 @@ avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msf
 avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
+avm-res-eventgrid-topic,Microsoft.EventGrid,topics,EventGrid Topic,,fafriha,Farouk Friha,,
 avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mbilalamjad,Bilal Amjad,,
 avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot,,,,,
 avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,
