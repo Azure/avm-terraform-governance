@@ -100,6 +100,7 @@ avm-res-insights-datacollectionrule,Microsoft.Insights,dataCollectionRules,Data 
 avm-res-insights-logprofile,Microsoft.Insights,logProfiles,Log profile,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,
+avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,
 avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,
 avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,
 avm-res-loadtestservice-loadtest,Microsoft.LoadTestService,loadTests,Load Testing Service,,LaurentLesle,Laurent Lesle,,
