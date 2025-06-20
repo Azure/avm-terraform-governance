@@ -128,7 +128,7 @@ jobs:
           REF=$(git rev-parse HEAD)
           echo "GREPT_URL=git::https://github.com/Azure/avm-terraform-governance.git//grept-policies?ref=${REF}" >> $GITHUB_ENV
           echo "MAKEFILE_REF=${REF}" >> $GITHUB_ENV
-          echo "MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs?ref=${REF}" >> $GITHUB_ENV
+          echo "MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
           echo "PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
 
