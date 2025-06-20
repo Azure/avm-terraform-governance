@@ -9,6 +9,7 @@ avm-ptn-alz,,,Azure Landing Zone,,matt-FFFFFF,Matt White,,
 avm-ptn-alz-connectivity-hub-and-spoke-vnet,,,ALZ Connectivity Hub and Spoke,Azure Landing Zones - Hub and Spoke,jaredfholgate,Jared Holgate,,
 avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,
 avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-taylor,Luke Taylor,,
+avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
 avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
 avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
