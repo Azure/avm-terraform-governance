@@ -13,19 +13,11 @@ commands:
     command_line: terraform -version
     cwd: "."
 
-  - type: shell
-    name: check dir
-    command_line: |
-      if [ ! -d "./examples" ]; then
-        echo "No examples directory found, skipping example tests."
-        exit 99
-      fi
-    skip_on_exit_codes: [99]
-
   - type: foreachdirectory
     name: for each example
     depth: 1
     include_hidden: false
+    skip_on_not_exist: true
     working_directory: "./examples"
     env:
       TF_IN_AUTOMATION: "1"

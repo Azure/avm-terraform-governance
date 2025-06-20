@@ -37,6 +37,7 @@ commands:
         name: submodules
         working_directory: "./modules"
         mode: parallel
+        skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
 
@@ -44,6 +45,7 @@ commands:
         name: examples
         working_directory: "./examples"
         mode: parallel
+        skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
 
@@ -59,46 +61,24 @@ commands:
         command_line: |
           terraform-docs -c ".terraform-docs.yml" .
 
-      - type: serial
-        name: Examples
+      - type: foreachdirectory
+        name: Generate
+        working_directory: "./examples"
+        mode: parallel
+        skip_on_not_exist: true
         commands:
           - type: shell
-            name: Check dir
+            name: Generate example docs
             command_line: |
-              if [ ! -d "./examples" ]; then
-                echo "No examples directory found, skipping example docs generation."
-                exit 99
-              fi
-            skip_on_exit_codes: [99]
+              terraform-docs -c ".terraform-docs.yml" $ITEM
 
-          - type: foreachdirectory
-            name: Generate
-            working_directory: "./examples"
-            mode: parallel
-            commands:
-              - type: shell
-                name: Generate example docs
-                command_line: |
-                  terraform-docs -c ".terraform-docs.yml" $ITEM
-
-      - type: serial
-        name: Submodules
+      - type: foreachdirectory
+        name: Generate module docs
+        working_directory: "./modules"
+        mode: parallel
+        skip_on_not_exist: true
         commands:
           - type: shell
-            name: Check dir
-            command_line: |
-              if [ ! -d "./modules" ]; then
-                echo "No modules directory found, skipping module docs generation."
-                exit 99
-              fi
-            skip_on_exit_codes: [99]
-
-          - type: foreachdirectory
             name: Generate module docs
-            working_directory: "./modules"
-            mode: parallel
-            commands:
-              - type: shell
-                name: Generate module docs
-                command_line: |
-                  terraform-docs -c ".terraform-docs.yml" $ITEM
+            command_line: |
+              terraform-docs -c ".terraform-docs.yml" $ITEM

@@ -47,23 +47,12 @@ commands:
     env:
       TF_IN_AUTOMATION: "1"
     commands:
-      - type: serial
-        name: Submodules
-        commands:
-          - type: shell
-            name: Check dir
-            command_line: |
-              if [ ! -d "./modules" ]; then
-                echo "No modules directory found, skipping module docs generation."
-                exit 99
-              fi
-            skip_on_exit_codes: [99]
-
-          - type: foreachdirectory
-            name: submodules
-            working_directory: "./modules"
-            mode: parallel
-            command_group: terraform_unit_tests
+      - type: foreachdirectory
+        name: submodules
+        working_directory: "./modules"
+        mode: parallel
+        skip_on_not_exist: true
+        command_group: terraform_unit_tests
 
       - type: serial
         name: root module
