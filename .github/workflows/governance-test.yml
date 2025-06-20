@@ -102,8 +102,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-image
     environment: avm
+    permissions:
+      contents: read
+      id-token: write
     env:
         CONTAINER_PULL_POLICY: never
+        ARM_USE_OIDC: true
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.TARGET_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+
     defaults:
       run:
         working-directory: ${{ matrix.module }}
