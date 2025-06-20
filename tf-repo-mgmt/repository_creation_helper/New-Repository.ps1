@@ -140,7 +140,7 @@ terraform apply -auto-approve
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green
 Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
-Write-Host "Hit Enter to open the Pull Request in your browser and merge it:"
+Write-Host "Hit Enter to open the Pull Request in your browser and merge it:" -ForegroundColor Yellow
 Read-Host
 Start-Process $prUrl
 
