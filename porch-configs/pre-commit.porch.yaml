@@ -59,22 +59,46 @@ commands:
         command_line: |
           terraform-docs -c ".terraform-docs.yml" .
 
-      - type: foreachdirectory
-        name: Generate example docs
-        working_directory: "./examples"
-        mode: parallel
+      - type: serial
+        name: Examples
         commands:
           - type: shell
-            name: Generate example docs
+            name: Check dir
             command_line: |
-              terraform-docs -c ".terraform-docs.yml" $ITEM
+              if [ ! -d "./examples" ]; then
+                echo "No examples directory found, skipping example docs generation."
+                exit 99
+              fi
+            skip_on_exit_codes: [99]
 
-      - type: foreachdirectory
-        name: Generate module docs
-        working_directory: "./modules"
-        mode: parallel
+          - type: foreachdirectory
+            name: Generate
+            working_directory: "./examples"
+            mode: parallel
+            commands:
+              - type: shell
+                name: Generate example docs
+                command_line: |
+                  terraform-docs -c ".terraform-docs.yml" $ITEM
+
+      - type: serial
+        name: Submodules
         commands:
           - type: shell
-            name: Generate module docs
+            name: Check dir
             command_line: |
-              terraform-docs -c ".terraform-docs.yml" $ITEM
+              if [ ! -d "./modules" ]; then
+                echo "No modules directory found, skipping module docs generation."
+                exit 99
+              fi
+            skip_on_exit_codes: [99]
+
+          - type: foreachdirectory
+            name: Generate module docs
+            working_directory: "./modules"
+            mode: parallel
+            commands:
+              - type: shell
+                name: Generate module docs
+                command_line: |
+                  terraform-docs -c ".terraform-docs.yml" $ITEM
