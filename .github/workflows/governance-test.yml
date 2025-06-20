@@ -5,6 +5,14 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - container/**
+      - .github/workflows/governance-test.yml
+      - porch-configs/**
+      - grept-policies/**
+      - mapotf-configs/**
+      - tflint-configs/**
+      - tests/**
   workflow_dispatch:
 
 concurrency:
