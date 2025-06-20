@@ -17,6 +17,8 @@ param (
   [switch]$skipMetaDataCreation
 )
 
+$ProgressPreference = "SilentlyContinue"
+
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
 if($moduleName -notmatch $moduleNameRegex) {
@@ -73,7 +75,8 @@ if(!$skipMetaDataCreation) {
 $repositoryName = "terraform-$moduleProvider-$moduleName"
 
 if(!$skipRepoCreation) {
-  Write-Host "Creating repository $moduleName" -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "Creating repository $moduleName"
 
   gh repo create "Azure/$repositoryName" --public --template "Azure/terraform-azurerm-avm-template"
 
@@ -82,9 +85,11 @@ if(!$skipRepoCreation) {
   Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
   Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
   Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
-  Read-Host "Hit any key to open the open source portal in your browser and complete the setup"
+
+  Write-Host "Hit Enter to open the open source portal in your browser and complete the setup:" -ForegroundColor Yellow
+  Read-Host
   Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
-  Write-Host ""
+
   Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
   Write-Host ""
   Write-Host "Project name:" -ForegroundColor Cyan
@@ -100,10 +105,10 @@ if(!$skipRepoCreation) {
   Write-Host "This is open source project and can be leveraged in Microsoft service and product."
   Write-Host ""
 
-
   $response = ""
   while($response -ne "yes") {
-    $response = Read-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue..."
+    Write-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue:" -ForegroundColor Yellow
+    $response = Read-Host
   }
 }
 
@@ -135,12 +140,17 @@ terraform apply -auto-approve
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green
 Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
-Read-Host "Hit any key to open the Pull Request in your browser and merge it"
+Write-Host "Hit Enter to open the Pull Request in your browser and merge it:"
+Read-Host
 Start-Process $prUrl
+
+Write-Host ""
+Write-Host "Repository URL:" -ForegroundColor Cyan
+Write-Host "https://github.com/Azure/$repositoryName"
 
 $ownerMention = ""
 
-if($primaryOwnerGitHubHandle -ne "") {
+if($ownerPrimaryGitHubHandle -ne "") {
   $ownerMention = "@$ownerPrimaryGitHubHandle "
 }
 
@@ -155,6 +165,8 @@ Thanks
 "@
 
 Write-Host ""
-Write-Host "Here is some text for the GitHub issue comment to notify the module owner about the repository creation:" -ForegroundColor Yellow
+Write-Host "Here is some text for the GitHub issue comment to notify the module owner about the repository creation:" -ForegroundColor Cyan
 Write-Host $issueComment
 Write-Host ""
+Write-Host ""
+Write-Host "All done, thanks!" -ForegroundColor Green
