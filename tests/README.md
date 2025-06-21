@@ -38,7 +38,7 @@ It stores the image as an artifact so that it can be downloaded in the second jo
 
 This job also runs a trivy scan on the image to ensure that it is secure and does not contain any vulnerabilities. This step is set to continue on error, so that the workflow can continue even if the scan fails.
 
-![IMPORTANT]
+[!IMPORTANT]
 > Please review the build to ensure that there are no vulnerabilities that have been added by packages or dependencies that have been added to the image. If there are vulnerabilities, please address them before merging your changes.
 
 
