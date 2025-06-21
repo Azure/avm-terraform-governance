@@ -56,7 +56,7 @@ It executes the following steps:
 1. `avm pre-commit`: Runs the pre-commit hooks (and git commit if needed).
 1. `avm pr-check`: Runs the tests against the mock modules.
 1. `avm test-examples`: Deploys the examples.
-1. `avm tf-unit-test`: Runs the Terraform unit tests.
+1. `avm tf-test-unit`: Runs the Terraform unit tests.
 
 This allows you to ensure that any policy changes you make will not break the existing tests and that the governance framework works as expected.
 
