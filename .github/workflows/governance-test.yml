@@ -208,9 +208,11 @@ jobs:
       - name: pr-check
         run: |
           ./avm pr-check
-          git status --porcelain
 
       - name: test-examples
         run: |
           ./avm test-examples
-          git status --porcelain
+
+      - name: terraform test (unit)
+        run: |
+          ./avm tf-unit-test
