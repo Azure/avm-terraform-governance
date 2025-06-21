@@ -27,7 +27,10 @@ There are two mock modules that are used in the tests:
 
 ## Test harness
 
-There is a [test workflow](https://github.com/Azure/avm-terraform-governance/actions/workflows/governance-test.yml) that will run the governance framework against the mock modules. You can run this workflow manually or as part of a pull request.
+There is a [test workflow](https://github.com/Azure/avm-terraform-governance/actions/workflows/governance-test.yml)
+[[yaml]](https://github.com/Azure/avm-terraform-governance/blob/main/.github/workflows/governance-test.yml) that
+will run the governance framework against the mock modules. You can run this workflow manually
+or as part of a pull request.
 
 The workflow has two jobs, the second of which uses a matrix to run against both mock modules.
 
