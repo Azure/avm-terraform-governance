@@ -11,6 +11,7 @@ on:
       - porch-configs/**
       - grept-policies/**
       - mapotf-configs/**
+      - Makefile
       - tflint-configs/**
       - tests/**
   workflow_dispatch:
