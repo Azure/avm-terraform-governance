@@ -6,8 +6,8 @@ variables {
   location = "eastus"
 }
 
-run "plan" {
-  command = plan
+run "apply" {
+  command = apply
 
   assert {
     condition     = can(modtm_telemetry.telemetry)
