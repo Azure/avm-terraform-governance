@@ -29,13 +29,39 @@ There are two mock modules that are used in the tests:
 
 There is a test workflow that will run the governance framework against the mock modules. You can run this workflow manually or as part of a pull request.
 
-The workflow will:
+The workflow has two jobs, the second of which uses a matrix to run against both mock modules.
 
-- Build the container image and store as an artifact.
-- Use the above container to run all future steps.
-- Override the default URLs for all the policies and configs to use the specific commit of branch you are testing.
-- Execute the following:
-  - `avm pre-commit`: Runs the pre-commit hooks (and git commit if needed).
-  - `avm pr-check`: Runs the tests against the mock modules.
+### Job 1 - Build image
+
+This job is responsible for building the container image that will be used in the second job.
+It stores the image as an artifact so that it can be downloaded in the second job, without having to push it to a registry.
+
+This job also runs a trivy scan on the image to ensure that it is secure and does not contain any vulnerabilities. This step is set to continue on error, so that the workflow can continue even if the scan fails.
+
+![IMPORTANT]
+> Please review the build to ensure that there are no vulnerabilities that have been added by packages or dependencies that have been added to the image. If there are vulnerabilities, please address them before merging your changes.
+
+
+### Job 2 - Run tests
+
+This job is responsible for running the governance framework against the mock modules. It uses the container image built in the first job and runs the tests against both mock modules.
+
+It overrides the default URLs for all the policies and configs to use the specific commit of branch you are testing.
+
+It executes the following steps:
+
+1. `avm pre-commit`: Runs the pre-commit hooks (and git commit if needed).
+1. `avm pr-check`: Runs the tests against the mock modules.
+1. `avm test-examples`: Deploys the examples.
+1. `avm tf-unit-test`: Runs the Terraform unit tests.
 
 This allows you to ensure that any policy changes you make will not break the existing tests and that the governance framework works as expected.
+
+## Updating the container image
+
+If you need to update the container image, you should make sure that:
+
+1. The changes to the Dockerfile are in the `main` branch of the `avm-terraform-governance` repository, before updating and policies or configs that depend on it.
+1. A release is created in the `avm-terraform-governance` repository with the updated image tag and this has succeeded and pushed the image to the container registry.
+
+After this is done you can merge in the changes to the policies or configs that depend on the updated image.
