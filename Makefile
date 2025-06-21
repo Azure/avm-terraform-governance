@@ -20,7 +20,12 @@ test-examples:
 	@echo "Testing examples..."
 	porch run ${TUI} -f "$(PORCH_BASE_URL)/test-examples.porch.yaml?ref=$(PORCH_REF)"
 
-.PHONY: tf-test
-tf-test:
-	@echo "Running terraform test..."
-	porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+.PHONY: tf-test-unit
+tf-test-unit:
+	@echo "Running terraform unit test..."
+	TEST_TYPE="unit" porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+
+.PHONY: tf-test-integration
+tf-test-integration:
+	@echo "Running terraform integration test..."
+	TEST_TYPE="integration" porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
