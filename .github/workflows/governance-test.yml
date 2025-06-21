@@ -210,7 +210,7 @@ jobs:
       - name: close and comment out of date prs
         if: steps.pr.outputs.number
         run: |
-          PULL_REQUESTS=$(gh pr list --base ${{ github.head_ref }} --search "test: update examples" --json number,headRefName)
+          PULL_REQUESTS=$(gh pr list --base ${{ github.head_ref }} --search "test: update examples \`${{ matrix.module }}\`" --json number,headRefName)
           echo "$PULL_REQUESTS" | jq -r '.[] | select(.number != ${{ steps.pr.outputs.number }}) | .number' | xargs -I {} gh pr close {} --delete-branch --comment "Supersceeded by #${{ steps.pr.outputs.number }}"
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
