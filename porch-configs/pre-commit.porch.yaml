@@ -37,6 +37,7 @@ commands:
         name: submodules
         working_directory: "./modules"
         mode: parallel
+        skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
 
@@ -44,6 +45,7 @@ commands:
         name: examples
         working_directory: "./examples"
         mode: parallel
+        skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
 
@@ -60,9 +62,10 @@ commands:
           terraform-docs -c ".terraform-docs.yml" .
 
       - type: foreachdirectory
-        name: Generate example docs
+        name: Generate
         working_directory: "./examples"
         mode: parallel
+        skip_on_not_exist: true
         commands:
           - type: shell
             name: Generate example docs
@@ -73,6 +76,7 @@ commands:
         name: Generate module docs
         working_directory: "./modules"
         mode: parallel
+        skip_on_not_exist: true
         commands:
           - type: shell
             name: Generate module docs
