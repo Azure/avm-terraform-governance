@@ -225,4 +225,6 @@ jobs:
 
       - name: terraform test (unit)
         run: |
-          ./avm tf-unit-test
+          ./avm tf-test
+        env:
+          TEST_TYPE: unit
