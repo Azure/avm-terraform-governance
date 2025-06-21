@@ -21,10 +21,8 @@ test-examples:
 
 tf-unit-test:
 	@echo "Running terraform unit test..."
-	@export TEST_TYPE="unit"
-	@porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+	@export TEST_TYPE="unit" && porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
 
 tf-integration-test:
 	@echo "Running terraform integration test..."
-	@export TEST_TYPE="integration"
-	@porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+	@export TEST_TYPE="integration" && porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
