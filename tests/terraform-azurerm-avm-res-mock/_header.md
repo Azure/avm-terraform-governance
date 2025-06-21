@@ -1,1 +1,1 @@
-# Mock AzurRM Module
+# Mock AzureRM Module

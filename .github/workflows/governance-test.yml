@@ -118,7 +118,7 @@ jobs:
       id-token: write
     env:
       CONTAINER_PULL_POLICY: never
-      ARM_USE_OIDC: true
+      ARM_USE_OIDC: "true"
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.TARGET_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
@@ -174,6 +174,11 @@ jobs:
           echo "CONFTEST_APRL_URL=${{ github.event.inputs.conftest-aprl-url }}" >> $GITHUB_ENV
           echo "CONFTEST_AVMSEC_URL=${{ github.event.inputs.conftest-avmsec-url }}" >> $GITHUB_ENV
 
+      - name: Set OIDC env vars
+        run: |
+          echo "ARM_OIDC_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN" >> $GITHUB_ENV
+          echo "ARM_OIDC_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL" >> $GITHUB_ENV
+
       - name: pre-commit
         run: |
           ./avm pre-commit
@@ -193,8 +198,8 @@ jobs:
 
           git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}
           gh pr create \
-            --title "test: update examples `${{ matrix.module }}` ${{ github.run_id }}" \
-            --body "This PR was created by the AVM governance test workflow. Please review if the changes should be made to the mock modules: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" \
+            --title "test: update examples `${{ matrix.module }}`" \
+            --body "This PR was created by the AVM governance test workflow after pre-commit was run. Please review if the changes should be made to the mock modules: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" \
             --base ${{ github.head_ref }} \
             --repo ${{ github.repository }}
         env:
