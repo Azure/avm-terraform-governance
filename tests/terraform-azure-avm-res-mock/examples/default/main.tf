@@ -1,4 +1,5 @@
 module "test" {
-  source   = "../../"
+  source = "../../"
+
   location = "westus3"
 }
