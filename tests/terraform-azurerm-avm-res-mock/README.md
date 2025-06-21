@@ -1,5 +1,5 @@
 <!-- BEGIN_TF_DOCS -->
-
+# Mock AzureRM Module
 
 <!-- markdownlint-disable MD033 -->
 ## Requirements
@@ -12,20 +12,39 @@ The following requirements are needed by this module:
 
 - <a name="requirement_modtm"></a> [modtm](#requirement\_modtm) (~> 0.3)
 
+- <a name="requirement_random"></a> [random](#requirement\_random) (~> 3.6)
+
 ## Resources
 
 The following resources are used by this module:
 
-- [azurerm_client_config.current](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
+- [modtm_telemetry.telemetry](https://registry.terraform.io/providers/Azure/modtm/latest/docs/resources/telemetry) (resource)
+- [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
+- [azurerm_client_config.telemetry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config) (data source)
+- [modtm_module_source.telemetry](https://registry.terraform.io/providers/Azure/modtm/latest/docs/data-sources/module_source) (data source)
 
 <!-- markdownlint-disable MD013 -->
 ## Required Inputs
 
-No required inputs.
+The following input variables are required:
+
+### <a name="input_location"></a> [location](#input\_location)
+
+Description: The Azure location where resources will be created
+
+Type: `string`
 
 ## Optional Inputs
 
-No optional inputs.
+The following input variables are optional (have default values):
+
+### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
+
+Description: Enable telemetry for the module
+
+Type: `bool`
+
+Default: `true`
 
 ## Outputs
 
