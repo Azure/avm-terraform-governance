@@ -10,3 +10,7 @@ It is currently a work in progress, the following assets live here:
 - **porch configs**: standard process orchestration templates to ensure consistent testing and validation of Terraform modules.
 - **template github workflows**: GitHub Actions workflows to automate the testing and validation of Terraform modules.
 - **makefile**: A centralized Makefile to streamline the development process across all AVM repositories.
+
+## Testing the tests
+
+See the [Testing](./tests/README.md) documentation for details on how we test the governance framework.

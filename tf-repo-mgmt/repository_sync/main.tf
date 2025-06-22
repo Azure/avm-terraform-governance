@@ -22,7 +22,7 @@ resource "azapi_resource" "identity_federated_credentials" {
     properties = {
       audiences = ["api://AzureADTokenExchange"]
       issuer    = "https://token.actions.githubusercontent.com"
-      subject   = "repo:${var.github_repository_owner}/${var.github_repository_name}:environment:${var.github_repository_environment_name}"
+      subject   = "repo:${var.github_repository_owner}/${var.github_repository_name}:environment:${var.github_repository_environment_name}${local.gh_actions_job_workflow_ref_claim_suffix}"
     }
   }
 }

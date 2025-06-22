@@ -11,6 +11,11 @@ commands:
         exit 1
       fi
 
+  - type: shell
+    name: install terraform
+    command_line: terraform -version
+    cwd: "."
+
     # all linting checks go here, they all use a unique directory
   - type: parallel
     name: linting
@@ -45,43 +50,68 @@ commands:
                 fi
               done
 
+          - type: shell
+            name: clean terraform
+            command_line: |
+              echo $(pwd) && \
+              find . -type d -name .terraform | xargs -n1 rm -rf && \
+              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+              find . -type f -name *.tfstate* | xargs -n1 rm -f
+
           # tflint
           - type: serial
             name: run
             commands:
+              - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
+
               - type: shell
                 name: root module
                 command_line: |
                   tflint --init --config="avm.tflint.hcl"
                   tflint --config="avm.tflint.hcl" --minimum-failure-severity=warning 1>&2
 
-              # tflint
-              - type: foreachdirectory
-                name: examples
-                working_directory: "./examples"
-                mode: parallel
-                runs_on_condition: always
-                commands:
-                  - type: shell
-                    name: run example
-                    command_line: |
-                      echo $(pwd) 1>&2
-                      tflint --init --config="../avm.tflint_example.hcl" && \
-                      tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+          # tflint
+          - type: foreachdirectory
+            name: examples
+            working_directory: "./examples"
+            mode: parallel
+            skip_on_not_exist: true
+            runs_on_condition: always
+            commands:
+              - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
 
-              # tflint
-              - type: foreachdirectory
-                name: modules
-                working_directory: "./modules"
-                mode: parallel
-                runs_on_condition: always
-                commands:
-                  - type: shell
-                    name: run module
-                    command_line: |
-                      echo $(pwd) 1>&2
-                      tflint --init --config="../avm.tflint_module.hcl" && \
-                      tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+              - type: shell
+                name: run example
+                command_line: |
+                  echo $(pwd) 1>&2
+                  tflint --init --config="../avm.tflint_example.hcl" && \
+                  tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+
+          # tflint
+          - type: foreachdirectory
+            name: modules
+            working_directory: "./modules"
+            mode: parallel
+            skip_on_not_exist: true
+            runs_on_condition: always
+            commands:
+              - type: shell
+                name: terraform init
+                command_line: |
+                  terraform init -input=false
+
+              - type: shell
+                name: run module
+                command_line: |
+                  echo $(pwd) 1>&2
+                  tflint --init --config="../avm.tflint_module.hcl" && \
+                  tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
       # grept
       - type: serial
@@ -144,30 +174,33 @@ commands:
         commands:
           - type: copycwdtotemp
             name: Copy to temp
+
           - type: parallel
-            name: Generate docs
+            name: Generate
             commands:
               - type: shell
                 name: Generate root module docs
                 command_line: |
                   terraform-docs -c ".terraform-docs.yml" .
 
-                # docs
+              # docs
               - type: foreachdirectory
                 name: examples
                 working_directory: "./examples"
                 mode: parallel
+                skip_on_not_exist: true
                 commands:
                   - type: shell
                     name: Generate example docs
                     command_line: |
                       terraform-docs -c ".terraform-docs.yml" $ITEM
 
-                # docs
+              # docs
               - type: foreachdirectory
                 name: modules
                 working_directory: "./modules"
                 mode: parallel
+                skip_on_not_exist: true
                 commands:
                   - type: shell
                     name: Generate module docs
@@ -190,42 +223,28 @@ commands:
       - type: copycwdtotemp
         name: Copy to temp
 
-        # This kicks off the tfenv installer
+      # conftest
       - type: shell
-        name: install terraform
+        name: Clean Terraform
         command_line: |
-          terraform
+          echo $(pwd) && \
+          find . -type d -name .terraform | xargs -n1 rm -rf && \
+          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: foreachdirectory
         name: well architected
         working_directory: "./examples"
         mode: parallel
+        skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         commands:
           # conftest
           - type: shell
-            name: Clean Terraform
-            command_line: |
-              echo $(pwd) && \
-              find . -type d -name .terraform | xargs -n1 rm -rf && \
-              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-              find . -type f -name *.tfstate* | xargs -n1 rm -f
-
-          # conftest
-          - type: shell
-            name: Clean Terraform
-            command_line: |
-              echo $(pwd) && \
-              find . -type d -name .terraform | xargs -n1 rm -rf && \
-              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-              find . -type f -name *.tfstate* | xargs -n1 rm -f
-
-            # conftest
-          - type: shell
             name: terraform init
             command_line: terraform init -input=false
 
-            # conftest
+          # conftest
           - name: terraform plan
             type: shell
             command_line: terraform plan -out=tfplan -input=false
@@ -246,7 +265,7 @@ commands:
               mkdir -p ./policy/default_exceptions
               curl -sS -o ./policy/default_exceptions/avmsec_exceptions.rego "$CONFTEST_EXCEPTIONS_URL"
 
-            # conftest
+          # conftest
           - type: shell
             name: run aprl
             command_line: |
@@ -258,7 +277,7 @@ commands:
               fi
               conftest test --all-namespaces --update "$CONFTEST_APRL_URL" -p policy/aprl -p policy/default_exceptions $LOCALEXCEPTION tfplan.json
 
-            # conftest
+          # conftest
           - type: shell
             name: run avmsec
             command_line: |
