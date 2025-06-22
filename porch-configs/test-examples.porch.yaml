@@ -17,6 +17,7 @@ commands:
     name: for each example
     depth: 1
     include_hidden: false
+    skip_on_not_exist: true
     working_directory: "./examples"
     env:
       TF_IN_AUTOMATION: "1"

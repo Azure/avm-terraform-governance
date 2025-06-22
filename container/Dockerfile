@@ -117,8 +117,8 @@ RUN tdnf install -y ca-certificates azure-cli gawk git jq less make powershell u
   git config --global user.email "tfmod442916@users.noreply.github.com" && \
   git config --global user.name "github-actions[bot]" && \
   git config --global --add safe.directory '*' && \
-  cp /root/.gitconfig ${HOME_DIR}/.gitconfig && \
   mkdir -p ${HOME_DIR} && \
+  cp /root/.gitconfig ${HOME_DIR}/.gitconfig && \
   mkdir ${HOME_DIR}/tflintenv && \
   chmod -R a+rwX ${HOME_DIR} && \
   chmod a+x ${HOME_DIR}/tfenv/bin/* && \

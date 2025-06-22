@@ -11,7 +11,7 @@ command_groups:
         command_line: |
           if [ -z "$TEST_TYPE" ]; then
             echo "TEST_TYPE is not set. Please set TEST_TYPE to 'unit' or 'integration'." 1>&2
-            echo " E.g. TEST_TYPE=\"unit\ # ... rest of your command" 1>&2
+            echo "E.g. TEST_TYPE=\"unit\" # ... rest of your command" 1>&2
             exit 1
           fi
       - type: shell
@@ -35,6 +35,11 @@ commands:
     cwd: "."
 
   - type: shell
+    name: install terraform
+    command_line: terraform -version
+    cwd: "."
+
+  - type: shell
     name: Clean Terraform
     command_line: |
       echo $(pwd) && \
@@ -51,6 +56,7 @@ commands:
         name: submodules
         working_directory: "./modules"
         mode: parallel
+        skip_on_not_exist: true
         command_group: terraform_unit_tests
 
       - type: serial
