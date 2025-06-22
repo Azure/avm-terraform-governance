@@ -8,7 +8,7 @@ It is currently a work in progress, the following assets live here:
 - **tflint config**: Configuration for TFLint to enforce coding standards and best practices.
 - **grept policy**: A policy to ensure that all Terraform module repositories are compliant with organizational standards.
 - **porch configs**: standard process orchestration templates to ensure consistent testing and validation of Terraform modules.
-- **template github workflows**: GitHub Actions workflows to automate the testing and validation of Terraform modules.
+- **managed github workflows**: GitHub Actions workflows to automate the testing and validation of Terraform modules.
 - **makefile**: A centralized Makefile to streamline the development process across all AVM repositories.
 
 ## Testing the tests

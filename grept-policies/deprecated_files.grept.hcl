@@ -1,7 +1,12 @@
 locals {
   deprecated_files = toset([
+    ".github/policies/avmrequiredfiles.yml",
+    ".github/workflows/e2e.yml",
+    ".github/workflows/grept_cronjob.yml",
+    ".github/workflows/linting.yml",
+    ".github/workflows/version-check.yml",
     "locals.telemetry.tf",
-    "locals.version.tf.json"
+    "locals.version.tf.json",
   ])
 }
 

@@ -1,6 +1,7 @@
 # "avm.bat",
 # "Makefile",
 # Add in new workflows once template updated
+# ".github/workflows/pr-check.yml",
 locals {
   synced_files = toset([
     "_footer.md",
