@@ -57,6 +57,7 @@ if [ -z "$AVM_IN_CONTAINER" ]; then
     -e ARM_SUBSCRIPTION_ID \
     -e ARM_TENANT_ID \
     -e ARM_USE_OIDC \
+    -e AVM_EXAMPLE \
     -e CONFTEST_APRL_URL \
     -e CONFTEST_AVMSEC_URL \
     -e CONFTEST_EXCEPTIONS_URL \

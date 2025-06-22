@@ -6,6 +6,7 @@ All of the workflows that we use have substitution variables that can be set to 
 
 | Variable Name | Description | Default Value |
 | ------------- | ----------- | ------------- |
+| AVM_EXAMPLE | By default all examples are run with `test-examples`, set this to limit to a specific example. | undefined |
 | CONFTEST_APRL_URL | The URL to the APRL Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2` |
 | CONFTEST_AVMSEC_URL | The URL to the AVMSEC Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/avmsec` |
 | CONFTEST_EXCEPTIONS_URL | The URL to the global Conftest exceptions file. | `https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak` |
