@@ -92,6 +92,7 @@ avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mb
 avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot,,,,,
 avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,
 avm-res-hybridcontainerservice-provisionedclusterinstance,Microsoft.HybridContainerService,provisionedClusterInstances,AKS Arc,,xhy8759,Hangyu Xu,,
+avm-res-insights-actiongroup,Microsoft.Insights,actionGroups,Insights Action Group,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli
 avm-res-insights-activitylogalert,Microsoft.Insights,activityLogAlerts,Activity Log Alerts,,tagolovina,Tanya Golovina,,
 avm-res-insights-autoscalesetting,Microsoft.Insights,autoscalesettings,Auto scale settings,,chianw,Chian Wong,,
 avm-res-insights-component,Microsoft.Insights,components,Application Insight,,Jfolberth,John Folberth,,
