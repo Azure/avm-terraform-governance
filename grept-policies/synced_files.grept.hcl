@@ -20,7 +20,8 @@ locals {
     "examples/.terraform-docs.yml",
     "LICENSE",
     "SECURITY.md",
-    "SUPPORT.md"
+    "SUPPORT.md",
+    "Makefile",
   ])
 }
 
