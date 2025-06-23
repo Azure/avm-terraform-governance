@@ -99,6 +99,7 @@ avm-res-insights-component,Microsoft.Insights,components,Application Insight,,Jf
 avm-res-insights-datacollectionendpoint,Microsoft.Insights,dataCollectionEndpoints,Data Collection Endpoint,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-datacollectionrule,Microsoft.Insights,dataCollectionRules,Data Collection Rule,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-logprofile,Microsoft.Insights,logProfiles,Log profile,,sharmilamusunuru,Sharmila Musunuru,,
+avm-res-insights-metricalert,Microsoft.Insights,metricAlerts,Insights Metric Alert,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli
 avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,
 avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,
