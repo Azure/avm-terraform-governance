@@ -184,6 +184,8 @@ jobs:
         run: |
           ./avm pre-commit
           git status --porcelain
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: commit and pr to this branch if changes
         id: pr
@@ -219,11 +221,17 @@ jobs:
       - name: pr-check
         run: |
           ./avm pr-check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: test-examples
         run: |
           ./avm test-examples
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: terraform test (unit)
         run: |
           ./avm tf-test-unit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
