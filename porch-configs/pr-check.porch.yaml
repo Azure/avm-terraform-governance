@@ -103,6 +103,7 @@ commands:
             depth: 1
             mode: parallel
             skip_on_not_exist: true
+            working_directory_strategy: "item_relative"
             runs_on_condition: always
             commands:
               - type: shell
