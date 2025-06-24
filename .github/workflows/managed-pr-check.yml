@@ -223,7 +223,8 @@ jobs:
   checkteardown:
     runs-on: ubuntu-latest
     if: always() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
-    needs: empty-no-approval
+    needs: testexamples
+    environment: empty-no-approval
     outputs:
       teardown_exists: ${{ steps.check-teardown.outputs.teardown_exists }}
     steps:
