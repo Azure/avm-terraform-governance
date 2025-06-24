@@ -10,7 +10,6 @@ locals {
     ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
     ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
     ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/policies/avmrequiredfiles.yml",
     ".github/policies/eventResponder.yml",
     ".github/policies/scheduledSearches.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
