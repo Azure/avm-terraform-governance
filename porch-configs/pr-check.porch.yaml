@@ -80,6 +80,7 @@ commands:
             depth: 1
             mode: parallel
             skip_on_not_exist: true
+            working_directory_strategy: "item_relative"
             runs_on_condition: always
             commands:
               - type: shell
@@ -92,8 +93,8 @@ commands:
                 command_line: |
                   echo "PWD is: $(pwd)" 1>&2
                   echo "Running tflint for example $ITEM" 1>&2
-                  tflint --init --config="../avm.tflint_example.hcl" && \
-                  tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+                  tflint --init --config="../../avm.tflint_example.hcl" && \
+                  tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning 1>&2
 
           # tflint
           - type: foreachdirectory
@@ -114,8 +115,8 @@ commands:
                 command_line: |
                   echo "PWD is: $(pwd)" 1>&2
                   echo "Running tflint for module $ITEM" 1>&2
-                  tflint --init --config="../avm.tflint_module.hcl" && \
-                  tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
+                  tflint --init --config="../../avm.tflint_module.hcl" && \
+                  tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning 1>&2
 
       # grept
       - type: serial
