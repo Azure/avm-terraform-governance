@@ -56,7 +56,7 @@ jobs:
     if: github.event.pull_request.head.repo.fork == false
     needs: pr-check
     runs-on: ubuntu-latest
-    environment: test
+    environment: empty-no-approval
     outputs:
       examples: ${{ steps.getexamples.outputs.examples }}
     steps:
@@ -64,14 +64,42 @@ jobs:
 
       - name: get examples
         id: getexamples
-        uses: Azure/terraform-azurerm-avm-template/.github/actions/e2e-getexamples@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get all the folders in the examples directory
+          $folders = Get-ChildItem -Directory
+
+          $examples = @()
+          $e2eTests = @()
+
+          foreach ($folder in $folders) {
+              # Check if the folder contains at least one .tf file
+              $files = Get-ChildItem -Path $folder.FullName -File -Filter "*.tf" -Force
+              if($files.Count -ne 0) {
+                  $examples += $folder.Name
+
+                  # Check if the folder contains a .e2eignore file
+                  $ignore = Get-ChildItem -Path $folder.FullName -File -Filter ".e2eignore" -Force
+                  if($ignore.Count -eq 0) {
+                      $e2eTests += $folder.Name
+                  }
+              }
+          }
+
+          if($examples.Count -eq 0) {
+            throw "At least one example must be present for Azure Verified Modules"
+          }
+
+          $e2eTestsJson = ConvertTo-Json $e2eTests -Compress
+          Write-Host $e2eTestsJson
+
+          Write-Output "examples=$e2eTestsJson" >> $env:GITHUB_OUTPUT
+        working-directory: examples
+        shell: pwsh
 
   checksetup:
     runs-on: ubuntu-latest
     needs: getexamples
-    environment: test
+    environment: empty-no-approval
     outputs:
       setup_exists: ${{ steps.check-setup.outputs.setup_exists }}
     steps:
@@ -195,7 +223,7 @@ jobs:
   checkteardown:
     runs-on: ubuntu-latest
     if: always() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
-    needs: testexamples
+    needs: empty-no-approval
     outputs:
       teardown_exists: ${{ steps.check-teardown.outputs.teardown_exists }}
     steps:
@@ -264,7 +292,7 @@ jobs:
   testexamplescomplete:
     if: always() && !failure() && !cancelled() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
-    environment: test
+    environment: empty-no-approval
     needs: testexamples
     steps:
       - run: echo "All tests passed"
