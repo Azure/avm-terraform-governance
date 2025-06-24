@@ -90,7 +90,8 @@ commands:
               - type: shell
                 name: run example
                 command_line: |
-                  echo $(pwd) 1>&2
+                  echo "PWD is: $(pwd)" 1>&2
+                  echo "Running tflint for module $ITEM" 1>&2
                   tflint --init --config="../avm.tflint_example.hcl" && \
                   tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
@@ -111,7 +112,8 @@ commands:
               - type: shell
                 name: run module
                 command_line: |
-                  echo $(pwd) 1>&2
+                  echo "PWD is: $(pwd)" 1>&2
+                  echo "Running tflint for module $ITEM" 1>&2
                   tflint --init --config="../avm.tflint_module.hcl" && \
                   tflint --config="../../avm.tflint_module.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
