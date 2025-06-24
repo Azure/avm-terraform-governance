@@ -54,6 +54,7 @@ commands:
     commands:
       - type: foreachdirectory
         name: submodules
+        depth: 1
         working_directory: "./modules"
         mode: parallel
         skip_on_not_exist: true

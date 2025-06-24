@@ -36,6 +36,7 @@ commands:
       - type: foreachdirectory
         name: submodules
         working_directory: "./modules"
+        depth: 1
         mode: parallel
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
@@ -44,6 +45,7 @@ commands:
       - type: foreachdirectory
         name: examples
         working_directory: "./examples"
+        depth: 1
         mode: parallel
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
@@ -64,6 +66,7 @@ commands:
       - type: foreachdirectory
         name: Generate
         working_directory: "./examples"
+        depth: 1
         mode: parallel
         skip_on_not_exist: true
         commands:
@@ -75,6 +78,7 @@ commands:
       - type: foreachdirectory
         name: Generate module docs
         working_directory: "./modules"
+        depth: 1
         mode: parallel
         skip_on_not_exist: true
         commands:
