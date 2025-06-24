@@ -52,6 +52,7 @@ avm-res-botservice-botservice,Microsoft.BotService,botServices,Bot Service,,salu
 avm-res-cache-redis,Microsoft.Cache,Redis,Redis Cache,,jchancellor-ms,Jon Chancellor,,
 avm-res-cache-redis-enterprise,Microsoft.Cache,redisEnterprise,Redis Cached Enterprise,,Ankur1106,Ankur Sharma (HK),,
 avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Venkataramanan,didayal-msft,Divyadeep Dayal
+avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,
 avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,
 avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,
 avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,
