@@ -20,3 +20,7 @@ locals {
   ) ? ":job_workflow_ref:Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main" : ""
 
 }
+
+locals {
+  github_avm_app_id = "1049636"
+}
