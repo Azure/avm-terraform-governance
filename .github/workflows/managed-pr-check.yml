@@ -179,6 +179,9 @@ jobs:
             -e \
             TF_VAR_enable_telemetry \
             -e AVM_EXAMPLE=${{ matrix.example }} \
+            -w /src/examples \
+            -e TF_IN_AUTOMATION \
+            -e TF_VAR_enable_telemetry \
             -e ARM_SUBSCRIPTION_ID \
             -e ARM_TENANT_ID \
             -e ARM_CLIENT_ID \
@@ -242,7 +245,6 @@ jobs:
             -w /src/examples \
             -e TF_IN_AUTOMATION \
             -e TF_VAR_enable_telemetry \
-            -e AVM_MOD_PATH=/src \
             -e ARM_SUBSCRIPTION_ID \
             -e ARM_TENANT_ID \
             -e ARM_CLIENT_ID \

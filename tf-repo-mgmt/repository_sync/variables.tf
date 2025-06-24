@@ -21,8 +21,14 @@ variable "github_repository_name" {
 
 variable "github_repository_environment_name" {
   type        = string
-  description = "Branch of the GitHub repository."
+  description = "Name of the environment used to store secrets for the test environment."
   default     = "test"
+}
+
+variable "github_repository_no_approval_environment_name" {
+  type        = string
+  description = "Name of the environment used as a dummy no approval environment."
+  default     = "empty-no-approval"
 }
 
 variable "github_core_team_name" {

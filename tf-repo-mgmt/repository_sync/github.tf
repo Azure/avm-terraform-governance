@@ -59,3 +59,12 @@ resource "github_actions_environment_secret" "client_id" {
   secret_name     = "ARM_CLIENT_ID"
   plaintext_value = azapi_resource.identity.output.properties.clientId
 }
+
+# This environment is used for jobs that do not require authentication.
+# Due to the OIDC subject claim refs mandating that environment is included,
+# all jobs must be run in an environment whether they need authentication or not.
+resource "github_repository_environment" "dummy_no_approval" {
+  count       = var.manage_github_environment ? 1 : 0
+  environment = var.github_repository_no_approval_environment_name
+  repository  = data.github_repository.this.name
+}
