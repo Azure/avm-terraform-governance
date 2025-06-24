@@ -91,7 +91,7 @@ commands:
                 name: run example
                 command_line: |
                   echo "PWD is: $(pwd)" 1>&2
-                  echo "Running tflint for module $ITEM" 1>&2
+                  echo "Running tflint for example $ITEM" 1>&2
                   tflint --init --config="../avm.tflint_example.hcl" && \
                   tflint --config="../../avm.tflint_example.hcl" --minimum-failure-severity=warning --chdir="./$ITEM" 1>&2
 
