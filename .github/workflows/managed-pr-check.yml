@@ -19,7 +19,7 @@ jobs:
       - name: pr-check
         env:
           TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: false
+          TF_VAR_enable_telemetry: "false"
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
           VARS_CONTEXT: ${{ toJson(vars) }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
@@ -28,7 +28,8 @@ jobs:
           ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: true
+          ARM_USE_OIDC: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -40,14 +41,14 @@ jobs:
           docker run --rm \
             -v \
             $(pwd):/src \
-            -e \
-            TF_VAR_enable_telemetry \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
             -e ARM_CLIENT_ID \
             -e ARM_OIDC_REQUEST_TOKEN \
             -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC=true \
+            -e ARM_SUBSCRIPTION_ID \
+            -e ARM_TENANT_ID \
+            -e ARM_USE_OIDC \
+            -e GITHUB_TOKEN \
+            -e TF_IN_AUTOMATION \
             --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
             ${{ env.CONTAINER_IMAGE }} \
             make pr-check
@@ -124,7 +125,7 @@ jobs:
       - name: Run global setup script
         env:
           TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: false
+          TF_VAR_enable_telemetry: "false"
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
           VARS_CONTEXT: ${{ toJson(vars) }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
@@ -133,7 +134,8 @@ jobs:
           ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: true
+          ARM_USE_OIDC: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -148,19 +150,18 @@ jobs:
             -v $(pwd):/src \
             -w /src/examples \
             -e TF_IN_AUTOMATION \
-            -e TF_VAR_enable_telemetry \
-            -e AVM_MOD_PATH=/src \
             -e ARM_SUBSCRIPTION_ID \
             -e ARM_TENANT_ID \
-            -e ARM_CLIENT_ID \
+            -e GITHUB_TOKEN \
             -e ARM_OIDC_REQUEST_TOKEN \
             -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC=true \
+            -e ARM_USE_OIDC= \
             --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
             ${{ env.CONTAINER_IMAGE }} \
             ./setup.sh
           fi
         shell: bash
+
 
 
   testexamples:
@@ -183,7 +184,7 @@ jobs:
         shell: bash
         env:
           TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: false
+          TF_VAR_enable_telemetry: "false"
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
           VARS_CONTEXT: ${{ toJson(vars) }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
@@ -192,7 +193,8 @@ jobs:
           ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: true
+          ARM_USE_OIDC: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -206,16 +208,16 @@ jobs:
             $(pwd):/src \
             -e \
             TF_VAR_enable_telemetry \
-            -e AVM_EXAMPLE=${{ matrix.example }} \
-            -w /src/examples \
-            -e TF_IN_AUTOMATION \
-            -e TF_VAR_enable_telemetry \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
             -e ARM_CLIENT_ID \
             -e ARM_OIDC_REQUEST_TOKEN \
             -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC=true \
+            -e ARM_SUBSCRIPTION_ID \
+            -e ARM_TENANT_ID \
+            -e ARM_USE_OIDC \
+            -e AVM_EXAMPLE=${{ matrix.example }} \
+            -e GITHUB_TOKEN \
+            -e TF_IN_AUTOMATION \
+            -e TF_VAR_enable_telemetry \
             --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
             ${{ env.CONTAINER_IMAGE }} \
             make test-examples
@@ -249,7 +251,7 @@ jobs:
       - name: Run teardown script
         env:
           TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: false
+          TF_VAR_enable_telemetry: "false"
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
           VARS_CONTEXT: ${{ toJson(vars) }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
@@ -258,7 +260,7 @@ jobs:
           ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: true
+          ARM_USE_OIDC: "true"
         run: |
           set -e
 
@@ -279,7 +281,7 @@ jobs:
             -e ARM_CLIENT_ID \
             -e ARM_OIDC_REQUEST_TOKEN \
             -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC=true \
+            -e ARM_USE_OIDC \
             --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
             ${{ env.CONTAINER_IMAGE }} \
             ./teardown.sh
