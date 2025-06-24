@@ -13,7 +13,7 @@ avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application 
 avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
 avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-ptn-avd-sessionhost,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
+avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
 avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,
