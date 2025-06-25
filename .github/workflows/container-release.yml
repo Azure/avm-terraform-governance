@@ -105,13 +105,13 @@ jobs:
           build-args: |
             ${{ steps.readenv.outputs.content }}
           platforms: ${{ env.PLATFORMS }}
-          cache-from: type=registry,ref=user/app:latest
+          cache-from: type=registry,ref=${{ secrets.ACR_SERVER_URL }}/${{ matrix.image.repo }}:latest
           cache-to: type=inline
 
       # This step generates an artifact attestation for the image, which is an unforgeable statement about where and how it was built. It increases supply chain security for people who consume the image. For more information, see [Using artifact attestations to establish provenance for builds](/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds).
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ secrets.ACR_SERVER_URL }}/${{ matrix.image.repo }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: false
