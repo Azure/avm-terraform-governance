@@ -113,4 +113,4 @@ jobs:
         with:
           subject-name: ${{ secrets.ACR_SERVER_URL }}/${{ matrix.image.repo }}
           subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: false
+          push-to-registry: true
