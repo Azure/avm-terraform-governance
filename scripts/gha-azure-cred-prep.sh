@@ -11,7 +11,7 @@ declare -A variables
 eval "$(echo "$VARS_CONTEXT" | jq -r 'to_entries[] | @sh "variables[\(.key|tostring)]=\(.value|tostring)"')"
 
 for key in "${!secrets[@]}"; do
-  if [[ $key = '\TF_VAR_*' ]]; then
+  if [[ $key = TF_VAR_* ]]; then
     lowerKey=$(echo "$key" | tr '[:upper:]' '[:lower:]')
     finalKey=${lowerKey/tf_var_/TF_VAR_}
     export "$finalKey"="${secrets[$key]}"
@@ -26,27 +26,13 @@ for key in "${!variables[@]}"; do
   fi
 done
 
-echo -e "Custom environment variables:\n$(env | grep TF_VAR_ | grep -v ' "TF_VAR_')"
+echo -e "Custom environment variables:\n$(env | grep '^TF_VAR_')"
 
-# Set up the Azure Provider Environment Variables
-tenantId=$ARM_TENANT_ID_OVERRIDE
-if [ -z "$tenantId" ]; then
-  tenantId=$ARM_TENANT_ID
-fi
-echo "tenantId: $tenantId"
+# Use override values if provided, otherwise use the default values from the environment
+export ARM_TENANT_ID="${ARM_TENANT_ID_OVERRIDE:-${ARM_TENANT_ID}}"
+export ARM_SUBSCRIPTION_ID="${ARM_SUBSCRIPTION_ID_OVERRIDE:-${ARM_SUBSCRIPTION_ID}}"
+export ARM_CLIENT_ID="${ARM_CLIENT_ID_OVERRIDE:-${ARM_CLIENT_ID}}"
 
-subscriptionId=$ARM_SUBSCRIPTION_ID_OVERRIDE
-if [ -z "$subscriptionId" ]; then
-  subscriptionId=$ARM_SUBSCRIPTION_ID
-fi
-
-clientId=$ARM_CLIENT_ID_OVERRIDE
-if [ -z "$clientId" ]; then
-  clientId=$ARM_CLIENT_ID
-fi
-
-export ARM_TENANT_ID=$tenantId
-export ARM_SUBSCRIPTION_ID=$subscriptionId
-export ARM_CLIENT_ID=$clientId
-export ARM_OIDC_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN
-export ARM_OIDC_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL
+# Set these to allow providers to refresh the tokens
+export ARM_OIDC_REQUEST_TOKEN="$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+export ARM_OIDC_REQUEST_URL="$ACTIONS_ID_TOKEN_REQUEST_URL"

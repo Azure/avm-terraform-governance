@@ -29,3 +29,13 @@ tf-test-unit:
 tf-test-integration:
 	@echo "Running terraform integration test..."
 	TEST_TYPE="integration" porch run ${TUI} -f "$(PORCH_BASE_URL)/terraform-test.porch.yaml?ref=$(PORCH_REF)"
+
+.PHONY: globalsetup
+globalsetup:
+	@echo "Running global setup..."
+	porch run ${TUI} -f "$(PORCH_BASE_URL)/global-setup.porch.yaml?ref=$(PORCH_REF)"
+
+.PHONY: globalteardown
+globalteardown:
+	@echo "Running global teardown..."
+	porch run ${TUI} -f "$(PORCH_BASE_URL)/global-teardown.porch.yaml?ref=$(PORCH_REF)"

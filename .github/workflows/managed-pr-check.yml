@@ -4,9 +4,22 @@ name: managed pr check and test examples
 on:
   workflow_call:
 
+# These are used by nearly every step and job, so we define them here to avoid repetition.
 env:
+  ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ARM_USE_OIDC: "true"
   CONTAINER_IMAGE: ghcr.io/azure/avm-terraform-governance:avm-latest
   FORCE_COLOR: 1
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SECRETS_CONTEXT: ${{ toJson(secrets) }}
+  TF_IN_AUTOMATION: 1
+  TF_VAR_enable_telemetry: "false"
+  VARS_CONTEXT: ${{ toJson(vars) }}
 
 jobs:
   pr-check:
@@ -17,19 +30,6 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
       - name: pr-check
-        env:
-          TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: "false"
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-          VARS_CONTEXT: ${{ toJson(vars) }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: "true"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -38,20 +38,7 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
-          docker run --rm \
-            -v \
-            $(pwd):/src \
-            -e ARM_CLIENT_ID \
-            -e ARM_OIDC_REQUEST_TOKEN \
-            -e ARM_OIDC_REQUEST_URL \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
-            -e ARM_USE_OIDC \
-            -e GITHUB_TOKEN \
-            -e TF_IN_AUTOMATION \
-            --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
-            ${{ env.CONTAINER_IMAGE }} \
-            make pr-check
+          ./avm pr-check
 
   getexamples:
     if: github.event.pull_request.head.repo.fork == false
@@ -63,39 +50,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
-      - name: get examples
+      - uses: Azure/avm-terraform-governance/.github/actions/getexamples@main
         id: getexamples
-        run: |
-          # Get all the folders in the examples directory
-          $folders = Get-ChildItem -Directory
-
-          $examples = @()
-          $e2eTests = @()
-
-          foreach ($folder in $folders) {
-              # Check if the folder contains at least one .tf file
-              $files = Get-ChildItem -Path $folder.FullName -File -Filter "*.tf" -Force
-              if($files.Count -ne 0) {
-                  $examples += $folder.Name
-
-                  # Check if the folder contains a .e2eignore file
-                  $ignore = Get-ChildItem -Path $folder.FullName -File -Filter ".e2eignore" -Force
-                  if($ignore.Count -eq 0) {
-                      $e2eTests += $folder.Name
-                  }
-              }
-          }
-
-          if($examples.Count -eq 0) {
-            throw "At least one example must be present for Azure Verified Modules"
-          }
-
-          $e2eTestsJson = ConvertTo-Json $e2eTests -Compress
-          Write-Host $e2eTestsJson
-
-          Write-Output "examples=$e2eTestsJson" >> $env:GITHUB_OUTPUT
-        working-directory: examples
-        shell: pwsh
 
   checksetup:
     runs-on: ubuntu-latest
@@ -123,19 +79,6 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
       - name: Run global setup script
-        env:
-          TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: "false"
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-          VARS_CONTEXT: ${{ toJson(vars) }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: "true"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
 
@@ -144,25 +87,8 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
-          if [ -f examples/setup.sh ]; then
-            chmod +x examples/setup.sh
-            docker run --rm \
-            -v $(pwd):/src \
-            -w /src/examples \
-            -e TF_IN_AUTOMATION \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
-            -e GITHUB_TOKEN \
-            -e ARM_OIDC_REQUEST_TOKEN \
-            -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC= \
-            --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
-            ${{ env.CONTAINER_IMAGE }} \
-            ./setup.sh
-          fi
+          ./avm global-teardown
         shell: bash
-
-
 
   testexamples:
     if: always() && !failure() && !cancelled() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
@@ -183,18 +109,7 @@ jobs:
       - name: Test example
         shell: bash
         env:
-          TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: "false"
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-          VARS_CONTEXT: ${{ toJson(vars) }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: "true"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AVM_EXAMPLE: ${{ matrix.example }}
         run: |
           set -e
 
@@ -203,24 +118,7 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
-          docker run --rm \
-            -v \
-            $(pwd):/src \
-            -e \
-            TF_VAR_enable_telemetry \
-            -e ARM_CLIENT_ID \
-            -e ARM_OIDC_REQUEST_TOKEN \
-            -e ARM_OIDC_REQUEST_URL \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
-            -e ARM_USE_OIDC \
-            -e AVM_EXAMPLE=${{ matrix.example }} \
-            -e GITHUB_TOKEN \
-            -e TF_IN_AUTOMATION \
-            -e TF_VAR_enable_telemetry \
-            --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
-            ${{ env.CONTAINER_IMAGE }} \
-            make test-examples
+          ./avm test-examples
 
   checkteardown:
     runs-on: ubuntu-latest
@@ -249,18 +147,6 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
       - name: Run teardown script
-        env:
-          TF_IN_AUTOMATION: 1
-          TF_VAR_enable_telemetry: "false"
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-          VARS_CONTEXT: ${{ toJson(vars) }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
-          ARM_USE_OIDC: "true"
         run: |
           set -e
 
@@ -269,23 +155,7 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
-          if [ -f examples/teardown.sh ]; then
-            chmod +x examples/teardown.sh
-            docker run --rm \
-            -v $(pwd):/src \
-            -w /src/examples \
-            -e TF_IN_AUTOMATION \
-            -e TF_VAR_enable_telemetry \
-            -e ARM_SUBSCRIPTION_ID \
-            -e ARM_TENANT_ID \
-            -e ARM_CLIENT_ID \
-            -e ARM_OIDC_REQUEST_TOKEN \
-            -e ARM_OIDC_REQUEST_URL \
-            -e ARM_USE_OIDC \
-            --env-file <(env | grep TF_VAR_ | grep -v ' "TF_VAR_') \
-            ${{ env.CONTAINER_IMAGE }} \
-            ./teardown.sh
-          fi
+          ./avm global-teardown
         id: global-teardown
         shell: bash
 

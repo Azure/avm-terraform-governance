@@ -1,0 +1,22 @@
+name: Global Teardown
+description: |
+  This configuration file is used to run global teardown for Azure Verified Modules example tests.
+  It's typically used in GitHub Actions to configure the environment before running other tasks.
+commands:
+  - type: shell
+    name: Check teardown.sh
+    command_line: |
+      if [ ! -f examples/teardown.sh ]; then
+        echo "teardown.sh not found" 1>&2
+        echo "Skipping global teardown" 1>&2
+        exit 99
+      fi
+    skip_on_exit_codes:
+      - 99
+
+  - type: shell
+    name: Run teardown.sh
+    command_line: |
+      chmod +x ./teardown.sh && \
+      ./teardown.sh
+    working_directory: examples

@@ -1,0 +1,22 @@
+name: Global Setup
+description: |
+  This configuration file is used to run global setup for Azure Verified Modules example tests.
+  It's typically used in GitHub Actions to configure the environment before running other tasks.
+commands:
+  - type: shell
+    name: Check setup.sh
+    command_line: |
+      if [ ! -f examples/setup.sh ]; then
+        echo "setup.sh not found" 1>&2
+        echo "Skipping global setup" 1>&2
+        exit 99
+      fi
+    skip_on_exit_codes:
+      - 99
+
+  - type: shell
+    name: Run setup.sh
+    command_line: |
+      chmod +x ./setup.sh && \
+      ./setup.sh
+    working_directory: examples
