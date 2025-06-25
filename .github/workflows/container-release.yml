@@ -70,6 +70,7 @@ jobs:
               type=semver,pattern={{version}},prefix=${{ matrix.image.tag_prefix }}v
               type=semver,pattern={{major}}.{{minor}},prefix=${{ matrix.image.tag_prefix }}v
               type=semver,pattern={{major}},prefix=${{ matrix.image.tag_prefix }}v
+              type=sha,prefix=${{ matrix.image.tag_prefix }}sha-,format=long
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Concat Dockerfiles
