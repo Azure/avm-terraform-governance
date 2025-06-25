@@ -24,7 +24,7 @@ if [ -z "$1" ]; then
     usage
     exit 1
 fi
-ß
+
 # Check if AZURE_CONFIG_DIR is set, if not, set it to ~/.azure
 if [ -z "${AZURE_CONFIG_DIR}" ]; then
   AZURE_CONFIG_DIR="${HOME}/.azure"
