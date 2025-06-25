@@ -19,7 +19,7 @@ for key in "${!secrets[@]}"; do
 done
 
 for key in "${!variables[@]}"; do
-  if [[ $key = '\TF_VAR_*' ]]; then
+  if [[ $key = TF_VAR_* ]]; then
     lowerKey=$(echo "$key" | tr '[:upper:]' '[:lower:]')
     finalKey=${lowerKey/tf_var_/TF_VAR_}
     export "$finalKey"="${variables[$key]}"

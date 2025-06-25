@@ -12,19 +12,14 @@ runs:
       id: getexamples
       run: |
         DIRS=$(for dir in */; do
-          # Check if the directory does NOT contain a .e2eignore file
           if [ -f "$dir/.e2eignore" ]; then
             continue
           fi
-          # If the directory does not have a .e2eignore file, include it in the output
           echo "$dir"
         done | \
-        # Remove the trailing slash from each directory name
         cut -d/ -f1 | \
-        # Convert the list to a JSON array
-        jq -R -s -c 'split("\n")[:-1]')
+        jq --raw-input --slurp --compact-output 'split("\n")[:-1]')
 
-        # Set output for GitHub Actions using the $GITHUB_OUTPUT variable
         echo examples="$DIRS" >> "$GITHUB_OUTPUT"
       working-directory: examples
       shell: bash
