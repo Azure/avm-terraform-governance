@@ -13,7 +13,6 @@ on:
 env:
   REGISTRY: ghcr.io # remove this once migrated to ACR
   IMAGE_NAME: ${{ github.repository }}
-  ACR_IMAGE_NAME: public/azterraform
   PLATFORMS: linux/amd64,linux/arm64
   TAG_PREFIX: avm-
 
@@ -23,6 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     environment: acr
+    strategy:
+      matrix:
+        image:
+          - name: azterraform
+            repo: public/azterraform
+            tag_prefix: ""
+            dockerfile: Dockerfile
+            source_files: "Dockerfile.build Dockerfile.azterraform"
+          - name: avm
+            repo: public/azterraform
+            tag_prefix: "avm-"
+            dockerfile: Dockerfile
+            source_files: "Dockerfile.build Dockerfile.avm"
     permissions:
       contents: read
       packages: write
@@ -37,12 +49,9 @@ jobs:
       - name: Log in to the Container registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
-          # registry: ${{ secrets.ACR_SERVER_URL }}
-          # username: ${{ secrets.ACR_USERNAME }}
-          # password: ${{ secrets.ACR_TOKEN }}
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ secrets.ACR_SERVER_URL }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_TOKEN }}
 
       - uses: juliangruber/read-file-action@02bbba9876a8f870efd4ad64e3b9088d3fb94d4b # v1.1.6
         id: readenv
@@ -54,19 +63,22 @@ jobs:
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
-          # Add this image below when using ACR
-          # ${{ secrets.ACR_SERVER_URL }}/${{ env.ACR_IMAGE_NAME }}
           images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ secrets.ACR_SERVER_URL }}/${{ matrix.image.repo }}
           flavor: |
             latest=auto
-            prefix=${{ env.TAG_PREFIX }},onlatest=true
+            prefix=${{ matrix.image.tag_prefix }},onlatest=true
           tags: |
-              type=semver,pattern={{version}},prefix=${{ env.TAG_PREFIX }}v
-              type=semver,pattern={{major}}.{{minor}},prefix=${{ env.TAG_PREFIX }}v
-              type=semver,pattern={{major}},prefix=${{ env.TAG_PREFIX }}v
-              type=sha,format=long
+              type=semver,pattern={{version}},prefix=${{ matrix.image.tag_prefix }}v
+              type=semver,pattern={{major}}.{{minor}},prefix=${{ matrix.image.tag_prefix }}v
+              type=semver,pattern={{major}},prefix=${{ matrix.image.tag_prefix }}v
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Concat Dockerfiles
+        run: |
+          cat ${{ matrix.image.source_files }} > ${{ matrix.image.dockerfile }}
+          rm -f Dockerfile.* || true
+        working-directory: ./container
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
@@ -102,4 +114,4 @@ jobs:
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
           subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+          push-to-registry: false
