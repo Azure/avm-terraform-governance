@@ -122,25 +122,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for changes
+      - name: Commit and push changes
         id: changes
         run: |
           # Check if there are ANY changes (including untracked files)
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "Changes detected (including untracked files)"
-            echo "detected=true" >> $GITHUB_OUTPUT
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes detected"
             exit 0
           fi
 
-          echo "No changes detected"
-          echo "detected=false" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: commit and push changes
-        if: steps.changes.outputs.detected == 'true'
-        run: |
           git config --global user.name "Azure Verified Modules [bot]"
           git config --global user.email "no-reply@azure.com"
           git add .
           git commit -m "chore: pre-commit updates"
           git push
+        shell: bash
