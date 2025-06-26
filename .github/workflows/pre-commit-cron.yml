@@ -66,6 +66,12 @@ jobs:
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
       - name: Check for recent PR activity
         id: check
         run: |
@@ -124,9 +130,9 @@ jobs:
             exit 0
           fi
 
-          git config --global credential.helper '!f() { echo "username=token"; echo "password=$GITHUB_TOKEN"; }; f'
-          git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
-          git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
+          git config --global credential.helper '!f() { echo "username=${{ steps.app-token.outputs.app-slug }}[bot]"; echo "password=$GITHUB_TOKEN"; }; f'
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com>'
           git add .
           git commit -m "chore: pre-commit updates"
           git push
