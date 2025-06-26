@@ -8,6 +8,10 @@ on:
         description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
         default: 'All'
         type: string
+      inactive_days:
+        description: 'Number of days to consider a PR inactive'
+        default: 7
+        type: number
       first_run:
         description: 'Whether to run in first run mode'
         default: false
@@ -73,16 +77,18 @@ jobs:
             exit 0
           fi
 
-          echo "Found $PR_COUNT open PR(s), checking for recent activity..."
+          INACTIVE_DAYS=${{ inputs.inactive_days != '' && inputs.inactive_days || env.ACTIVITY_DAYS_AGO }}
+
+          echo "Found $PR_COUNT open PR(s), checking for recent activity (checking last $INACTIVE_DAYS days)..."
           # Read PR numbers into an array
           readarray -t NOS < <(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq -r '.[].number')
           for N in "${NOS[@]}"; do
             LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
             if [ -n "$LAST_COMMIT" ]; then
               LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
-              DAYS_AGO_EPOCH=$(date -d '${{ env.ACTIVITY_DAYS_AGO }} days ago' +%s)
+              DAYS_AGO_EPOCH=$(date -d "$INACTIVE_DAYS days ago" +%s)
               if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
-                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has activity within the last ${{ env.ACTIVITY_DAYS_AGO }} days (PR: #$N last commit: $LAST_COMMIT)."
+                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has activity within the last $INACTIVE_DAYS days (PR: #$N last commit: $LAST_COMMIT)."
                 exit 0
               fi
             fi
