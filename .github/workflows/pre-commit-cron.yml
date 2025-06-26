@@ -19,6 +19,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  ACTIVITY_DAYS_AGO: 7
+
 defaults:
   run:
     working-directory: ./tf-repo-mgmt/repository_sync
@@ -55,11 +58,6 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
-        with:
-          repository: ${{ matrix.repoFullName }}
-
       - name: Create GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
@@ -68,13 +66,52 @@ jobs:
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      - name: Check for recent PR activity
+        id: check
+        run: |
+          # Check if there are any open PRs
+          PR_COUNT=$(gh pr list --base main --json number | jq 'length')
+          if [[ "$PR_COUNT" -eq 0 ]]; then
+            echo "No open PRs found, proceeding with pre-commit run."
+            exit 0
+          fi
+
+          echo "Found $PR_COUNT open PR(s), checking for recent activity..."
+          # Read PR numbers into an array
+          readarray -t NOS < <(gh pr list --base main --json number | jq -r '.[].number')
+          for N in "${NOS[@]}"; do
+            LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
+            if [[ -n "$LAST_COMMIT" ]]; then
+              LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
+              DAYS_AGO_EPOCH=$(date -d '${{ env.ACTIVITY_DAYS_AGO }} days ago' +%s)
+              if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
+                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has recent activity (last commit: $LAST_COMMIT)."
+                exit 0
+              fi
+            fi
+          done
+          echo "No recent PR activity found, proceeding with pre-commit run."
+          echo "continue=true" >> $GITHUB_OUTPUT
+
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Checkout repository
+        if: steps.check.outputs.continue
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+        with:
+          repository: ${{ matrix.repoFullName }}
+
+
       - name: Run pre-commit
+        if: steps.check.outputs.continue
         run: ./avm pre-commit
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push changes
+        if: steps.check.outputs.continue
         id: changes
         run: |
           # Check if there are ANY changes (including untracked files)
