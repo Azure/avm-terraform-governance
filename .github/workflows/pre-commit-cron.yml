@@ -81,7 +81,7 @@ jobs:
           readarray -t NOS < <(gh pr list --base main --json number | jq -r '.[].number')
           for N in "${NOS[@]}"; do
             LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
-            if [[ -n "$LAST_COMMIT" ]]; then
+            if [ -n "$LAST_COMMIT" ]; then
               LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
               DAYS_AGO_EPOCH=$(date -d '${{ env.ACTIVITY_DAYS_AGO }} days ago' +%s)
               if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
