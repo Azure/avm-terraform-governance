@@ -5,5 +5,5 @@ output "resource_id" {
 
 output "azurerm_use" {
   description = "This output is used to ensure that the azurerm provider is used in the module."
-  value       = azurerm_client_config.this.subscription_id
+  value       = data.azurerm_client_config.this.subscription_id
 }
