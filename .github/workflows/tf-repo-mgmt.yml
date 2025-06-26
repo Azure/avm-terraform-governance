@@ -40,38 +40,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Create GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
-        with:
-          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
-          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
       - name: Generate Matrix
         uses: ./.github/actions/avm-repos
         id: matrix
         with:
           repositories: ${{ inputs.repositories }}
           first_run: ${{ inputs.first_run }}
-          github_token: ${{ steps.app-token.outputs.token }}
-
-      - name: Upload Repo Logs Json
-        if: always() && hashFiles('warning.log.json') != ''
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: warning.log.json
-          path: warning.log.json
-
-      - name: Repo Error
-        if: always() && hashFiles('warning.log.json') != ''
-        run: |
-          $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
-          $issueLog = ConvertFrom-Json $issueLogJson
-          $issueLog | ForEach-Object {
-            echo "::error title=$($_.repoId) has issues::$($_.message)"
-          }
-        shell: pwsh
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
   run-sync:
     name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})

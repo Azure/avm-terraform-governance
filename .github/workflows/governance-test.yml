@@ -200,8 +200,8 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git config --global user.name "Azure Verified Modules [bot]"
-          git config --global user.email "1049636+azure-verified-modules[bot]@users.noreply.github.com"
+          git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
+          git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
           git checkout -b ${{ matrix.module }}${{ github.run_id }}
           git add .
           git commit -m "avm test run ${{ github.run_id }}"
