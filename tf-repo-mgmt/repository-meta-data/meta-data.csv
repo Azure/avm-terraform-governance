@@ -82,6 +82,7 @@ avm-res-desktopvirtualization-scalingplan,Microsoft.DesktopVirtualization,scalin
 avm-res-desktopvirtualization-workspace,Microsoft.DesktopVirtualization,workspaces,Azure Virtual Desktop (AVD) Workspace,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msft,Charles Shea,,
 avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,
+avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
