@@ -81,7 +81,7 @@ jobs:
               LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
               DAYS_AGO_EPOCH=$(date -d '${{ env.ACTIVITY_DAYS_AGO }} days ago' +%s)
               if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
-                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has recent activity (last commit: $LAST_COMMIT)."
+                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has recent activity (PR: #$N last commit: $LAST_COMMIT)."
                 exit 0
               fi
             fi
