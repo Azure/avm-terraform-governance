@@ -1,5 +1,5 @@
 locals {
-  sync_main_telemetry_tf = strcontains(env("AVMSCRIPT_VERSION"), "canary")
+  sync_main_telemetry_tf = true
 }
 
 data "local" avm_azapi_header {

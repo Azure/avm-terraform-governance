@@ -1,5 +1,5 @@
 locals {
-  avm_headers_for_azapi_enabled = strcontains(env("AVMSCRIPT_VERSION"), "canary")
+  avm_headers_for_azapi_enabled = true
 }
 
 data "variable" enable_telemetry {
