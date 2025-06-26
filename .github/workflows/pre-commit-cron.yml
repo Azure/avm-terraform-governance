@@ -115,7 +115,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push changes
-        if: false
+        if: steps.check.outputs.continue
         id: changes
         run: |
           # Check if there are ANY changes (including untracked files)
