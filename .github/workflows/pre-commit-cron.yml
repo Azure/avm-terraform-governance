@@ -111,6 +111,8 @@ jobs:
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
         with:
           repository: ${{ matrix.repoFullName }}
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
 
 
       - name: Run pre-commit
@@ -130,12 +132,14 @@ jobs:
             exit 0
           fi
 
-          git config --global credential.helper '!f() { echo "username=${{ steps.app-token.outputs.app-slug }}[bot]"; echo "password=$GITHUB_TOKEN"; }; f'
-          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
-          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com>'
+          # Configure git with the GitHub App identity
+          git config --global user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+          # Add and commit changes
           git add .
           git commit -m "chore: pre-commit updates"
+
+          # Push using the token (checkout action already configured git with the token)
           git push
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
