@@ -1,0 +1,55 @@
+author: AVM
+name: avm-repos
+description: Gets AVM repositories based on GH app installation and outputs them as a JSON array.
+inputs:
+  repositories:
+    description: "Target repositories, use this syntax to select specific repositories: 'avm-res-keyvault-vault'."
+    default: "All"
+  first_run:
+    description: "Whether to run in first run mode"
+    default: "false"
+  github_token:
+    description: "GitHub token"
+    required: true
+outputs:
+  matrix:
+    description: The repository data
+    value: ${{ steps.matrix.outputs.matrix }}
+  matrixParallel:
+    description: The number of parallel jobs to run
+    value: ${{ steps.matrix.outputs.matrixParallel }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate Matrix
+      id: matrix
+      run: |
+        $triggerType = "${{ github.event_name }}"
+
+        $repositories = "All"
+        $firstRun = $false
+
+        if($triggerType -eq "workflow_dispatch") {
+          $repositories = "${{ inputs.repositories }}"
+          $firstRun = "${{ inputs.first_run }}".ToLower() -eq "true"
+        }
+
+        $matrixParallel = 5
+        if($firstRun) {
+          $matrixParallel = 1
+        }
+        Write-Output "matrixParallel=$matrixParallel" >> $env:GITHUB_OUTPUT
+
+        if($repositories -eq "All") {
+          $repositories = @()
+        } else {
+          $repositories = $repositories -split ','
+        }
+        $matrix = @(./scripts/Get-RepositoriesWhereAppInstalled.ps1 -repoFilter $repositories -outputDirectory "${{ github.workspace }}" -protectedReposFilePath "../protected_repos/ProtectedRepos.csv")
+        $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
+        Write-Host (ConvertTo-Json $matrix -Depth 10)
+        Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
