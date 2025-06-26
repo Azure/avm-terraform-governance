@@ -91,6 +91,8 @@ jobs:
           echo "continue=true" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ matrix.repoFullName }}
 
       - name: Checkout repository
         if: steps.check.outputs.continue
