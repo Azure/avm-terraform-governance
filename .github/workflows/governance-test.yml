@@ -208,7 +208,7 @@ jobs:
 
           git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}
           PR_URL=$(gh pr create \
-            --title "test: update examples \`${{ matrix.module }}\` (${{ github.run_id }})" \
+            --title "test: update examples \`${{ matrix.module }}\` (${{ github.ref_name }})" \
             --body "This PR was created by the AVM governance test workflow after pre-commit was run. Please review if the changes should be made to the mock modules: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" \
             --base ${{ github.head_ref }} \
             --repo ${{ github.repository }})
