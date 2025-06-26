@@ -141,6 +141,8 @@ jobs:
           git add .
           git commit -m "chore: pre-commit updates"
           git push --set-upstream origin pre-commit-${{ github.run_id }}
+
+          # Create a PR and merge it
           PRURL=$(gh pr create --base main --head pre-commit-${{ github.run_id }} --title "chore: pre-commit updates" --body "This PR contains pre-commit updates.")
           gh pr merge $PRURL --squash --admin --delete-branch
 
