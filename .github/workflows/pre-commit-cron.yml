@@ -22,10 +22,6 @@ permissions:
 env:
   ACTIVITY_DAYS_AGO: 7
 
-defaults:
-  run:
-    working-directory: ./tf-repo-mgmt/repository_sync
-
 jobs:
   generate-matrix:
     name: Generate Matrix
@@ -92,7 +88,6 @@ jobs:
           done
           echo "No recent PR activity found, proceeding with pre-commit run."
           echo "continue=true" >> $GITHUB_OUTPUT
-
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
