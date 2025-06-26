@@ -106,31 +106,6 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ matrix.repoFullName }}
 
-      - name: Disable legacy branch protection admin enforce
-        if: steps.check.outputs.continue
-        id: disable-legacy-protection
-        run: |
-          # Disable legacy branch protection admin enforce
-          gh api \
-            --method DELETE \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ matrix.repoFullName }}/branches/main/protection/enforce_admins
-
-          # Capture the exit code immediately
-          EXIT_CODE=$?
-
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "Failed to disable branch protection (exit code: $EXIT_CODE). This is expected if no legacy protection exists."
-            exit 0
-          fi
-
-          echo "Successfully disabled legacy branch protection admin enforce"
-          echo "success=true" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        continue-on-error: true
-
       - name: Checkout repository
         if: steps.check.outputs.continue
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
@@ -162,23 +137,15 @@ jobs:
           git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
 
           # Add and commit changes
+          git checkout -b pre-commit-${{ github.run_id }}
           git add .
           git commit -m "chore: pre-commit updates"
+          git push --set-upstream origin pre-commit-${{ github.run_id }}
+          PRURL=$(gh pr create --base main --head pre-commit-${{ github.run_id }} --title "chore: pre-commit updates" --body "This PR contains pre-commit updates.")
+          gh pr merge $PRURL --squash --admin --delete-branch
 
           # Push using the token (checkout action already configured git with the token)
           git push
         shell: bash
-
-        # This will fail if there's no legacy branch protection
-        # but this is fine.
-      - name: Re-enable legacy branch protection admin enforce
-        if: steps.check.outputs.continue && steps.disable-legacy-protection.outputs.success
-        run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ matrix.repoFullName }}/branches/main/protection/enforce_admins
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        continue-on-error: true
