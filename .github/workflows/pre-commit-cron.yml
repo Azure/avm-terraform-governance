@@ -9,7 +9,7 @@ on:
         default: 'All'
         type: string
       inactive_days:
-        description: 'Number of days to consider a PR inactive'
+        description: 'Number of days with no PR activity'
         default: 7
         type: number
       first_run:
