@@ -1,5 +1,5 @@
 ---
-name: Repository Sync
+name: pre-commit-cron
 
 on:
   workflow_dispatch:
@@ -12,12 +12,8 @@ on:
         description: 'Whether to run in first run mode'
         default: false
         type: boolean
-      plan_only:
-        description: 'Whether to only plan the changes'
-        default: true
-        type: boolean
   schedule:
-    - cron: '0 0,4,8,12,16,20 * * *'
+    - cron: '34 4 * * 0,3,5'
 
 permissions:
   id-token: write
@@ -35,7 +31,6 @@ jobs:
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -110,12 +105,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
-          terraform_version: latest
-          terraform_wrapper: false
+          repository: ${{ matrix.repoFullName }}
 
       - name: Create GitHub App Token
         id: app-token
@@ -125,71 +116,31 @@ jobs:
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Download Labels CSV File
-        run: |
-          ../scripts/Get-AvmLabels.ps1
-        shell: pwsh
-
-      - name: Run Sync for ${{ matrix.repoId }}
-        run: |
-
-          $triggerType = "${{ github.event_name }}"
-
-          $firstRun = $false
-          $planOnly = $false
-
-          if($triggerType -eq "workflow_dispatch") {
-            $firstRun = "${{ inputs.first_run }}".ToLower() -eq "true"
-            $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
-          }
-
-          Write-Output "Token: $env:GH_TOKEN"
-          Write-Output "Repositories: $repositories"
-          Write-Output "First Run: $firstRun"
-          Write-Output "Plan Only: $planOnly"
-
-          Write-Host "Authenticating gh cli"
-          gh auth login -h "GitHub.com"
-          Write-Host "Running repo sync"
-          ../scripts/Invoke-RepositorySync.ps1 `
-            -firstRun $firstRun `
-            -planOnly $planOnly `
-            -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
-            -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
-            -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
-            -targetSubscriptionId "${{ secrets.TARGET_SUBSCRIPTION_ID }}" `
-            -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
-            -repoId "${{ matrix.repoId }}" `
-            -repoUrl "${{ matrix.repoUrl }}" `
-            -repoType "${{ matrix.repoType }}" `
-            -repoSubType "${{ matrix.repoSubType }}" `
-            -repoOwnerTeam "${{ matrix.repoOwnerTeam }}" `
-            -repoContributorTeam "${{ matrix.repoContributorTeam }}" `
-            -repoIsProtected ("${{ matrix.repoIsProtected }}" -eq "true") `
-            -outputDirectory "${{ github.workspace }}"
-        shell: pwsh
+      - name: Run pre-commit
+        run: ./avm pre-commit
+        shell: bash
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_USE_AZUREAD: true
-          ARM_USE_OIDC: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Issue Logs Json
-        if: always() && hashFiles('issue.log.json') != ''
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: ${{ matrix.repoId }}.issue.log.json
-          path: issue.log.json
-
-      - name: Issue Error
-        if: always() && hashFiles('issue.log.json') != ''
+      - name: Check for changes
+        id: changes
         run: |
-          $issueLogJson = Get-Content -Path "${{ github.workspace }}/issue.log.json" -Raw
-          $issueLog = ConvertFrom-Json $issueLogJson
-          $issueLog | ForEach-Object {
-            echo "::error title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
-          }
-          exit 1
-        shell: pwsh
+          # Check if there are ANY changes (including untracked files)
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected (including untracked files)"
+            echo "detected=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "No changes detected"
+          echo "detected=false" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: commit and push changes
+        if: steps.changes.outputs.detected == 'true'
+        run: |
+          git config --global user.name "Azure Verified Modules [bot]"
+          git config --global user.email "no-reply@azure.com"
+          git add .
+          git commit -m "chore: pre-commit updates"
+          git push
