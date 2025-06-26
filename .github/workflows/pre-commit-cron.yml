@@ -1,0 +1,93 @@
+---
+name: pre-commit-cron
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
+        default: 'All'
+        type: string
+      first_run:
+        description: 'Whether to run in first run mode'
+        default: false
+        type: boolean
+  # schedule:
+  #   - cron: '34 4 * * 0,3,5'
+
+permissions:
+  id-token: write
+  contents: read
+
+defaults:
+  run:
+    working-directory: ./tf-repo-mgmt/repository_sync
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    environment: avm
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Generate Matrix
+        uses: ./.github/actions/avm-repos
+        id: matrix
+        with:
+          repositories: ${{ inputs.repositories }}
+          first_run: ${{ inputs.first_run }}
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+  run-sync:
+    name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
+    runs-on: ubuntu-latest
+    environment: avm
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrixParallel) }}
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+        with:
+          repository: ${{ matrix.repoFullName }}
+
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+        with:
+          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Run pre-commit
+        run: ./avm pre-commit
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push changes
+        id: changes
+        run: |
+          # Check if there are ANY changes (including untracked files)
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes detected"
+            exit 0
+          fi
+
+          git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
+          git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
+          git add .
+          git commit -m "chore: pre-commit updates"
+          git push
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
