@@ -145,9 +145,6 @@ jobs:
           # Create a PR and merge it
           PRURL=$(gh pr create --base main --head pre-commit-${{ github.run_id }} --title "chore: pre-commit updates" --body "This PR contains pre-commit updates.")
           gh pr merge $PRURL --squash --admin --delete-branch
-
-          # Push using the token (checkout action already configured git with the token)
-          git push
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
