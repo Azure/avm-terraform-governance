@@ -46,7 +46,7 @@ runs:
         } else {
           $repositories = $repositories -split ','
         }
-        $matrix = @("${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" -repoFilter $repositories -outputDirectory "${{ github.workspace }}" -protectedReposFilePath "../protected_repos/ProtectedRepos.csv")
+        $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" -repoFilter $repositories -outputDirectory "${{ github.workspace }}" -protectedReposFilePath "../protected_repos/ProtectedRepos.csv")
         $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
         Write-Host (ConvertTo-Json $matrix -Depth 10)
         Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
