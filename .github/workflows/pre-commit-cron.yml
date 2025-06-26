@@ -43,7 +43,7 @@ jobs:
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
-  run-sync:
+  run-precommit:
     name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
     runs-on: ubuntu-latest
     environment: avm
@@ -66,7 +66,7 @@ jobs:
         id: check
         run: |
           # Check if there are any open PRs
-          PR_COUNT=$(gh pr list --base main --json number | jq 'length')
+          PR_COUNT=$(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq 'length')
           if [[ "$PR_COUNT" -eq 0 ]]; then
             echo "No open PRs found, proceeding with pre-commit run."
             echo "continue=true" >> $GITHUB_OUTPUT
@@ -75,7 +75,7 @@ jobs:
 
           echo "Found $PR_COUNT open PR(s), checking for recent activity..."
           # Read PR numbers into an array
-          readarray -t NOS < <(gh pr list --base main --json number | jq -r '.[].number')
+          readarray -t NOS < <(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq -r '.[].number')
           for N in "${NOS[@]}"; do
             LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
             if [ -n "$LAST_COMMIT" ]; then
@@ -109,7 +109,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push changes
-        if: steps.check.outputs.continue
+        if: false
         id: changes
         run: |
           # Check if there are ANY changes (including untracked files)
@@ -118,6 +118,7 @@ jobs:
             exit 0
           fi
 
+          git config --global credential.helper '!f() { echo "username=token"; echo "password=$GITHUB_TOKEN"; }; f'
           git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
           git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
           git add .
