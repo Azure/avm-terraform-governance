@@ -224,6 +224,13 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
+      - name: Comment this PR
+        if: steps.pr.outputs.number
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "This test run generated changes to the mock modules in this PR. Please review the changes and merge if appropriate, see #${{ steps.pr.outputs.number }}."
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
       - name: pr-check
         run: |
           ./avm pr-check
