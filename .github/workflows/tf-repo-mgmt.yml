@@ -76,7 +76,6 @@ jobs:
           app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: ${{ matrix.repoName }}
 
       - name: Download Labels CSV File
         run: |
