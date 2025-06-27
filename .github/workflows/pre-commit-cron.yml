@@ -16,8 +16,8 @@ on:
         description: 'Whether to run in first run mode'
         default: false
         type: boolean
-  # schedule:
-  #   - cron: '34 4 * * 0,3,5'
+  schedule:
+    - cron: '34 4 * * 0,3,5'
 
 permissions:
   id-token: write
