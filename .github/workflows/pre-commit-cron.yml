@@ -124,7 +124,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and push changes
+      - name: Commit, push, create PR and merge changes
         if: steps.check.outputs.continue
         id: changes
         run: |
