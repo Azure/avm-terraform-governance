@@ -8,20 +8,24 @@ on:
         description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
         default: 'All'
         type: string
+      inactive_days:
+        description: 'Number of days with no PR activity'
+        default: 7
+        type: number
       first_run:
         description: 'Whether to run in first run mode'
         default: false
         type: boolean
-  # schedule:
-  #   - cron: '34 4 * * 0,3,5'
+  schedule:
+    - cron: '34 4 * * 0,3,5'
 
 permissions:
   id-token: write
   contents: read
 
-defaults:
-  run:
-    working-directory: ./tf-repo-mgmt/repository_sync
+env:
+  ACTIVITY_DAYS_AGO: 7
+  FORCE_COLOR: 1
 
 jobs:
   generate-matrix:
@@ -44,7 +48,7 @@ jobs:
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
-  run-sync:
+  run-precommit:
     name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
     runs-on: ubuntu-latest
     environment: avm
@@ -55,11 +59,6 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
-        with:
-          repository: ${{ matrix.repoFullName }}
-
       - name: Create GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
@@ -67,14 +66,66 @@ jobs:
           app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.repoName }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Check for recent PR activity
+        id: check
+        run: |
+          # Check if there are any open PRs
+          PR_COUNT=$(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq 'length')
+          if [[ "$PR_COUNT" -eq 0 ]]; then
+            echo "No open PRs found, proceeding with pre-commit run."
+            echo "continue=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          INACTIVE_DAYS=${{ inputs.inactive_days != '' && inputs.inactive_days || env.ACTIVITY_DAYS_AGO }}
+
+          echo "Found $PR_COUNT open PR(s), checking for recent activity (checking last $INACTIVE_DAYS days)..."
+          # Read PR numbers into an array
+          readarray -t NOS < <(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq -r '.[].number')
+          for N in "${NOS[@]}"; do
+            LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
+            if [ -n "$LAST_COMMIT" ]; then
+              LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
+              DAYS_AGO_EPOCH=$(date -d "$INACTIVE_DAYS days ago" +%s)
+              if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
+                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has activity within the last $INACTIVE_DAYS days (last commit: $LAST_COMMIT)."
+                exit 0
+              fi
+            fi
+          done
+          echo "No recent PR activity found, proceeding with pre-commit run."
+          echo "continue=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ matrix.repoFullName }}
+
+      - name: Checkout repository
+        if: steps.check.outputs.continue
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
+        with:
+          repository: ${{ matrix.repoFullName }}
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+
 
       - name: Run pre-commit
+        if: steps.check.outputs.continue
         run: ./avm pre-commit
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Commit and push changes
+      - name: Commit, push, create PR and merge changes
+        if: steps.check.outputs.continue
         id: changes
         run: |
           # Check if there are ANY changes (including untracked files)
@@ -83,11 +134,19 @@ jobs:
             exit 0
           fi
 
-          git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
-          git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
+          # Configure git with the GitHub App identity
+          git config --global user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+          # Add and commit changes
+          git checkout -b pre-commit-${{ github.run_id }}
           git add .
           git commit -m "chore: pre-commit updates"
-          git push
+          git push --set-upstream origin pre-commit-${{ github.run_id }}
+
+          # Create a PR and merge it
+          PRURL=$(gh pr create --base main --head pre-commit-${{ github.run_id }} --title "chore: pre-commit updates" --body "This PR contains pre-commit updates.")
+          gh pr merge $PRURL --squash --admin --delete-branch
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}

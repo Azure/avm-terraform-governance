@@ -128,6 +128,7 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
 
   $repos += @{
     repoId              = $moduleName
+    repoName            = $installedRepository.name
     repoFullName        = $installedRepository.full_name
     repoUrl             = $installedRepository.html_url
     repoType            = "avm"
