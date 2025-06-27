@@ -25,6 +25,7 @@ permissions:
 
 env:
   ACTIVITY_DAYS_AGO: 7
+  FORCE_COLOR: 1
 
 jobs:
   generate-matrix:
