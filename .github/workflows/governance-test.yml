@@ -10,6 +10,7 @@ on:
       - container/**
       - porch-configs/**
       - grept-policies/**
+      - managed-files/root/**
       - mapotf-configs/**
       - Makefile
       - tflint-configs/**
