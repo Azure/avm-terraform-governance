@@ -19,6 +19,10 @@ commands:
       mapotf transform --mptf-dir "$MPTF_URL" --tf-dir .
 
   - type: shell
+    name: mapotf clean
+    command_line: mapotf clean-backup --tf-dir .
+
+  - type: shell
     name: Grept apply
     command_line: |
       if [ -z "$GREPT_URL" ]; then
@@ -50,10 +54,6 @@ commands:
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
-
-  - type: shell
-    name: mapotf clean
-    command_line: mapotf clean-backup --tf-dir .
 
   - type: parallel
     name: Generate docs

@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Clean up unmerged PRs that used to target PR head branch but now target main
         run: |
-          PULL_REQUESTS=$(gh pr list --base main --search "test: update examples" --json number)
+          PULL_REQUESTS=$(gh pr list --repo Azure/avm-terraform-governance --base main --search "test: update mock module" --json number)
           echo "$PULL_REQUESTS" | jq -r '.[] | .number' | xargs -I {} gh pr close {} --delete-branch --comment "Unmerged updates to mock modules closed as source PR is now merged."
 
         env:
