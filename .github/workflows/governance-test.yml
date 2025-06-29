@@ -33,6 +33,7 @@ concurrency:
 
 env:
   CONTAINER_IMAGE: avm:test
+  FORCE_COLOR: 1
 
 jobs:
   build-image:
