@@ -133,6 +133,11 @@ if (-not $env:AVM_IN_CONTAINER) {
     $dockerArgs += @("-e", "$($_.Name)=$($_.Value)")
   }
 
+  # Add AVM_ environment variables
+  Get-ChildItem env: | Where-Object { $_.Name -like "AVM_*" } | ForEach-Object {
+    $dockerArgs += @("-e", "$($_.Name)=$($_.Value)")
+  }
+
   $dockerArgs += $CONTAINER_IMAGE
   $dockerArgs += "make"
 
