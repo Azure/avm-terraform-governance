@@ -1,2 +1,1 @@
-@echo off
-.\avm.ps1 %1
+400: Invalid request
