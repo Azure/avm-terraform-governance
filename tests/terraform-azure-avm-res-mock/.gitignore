@@ -21,3 +21,4 @@ crash.*.log
 crash.log
 examples/*/policy
 terraform.rc
+.avm
