@@ -6,18 +6,20 @@ All of the workflows that we use have substitution variables that can be set to 
 
 | Variable Name | Description | Default Value |
 | ------------- | ----------- | ------------- |
+| AVM_CONFTEST_APRL_URL | The URL to the APRL Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2` |
+| AVM_CONFTEST_AVMSEC_URL | The URL to the AVMSEC Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/avmsec` |
+| AVM_CONFTEST_EXCEPTIONS_URL | The URL to the global Conftest exceptions file. | `https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak` |
+| AVM_CONTAINER_IMAGE | The container image to use in the `avm` script in the template repo. | `ghcr.io/azure/avm-terraform-governance:avm-latest` |
+| AVM_CONTAINER_PULL_POLICY | The pull policy for the container image. | `always` |
 | AVM_EXAMPLE | By default all examples are run with `test-examples`, set this to limit to a specific example. | undefined |
-| CONFTEST_APRL_URL | The URL to the APRL Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2` |
-| CONFTEST_AVMSEC_URL | The URL to the AVMSEC Conftest policies. | `git::https://github.com/Azure/policy-library-avm.git//policy/avmsec` |
-| CONFTEST_EXCEPTIONS_URL | The URL to the global Conftest exceptions file. | `https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak` |
-| CONTAINER_IMAGE | The container image to use in the `avm` script in the template repo. | `ghcr.io/azure/avm-terraform-governance:avm-latest` |
-| CONTAINER_PULL_POLICY | The pull policy for the container image. | `always` |
-| GREPT_URL | The URL to the Grept policies. | `git::https://github.com/Azure/avm-terraform-governance.git//grept-policies` |
-| MAKEFILE_REF | The git ref to use for the remote Makefile. | `main` |
-| MPTF_URL | The URL to the Map of TF configs. | `git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs` |
-| PORCH_BASE_URL | The base go-getter URL for the porch configs. | `git::https://github.com/Azure/avm-terraform-governance//porch-configs` |
-| PORCH_REF | The git ref to use for the porch configs. | `main` |
-| TFLINT_CONFIG_URL | The URL to the TFLint config files. | `https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs` |
+| AVM_GREPT_URL | The URL to the Grept policies. | `git::https://github.com/Azure/avm-terraform-governance.git//grept-policies` |
+| AVM_MAKEFILE_REF | The git ref to use for the remote Makefile. | `main` |
+| AVM_MPTF_URL | The URL to the Map of TF configs. | `git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs` |
+| AVM_PORCH_BASE_URL | The base go-getter URL for the porch configs. | `git::https://github.com/Azure/avm-terraform-governance//porch-configs` |
+| AVM_PORCH_REF | The git ref to use for the porch configs. | `main` |
+| AVM_TFLINT_CONFIG_URL | The URL to the TFLint config files. | `https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs` |
+
+The avm scripts will automatically add any `AVM_` environment variables to the container.
 
 ## Mock modules
 

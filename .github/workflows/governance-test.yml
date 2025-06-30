@@ -10,6 +10,7 @@ on:
       - container/**
       - porch-configs/**
       - grept-policies/**
+      - managed-files/root/**
       - mapotf-configs/**
       - Makefile
       - tflint-configs/**
@@ -26,6 +27,11 @@ on:
         required: false
         default: 'git::https://github.com/Azure/policy-library-avm.git//policy/avmsec?ref=main'
         type: string
+      conftest-exceptions-url:
+        description: The go-getter URL for the Azure AVM Exceptions policies.
+        required: false
+        default: 'https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak'
+        type: string
 
 concurrency:
   group: governance-test-${{ github.ref }}
@@ -33,6 +39,7 @@ concurrency:
 
 env:
   CONTAINER_IMAGE: avm:test
+  FORCE_COLOR: 1
 
 jobs:
   build-image:
@@ -169,17 +176,19 @@ jobs:
       - name: Set env vars
         run: |
           REF=$(git rev-parse HEAD)
-          echo "GREPT_URL=git::https://github.com/Azure/avm-terraform-governance.git//grept-policies?ref=${REF}" >> $GITHUB_ENV
-          echo "MAKEFILE_REF=${REF}" >> $GITHUB_ENV
-          echo "MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
-          echo "PORCH_REF=${REF}" >> $GITHUB_ENV
-          echo "TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
+          echo "AVM_GREPT_URL=git::https://github.com/Azure/avm-terraform-governance.git//grept-policies?ref=${REF}" >> $GITHUB_ENV
+          echo "AVM_MAKEFILE_REF=${REF}" >> $GITHUB_ENV
+          echo "AVM_MANAGED_FILES_REF=${REF}" >> $GITHUB_ENV
+          echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
+          echo "AVM_PORCH_REF=${REF}" >> $GITHUB_ENV
+          echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
 
       - name: Set conftest URLs (if workflow_dispatch)
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          echo "CONFTEST_APRL_URL=${{ github.event.inputs.conftest-aprl-url }}" >> $GITHUB_ENV
-          echo "CONFTEST_AVMSEC_URL=${{ github.event.inputs.conftest-avmsec-url }}" >> $GITHUB_ENV
+          echo "AVM_CONFTEST_APRL_URL=${{ github.event.inputs.conftest-aprl-url }}" >> $GITHUB_ENV
+          echo "AVM_CONFTEST_AVMSEC_URL=${{ github.event.inputs.conftest-avmsec-url }}" >> $GITHUB_ENV
+          echo "AVM_CONFTEST_EXCEPTIONS_URL=${{ github.event.inputs.conftest-exceptions-url }}" >> $GITHUB_ENV
 
       - name: Set OIDC env vars
         run: |

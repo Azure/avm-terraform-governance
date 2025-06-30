@@ -11,20 +11,24 @@ command_groups:
 
 commands:
   - type: shell
-    name: mapotf transform
-    command_line: |
-      if [ -z "$MPTF_URL" ]; then
-        MPTF_URL="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
-      fi
-      mapotf transform --mptf-dir "$MPTF_URL" --tf-dir .
-
-  - type: shell
     name: Grept apply
     command_line: |
-      if [ -z "$GREPT_URL" ]; then
-        GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
+      if [ -z "$AVM_GREPT_URL" ]; then
+        AVM_GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
       fi
-      grept apply -a "$GREPT_URL"
+      grept apply -a "$AVM_GREPT_URL"
+
+  - type: shell
+    name: mapotf transform
+    command_line: |
+      if [ -z "$AVM_MPTF_URL" ]; then
+        AVM_MPTF_URL="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
+      fi
+      mapotf transform --mptf-dir "$AVM_MPTF_URL" --tf-dir .
+
+  - type: shell
+    name: mapotf clean
+    command_line: mapotf clean-backup --tf-dir .
 
   - type: parallel
     name: avmfix
@@ -50,10 +54,6 @@ commands:
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         command_group: avmfix
-
-  - type: shell
-    name: mapotf clean
-    command_line: mapotf clean-backup --tf-dir .
 
   - type: parallel
     name: Generate docs

@@ -1,5 +1,6 @@
 locals {
   deprecated_files = toset([
+    ".github/actions/version-check/action.yml",
     ".github/policies/avmrequiredfiles.yml",
     ".github/workflows/e2e.yml",
     ".github/workflows/grept_cronjob.yml",

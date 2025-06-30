@@ -31,11 +31,11 @@ commands:
           - type: shell
             name: download configs
             command_line: |
-              if [ -z "$TFLINT_CONFIG_URL" ]; then
-                TFLINT_CONFIG_URL="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs"
+              if [ -z "$AVM_TFLINT_CONFIG_URL" ]; then
+                AVM_TFLINT_CONFIG_URL="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/tflint-configs"
               fi
               for file in avm.tflint.hcl avm.tflint_example.hcl avm.tflint_module.hcl; do
-                curl -H 'Cache-Control: no-cache, no-store' -sSL "$TFLINT_CONFIG_URL/$file" -o "./$file"
+                curl -H 'Cache-Control: no-cache, no-store' -sSL "$AVM_TFLINT_CONFIG_URL/$file" -o "./$file"
               done
 
           # tflint
@@ -129,10 +129,10 @@ commands:
           - type: shell
             name: Grept apply
             command_line: |
-              if [ -z "$GREPT_URL" ]; then
-                GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
+              if [ -z "$AVM_GREPT_URL" ]; then
+                AVM_GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
               fi
-              grept apply -a "$GREPT_URL"
+              grept apply -a "$AVM_GREPT_URL"
 
           - type: shell
             name: Check for grept changes
@@ -153,10 +153,10 @@ commands:
           - type: shell
             name: mapotf transform
             command_line: |
-              if [ -z "$MPTF_URL" ]; then
-                MPTF_URL="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
+              if [ -z "$AVM_MPTF_URL" ]; then
+                AVM_MPTF_URL="git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit"
               fi
-              mapotf transform --mptf-dir "$MPTF_URL" --tf-dir .
+              mapotf transform --mptf-dir "$AVM_MPTF_URL" --tf-dir .
 
             # mapotf
           - type: shell
@@ -267,12 +267,12 @@ commands:
           - type: shell
             name: download exemptions
             command_line: |
-              if [ -z "$CONFTEST_EXCEPTIONS_URL" ]; then
-                CONFTEST_EXCEPTIONS_URL="https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak"
+              if [ -z "$AVM_CONFTEST_EXCEPTIONS_URL" ]; then
+                AVM_CONFTEST_EXCEPTIONS_URL="https://raw.githubusercontent.com/Azure/policy-library-avm/main/policy/avmsec/avm_exceptions.rego.bak"
               fi
 
               mkdir -p ./policy/default_exceptions
-              curl -sS -o ./policy/default_exceptions/avmsec_exceptions.rego "$CONFTEST_EXCEPTIONS_URL"
+              curl -sS -o ./policy/default_exceptions/avmsec_exceptions.rego "$AVM_CONFTEST_EXCEPTIONS_URL"
 
           # conftest
           - type: shell
@@ -281,10 +281,10 @@ commands:
               if [ -d "exceptions" ]; then
                 export LOCALEXCEPTION="-p exceptions"
               fi
-              if [ -z "$CONFTEST_APRL_URL" ]; then
-                CONFTEST_APRL_URL="git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2"
+              if [ -z "$AVM_CONFTEST_APRL_URL" ]; then
+                AVM_CONFTEST_APRL_URL="git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2"
               fi
-              conftest test --all-namespaces --quiet --update "$CONFTEST_APRL_URL" -p policy/aprl -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
+              conftest test --all-namespaces --quiet --update "$AVM_CONFTEST_APRL_URL" -p policy/aprl -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
 
           # conftest
           - type: shell
@@ -293,7 +293,7 @@ commands:
               if [ -d "exceptions" ]; then
                 export LOCALEXCEPTION="-p exceptions"
               fi
-              if [ -z "$CONFTEST_AVMSEC_URL" ]; then
-                CONFTEST_AVMSEC_URL="git::https://github.com/Azure/policy-library-avm.git//policy/avmsec"
+              if [ -z "$AVM_CONFTEST_AVMSEC_URL" ]; then
+                AVM_CONFTEST_AVMSEC_URL="git::https://github.com/Azure/policy-library-avm.git//policy/avmsec"
               fi
-              conftest test --all-namespaces --quiet --update "$CONFTEST_AVMSEC_URL" -p policy/avmsec -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
+              conftest test --all-namespaces --quiet --update "$AVM_CONFTEST_AVMSEC_URL" -p policy/avmsec -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
