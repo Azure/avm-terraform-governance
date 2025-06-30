@@ -119,7 +119,7 @@ jobs:
 
       - name: Run pre-commit
         if: steps.check.outputs.continue
-        run: ./avm pre-commit
+        run: ./avm pre-commit || ./avm pre-commit
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
