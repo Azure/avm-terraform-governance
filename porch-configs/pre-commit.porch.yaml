@@ -11,6 +11,14 @@ command_groups:
 
 commands:
   - type: shell
+    name: Grept apply
+    command_line: |
+      if [ -z "$GREPT_URL" ]; then
+        GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
+      fi
+      grept apply -a "$GREPT_URL"
+
+  - type: shell
     name: mapotf transform
     command_line: |
       if [ -z "$MPTF_URL" ]; then
@@ -21,14 +29,6 @@ commands:
   - type: shell
     name: mapotf clean
     command_line: mapotf clean-backup --tf-dir .
-
-  - type: shell
-    name: Grept apply
-    command_line: |
-      if [ -z "$GREPT_URL" ]; then
-        GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
-      fi
-      grept apply -a "$GREPT_URL"
 
   - type: parallel
     name: avmfix
