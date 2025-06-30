@@ -17,7 +17,7 @@ data "http" "managed_files" {
   for_each = local.managed_files
 
   request_headers = merge({}, local.common_http_headers)
-  url             = "${local.url_prefix}${each.value}"
+  url             = "${local.managed_files_url_prefix}${each.value}"
 }
 
 rule "file_hash" "managed_files" {
