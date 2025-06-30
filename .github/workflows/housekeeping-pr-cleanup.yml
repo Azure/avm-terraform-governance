@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      contents: write
     steps:
       - name: Clean up unmerged PRs that used to target PR head branch but now target main
         run: |
