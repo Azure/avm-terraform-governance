@@ -123,6 +123,11 @@ jobs:
           scanners: vuln
         continue-on-error: true
 
+      - name: Annotate job
+        if: failure()
+        run: |
+          echo "## [error]Trivy found vulnerabilities in the image. Please review the scan results." >> $GITHUB_STEP_SUMMARY
+
   test-governance:
     runs-on: ubuntu-latest
     needs: build-image
