@@ -10,8 +10,8 @@ usage () {
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-"docker"}
 CONTAINER_IMAGE=${CONTAINER_IMAGE:-"mcr.microsoft.com/azterraform:avm-latest"}
 CONTAINER_PULL_POLICY=${CONTAINER_PULL_POLICY:-"always"}
-MAKEFILE_REF=${MAKEFILE_REF:-"main"}
-PORCH_REF=${PORCH_REF:-"main"}
+AVM_MAKEFILE_REF=${AVM_MAKEFILE_REF:-"main"}
+AVM_PORCH_REF=${AVM_PORCH_REF:-"main"}
 
 if [ ! "$(command -v "${CONTAINER_RUNTIME}")" ] && [ -z "${AVM_IN_CONTAINER}" ]; then
     echo "Error: ${CONTAINER_RUNTIME} is not installed. Please install ${CONTAINER_RUNTIME} first."
@@ -47,8 +47,6 @@ if [ -n "${AVM_PORCH_BASE_URL}" ]; then
   PORCH_BASE_URL_MAKE_ADD="PORCH_BASE_URL=${AVM_PORCH_BASE_URL}"
 fi
 
-
-
 # Check if we are running in a container
 # If we are then just run make directly
 if [ -z "${AVM_IN_CONTAINER}" ]; then
@@ -75,10 +73,10 @@ if [ -z "${AVM_IN_CONTAINER}" ]; then
     "${CONTAINER_IMAGE}" \
     make \
     TUI="${TUI}" \
-    MAKEFILE_REF="${MAKEFILE_REF}" \
+    AVM_MAKEFILE_REF="${AVM_MAKEFILE_REF}" \
     "${PORCH_BASE_URL_MAKE_ADD}" \
-    PORCH_REF="${PORCH_REF}" \
+    AVM_PORCH_REF="${AVM_PORCH_REF}" \
     "$1"
 else
-  make TUI="${TUI}" MAKEFILE_REF="${MAKEFILE_REF}" "${PORCH_BASE_URL_MAKE_ADD}" PORCH_REF="${AVM_PORCH_REF}" "$1"
+  make TUI="${TUI}" AVM_MAKEFILE_REF="${AVM_MAKEFILE_REF}" "${PORCH_BASE_URL_MAKE_ADD}" AVM_PORCH_REF="${AVM_PORCH_REF}" "$1"
 fi
