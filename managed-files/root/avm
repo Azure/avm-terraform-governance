@@ -17,6 +17,7 @@ if [ -z ${AVM_SCRIPT_FORKED} ]; then
   cp "$0" .avm
   chmod +x .avm
   ./.avm "$@"
+  exit $?
 fi
 
 # Default values for environment variables
