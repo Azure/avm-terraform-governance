@@ -23,7 +23,7 @@ locals {
     "examples/*/policy",
     "README-generated.md",
     "terraform.rc",
-    ".avm.sh",
+    ".avm",
   ])
 }
 
