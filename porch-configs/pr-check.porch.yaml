@@ -282,6 +282,14 @@ commands:
         skip_on_not_exist: true
         working_directory_strategy: "item_relative"
         commands:
+          - type: shell
+            name: run pre.sh if exists
+            command_line: |
+              if [ -f pre.sh ]; then
+                chmod +x pre.sh && \
+                ./pre.sh
+              fi
+
           # conftest
           - type: shell
             name: terraform init
@@ -331,3 +339,11 @@ commands:
                 AVM_CONFTEST_AVMSEC_URL="git::https://github.com/Azure/policy-library-avm.git//policy/avmsec"
               fi
               conftest test --all-namespaces --quiet --update "$AVM_CONFTEST_AVMSEC_URL" -p policy/avmsec -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
+
+          - type: shell
+            name: run post.sh if exists
+            command_line: |
+              if [ -f post.sh ]; then
+                chmod +x post.sh && \
+                ./post.sh
+              fi
