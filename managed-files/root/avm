@@ -13,6 +13,7 @@ if [ -z ${AVM_SCRIPT_FORKED} ]; then
   export AVM_SCRIPT_FORKED=true
 
   # Make a copy of this script in the current directory
+  # and run that copy.
   cp "$0" .avm
   chmod +x .avm
   .avm "$@"
