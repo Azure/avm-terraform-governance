@@ -42,10 +42,12 @@ if [ -z "${GITHUB_RUN_ID}" ] && [ -z "${NO_COLOR}" ]; then
   export FORCE_COLOR=1
 fi
 
-# if PORCH_BASE_URL is set, we want to add it to the make command
-if [ -n "${PORCH_BASE_URL}" ]; then
-  PORCH_BASE_URL_MAKE_ADD="PORCH_BASE_URL=${PORCH_BASE_URL}"
+# if AVM_PORCH_BASE_URL is set, we want to add it to the make command
+if [ -n "${AVM_PORCH_BASE_URL}" ]; then
+  PORCH_BASE_URL_MAKE_ADD="PORCH_BASE_URL=${AVM_PORCH_BASE_URL}"
 fi
+
+
 
 # Check if we are running in a container
 # If we are then just run make directly
@@ -63,20 +65,13 @@ if [ -z "${AVM_IN_CONTAINER}" ]; then
     -e ARM_SUBSCRIPTION_ID \
     -e ARM_TENANT_ID \
     -e ARM_USE_OIDC \
-    -e AVM_EXAMPLE \
-    -e CONFTEST_APRL_URL \
-    -e CONFTEST_AVMSEC_URL \
-    -e CONFTEST_EXCEPTIONS_URL \
     -e FORCE_COLOR \
     -e GITHUB_TOKEN \
-    -e GREPT_URL \
-    -e MPTF_URL \
     -e NO_COLOR \
     -e PORCH_LOG_LEVEL \
-    -e TEST_TYPE \
     -e TF_IN_AUTOMATION=1 \
-    -e TFLINT_CONFIG_URL \
     --env-file <(env | grep '^TF_VAR_') \
+    --env-file <(env | grep '^AVM_') \
     "${CONTAINER_IMAGE}" \
     make \
     TUI="${TUI}" \
@@ -85,5 +80,5 @@ if [ -z "${AVM_IN_CONTAINER}" ]; then
     PORCH_REF="${PORCH_REF}" \
     "$1"
 else
-  make TUI="${TUI}" MAKEFILE_REF="${MAKEFILE_REF}" "${PORCH_BASE_URL_MAKE_ADD}" PORCH_REF="${PORCH_REF}" "$1"
+  make TUI="${TUI}" MAKEFILE_REF="${MAKEFILE_REF}" "${PORCH_BASE_URL_MAKE_ADD}" PORCH_REF="${AVM_PORCH_REF}" "$1"
 fi
