@@ -36,7 +36,7 @@ resource "github_repository_ruleset" "main" {
   }
 }
 
-resource "github_repository_ruleset" "tag_deny_version_without_v" {
+resource "github_repository_ruleset" "tag_deny_non_v" {
   name        = "No version tags without 'v' prefix"
   repository  = data.github_repository.this.name
   target      = "tag"
@@ -45,13 +45,12 @@ resource "github_repository_ruleset" "tag_deny_version_without_v" {
   rules {
     creation = true
     update   = true
-    deletion = true
   }
 
   conditions {
     ref_name {
-      include = ["refs/tags/[0-9]*"]
-      exclude = []
+      include = ["~ALL"]
+      exclude = ["refs/tags/v[0-9]*.[0-9]*.[0-9]*"]
     }
   }
 }
@@ -71,7 +70,7 @@ resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
 
   conditions {
     ref_name {
-      include = ["refs/tags/v[0-9]+.[0-9]+.[0-9]+*"]
+      include = ["refs/tags/v[0-9]*.[0-9]*.[0-9]*"]
       exclude = []
     }
   }
