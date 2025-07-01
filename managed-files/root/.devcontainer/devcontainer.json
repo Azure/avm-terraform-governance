@@ -1,5 +1,5 @@
 {
-  "image": "mcr.microsoft.com/public/azterraform:avm-latest",
+  "image": "mcr.microsoft.com/azterraform:avm-latest",
   "updateRemoteUserUID": true,
   "containerUser": "1000",
   "runArgs": [],
