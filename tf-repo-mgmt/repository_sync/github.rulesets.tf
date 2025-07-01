@@ -35,3 +35,43 @@ resource "github_repository_ruleset" "main" {
     }
   }
 }
+
+resource "github_repository_ruleset" "tag_deny_non_v" {
+  name        = "Only allow v tags"
+  repository  = data.github_repository.this.name
+  target      = "tag"
+  enforcement = "active"
+
+  rules {
+    creation = true
+    update   = true
+  }
+
+  conditions {
+    ref_name {
+      include = ["~ALL"]
+      exclude = ["refs/tags/v[0-9]*.[0-9]*.[0-9]*"]
+    }
+  }
+}
+
+resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
+  name        = "Must not delete/update version tags"
+  repository  = data.github_repository.this.name
+  target      = "tag"
+  enforcement = "active"
+
+  rules {
+    update           = true
+    deletion         = true
+    non_fast_forward = true
+  }
+
+
+  conditions {
+    ref_name {
+      include = ["refs/tags/v[0-9]*.[0-9]*.[0-9]*"]
+      exclude = []
+    }
+  }
+}
