@@ -37,7 +37,7 @@ resource "github_repository_ruleset" "main" {
 }
 
 resource "github_repository_ruleset" "tag_deny_non_v" {
-  name        = "No version tags without 'v' prefix"
+  name        = "Only allow v tags"
   repository  = data.github_repository.this.name
   target      = "tag"
   enforcement = "active"
