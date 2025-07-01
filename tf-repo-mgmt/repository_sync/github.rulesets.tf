@@ -45,11 +45,12 @@ resource "github_repository_ruleset" "tag_deny_version_without_v" {
   rules {
     creation = true
     update   = true
+    deletion = true
   }
 
   conditions {
     ref_name {
-      include = ["refs/tags/[0123456789]*"]
+      include = ["refs/tags/[0-9]*"]
       exclude = []
     }
   }
@@ -70,7 +71,7 @@ resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
 
   conditions {
     ref_name {
-      include = ["refs/tags/v[0123456789]*"]
+      include = ["refs/tags/v[0-9]+.[0-9]+.[0-9]+*"]
       exclude = []
     }
   }
