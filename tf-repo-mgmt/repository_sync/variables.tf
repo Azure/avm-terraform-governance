@@ -65,7 +65,7 @@ variable "location" {
 variable "github_labels_source_path" {
   type        = string
   description = "Source csv for labels."
-  default     = "./temp/labels.csv"
+  default     = "../temp/labels.csv"
 }
 
 variable "is_protected_repo" {
