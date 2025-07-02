@@ -139,7 +139,7 @@ terraform `
     plan `
     -out="$($repoId).tfplan"
 
-$plan = $(terraform show -json "$($repoId).tfplan") | ConvertFrom-Json
+$plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
 
     $hasDestroy = $false
     foreach($resource in $plan.resource_changes) {
