@@ -19,12 +19,6 @@ variable "github_repository_name" {
   description = "Name of the GitHub repository."
 }
 
-variable "module_provider" {
-  type        = string
-  description = "Terraform Provider of the AVM (e.g. azurerm or azapi)"
-  default     = "azurerm"
-}
-
 variable "module_id" {
   type        = string
   description = "ID of the AVM (e.g. avm-ptn-alz-managment)"

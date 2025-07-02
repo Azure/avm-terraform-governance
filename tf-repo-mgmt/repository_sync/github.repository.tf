@@ -1,12 +1,16 @@
 locals {
-  github_repository_name        = "terraform-${var.module_provider}-${var.module_id}"
   module_type                   = split("-", var.module_id)[1]
   module_type_name              = local.module_type == "res" ? "Resource" : (local.module_type == "ptn" ? "Pattern" : "Utility")
   github_repository_description = "Terraform Azure Verified ${local.module_type_name} Module for ${var.module_name}"
 }
 
+import {
+  id = var.github_repository_name
+  to = github_repository.this
+}
+
 resource "github_repository" "this" {
-  name        = local.github_repository_name
+  name        = var.github_repository_name
   description = local.github_repository_description
   auto_init   = false
 
