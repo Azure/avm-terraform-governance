@@ -14,6 +14,6 @@ locals {
 resource "github_team_repository" "this" {
   for_each   = local.repository_teams
   team_id    = each.value.id
-  repository = data.github_repository.this.name
+  repository = github_repository.this.name
   permission = each.value.permission
 }

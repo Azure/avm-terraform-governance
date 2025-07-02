@@ -9,21 +9,21 @@ resource "github_repository_environment" "this" {
 }
 
 resource "github_actions_environment_secret" "tenant_id" {
-  repository      = data.github_repository.this.name
+  repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_TENANT_ID"
   plaintext_value = data.azapi_client_config.current.tenant_id
 }
 
 resource "github_actions_environment_secret" "subscription_id" {
-  repository      = data.github_repository.this.name
+  repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_SUBSCRIPTION_ID"
   plaintext_value = var.target_subscription_id
 }
 
 resource "github_actions_environment_secret" "client_id" {
-  repository      = data.github_repository.this.name
+  repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_CLIENT_ID"
   plaintext_value = azapi_resource.identity.output.properties.clientId
@@ -34,5 +34,5 @@ resource "github_actions_environment_secret" "client_id" {
 # all jobs must be run in an environment whether they need authentication or not.
 resource "github_repository_environment" "dummy_no_approval" {
   environment = var.github_repository_no_approval_environment_name
-  repository  = data.github_repository.this.name
+  repository  = github_repository.this.name
 }

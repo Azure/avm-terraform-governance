@@ -116,7 +116,6 @@ foreach($team in $teams) {
 $terraformVariables = @{
     github_repository_owner = $orgName
     github_repository_name = $repoName
-    module_provider = $moduleProvider
     module_id = $repoId
     module_name = $moduleName
     target_subscription_id = $targetSubscriptionId

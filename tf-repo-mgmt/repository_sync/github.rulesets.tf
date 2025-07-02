@@ -1,6 +1,6 @@
 resource "github_repository_ruleset" "main" {
   name        = "Azure Verified Modules"
-  repository  = data.github_repository.this.name
+  repository  = github_repository.this.name
   target      = "branch"
   enforcement = "active"
 
@@ -38,7 +38,7 @@ resource "github_repository_ruleset" "main" {
 
 resource "github_repository_ruleset" "tag_deny_non_v" {
   name        = "Only allow v tags"
-  repository  = data.github_repository.this.name
+  repository  = github_repository.this.name
   target      = "tag"
   enforcement = "active"
 
@@ -57,7 +57,7 @@ resource "github_repository_ruleset" "tag_deny_non_v" {
 
 resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
   name        = "Must not delete/update version tags"
-  repository  = data.github_repository.this.name
+  repository  = github_repository.this.name
   target      = "tag"
   enforcement = "active"
 
