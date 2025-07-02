@@ -77,10 +77,6 @@ foreach($repositoryGroupName in $repositoryGroupNames) {
 }
 
 Write-Host "Checking $($repoId)"
-if(Test-Path "imports.tf") {
-    Remove-Item "imports.tf" -Force
-}
-
 if(Test-Path ".terraform") {
     Remove-Item ".terraform" -Recurse -Force
 }
@@ -97,16 +93,6 @@ $orgAndRepoName = "$orgName/$repoName"
 Write-Host "<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
 Write-Host "<--->" -ForegroundColor Green
-
-    $import = @"
-import {
-to = github_repository.this
-id = "$repoName"
-}
-
-"@
-
-Add-Content -Path "imports.tf" -Value $import
 
 $githubTeams = @{}
 
