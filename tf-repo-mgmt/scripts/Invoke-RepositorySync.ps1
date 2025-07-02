@@ -20,7 +20,8 @@ param(
     [string]$repoSubType,
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
-    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv"
+    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
+    [string]$terraformModulePath = "./repository_sync"
 )
 
 Write-Host "Running repo sync script"
@@ -76,13 +77,13 @@ foreach($repositoryGroupName in $repositoryGroupNames) {
     }
 }
 
-Write-Host "Checking $($repoId)"
-if(Test-Path ".terraform") {
-    Remove-Item ".terraform" -Recurse -Force
+Write-Host "$([Environment]::NewLine)Checking $($repoId)"
+if(Test-Path "$terraformModulePath/.terraform") {
+    Remove-Item "$terraformModulePath/.terraform" -Recurse -Force
 }
 
-if(Test-Path "terraform.tfvars.json") {
-    Remove-Item "terraform.tfvars.json" -Force
+if(Test-Path "$terraformModulePath/terraform.tfvars.json") {
+    Remove-Item"$terraformModulePath/terraform.tfvars.json" -Force
 }
 
 $repoSplit = $repoUrl.Split("/")
@@ -90,9 +91,9 @@ $orgName = $repoSplit[3]
 $repoName = $repoSplit[4]
 $orgAndRepoName = "$orgName/$repoName"
 
-Write-Host "<--->" -ForegroundColor Green
+Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
-Write-Host "<--->" -ForegroundColor Green
+Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
 $githubTeams = @{}
 
@@ -103,6 +104,7 @@ foreach($team in $teams) {
         Write-Warning "Team does not exist: $($teamName)"
         $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-missing" -message "Team $teamName does not exist." -data $teamName -issueLog $issueLog
     } else {
+        Write-Host "Team exists: $($teamName)"
         $githubTeams[$teamName] = @{
             slug        = $teamName
             repository_access_permission = $team.repositoryPermission
@@ -123,10 +125,10 @@ $terraformVariables = @{
     github_teams = $githubTeams
 }
 
-$terraformVariables | ConvertTo-Json -Depth 100 | Out-File "terraform.tfvars.json"
+$terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
 
 terraform `
-    -chdir="./repository_sync" `
+    -chdir="$terraformModulePath" `
     init `
     -backend-config="resource_group_name=$stateResourceGroupName" `
     -backend-config="storage_account_name=$stateStorageAccountName" `
@@ -134,7 +136,7 @@ terraform `
     -backend-config="key=$($repoId).tfstate"
 
 terraform `
-    -chdir="./repository_sync" `
+    -chdir="$terraformModulePath" `
     plan `
     -out="$($repoId).tfplan"
 
@@ -160,7 +162,7 @@ if(!$planOnly -and $plan.errored) {
 
 if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
     terraform `
-        -chdir="./repository_sync" `
+        -chdir="$terraformModulePath" `
         apply "$($repoId).tfplan"
 }
 
