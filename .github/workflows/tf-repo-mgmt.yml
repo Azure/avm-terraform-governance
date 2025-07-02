@@ -96,7 +96,7 @@ jobs:
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
           Write-Host "Running repo sync"
-          ../scripts/Invoke-RepositorySync.ps1 `
+          ./scripts/Invoke-RepositorySync.ps1 `
             -planOnly $planOnly `
             -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
             -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
