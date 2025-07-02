@@ -1,0 +1,6 @@
+# Set the line ending to lf for text files
+# Ignores binary files
+*     text=auto eol=lf
+
+# Set the line ending to crlf for specific text files
+*.csv text eol=crlf
