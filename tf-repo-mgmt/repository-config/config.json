@@ -1,0 +1,86 @@
+{
+  "repositoryGroups": [
+    {
+      "name": "azure-landing-zones",
+      "repositories": [
+        "avm-ptn-alz",
+        "avm-ptn-alz-management",
+        "avm-ptn-alz-connectivity-hub-and-spoke-vnet",
+        "avm-ptn-alz-connectivity-virtual-wan",
+        "avm-ptn-hubnetworking",
+        "avm-ptn-virtualwan",
+        "avm-ptn-vnetgateway",
+        "avm-ptn-network-private-link-private-dns-zones",
+        "avm-res-resources-resourcegroup",
+        "avm-ptn-monitoring-amba-alz",
+        "avm-res-portal-dashboard",
+        "avm-res-network-firewallpolicy",
+        "avm-res-network-publicipaddress",
+        "avm-res-network-ddosprotectionplan",
+        "avm-res-network-networksecuritygroup",
+        "avm-res-network-bastionhost",
+        "avm-res-network-virtualnetwork",
+        "avm-res-network-privatednszone"
+      ],
+      "protected": true
+    }
+  ],
+  "teamMappings": [
+    {
+      "name": "avm-core-team-technical-terraform",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "maintain",
+      "environmentApproval": true
+    },
+    {
+      "name": "{{repoId}}-module-owners-tf",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "maintain",
+      "environmentApproval": true
+    },
+    {
+      "name": "{{repoId}}-module-contributors-tf",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "alz-accelerator-contributors-external",
+      "repositoryGroups": [
+        "azure-landing-zones"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "alz-core-team",
+      "repositoryGroups": [
+        "azure-landing-zones"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false
+    },
+    {
+      "name": "alz-core-team-technical",
+      "repositoryGroups": [
+        "azure-landing-zones"
+      ],
+      "repositoryPermission": "maintain",
+      "environmentApproval": true
+    },
+    {
+      "name": "alz-non-core-team-contributors-terraform",
+      "repositoryGroups": [
+        "azure-landing-zones"
+      ],
+      "repositoryPermission": "maintain",
+      "environmentApproval": true
+    }
+  ]
+}

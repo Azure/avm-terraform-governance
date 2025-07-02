@@ -47,22 +47,6 @@ variable "github_repository_no_approval_environment_name" {
   default     = "empty-no-approval"
 }
 
-variable "github_core_team_name" {
-  type        = string
-  description = "Name of the GitHub core team."
-  default     = "avm-core-team-technical-terraform"
-}
-
-variable "github_owner_team_name" {
-  type        = string
-  description = "Name of the GitHub owner team."
-}
-
-variable "github_contributor_team_name" {
-  type        = string
-  description = "Name of the GitHub owner team."
-}
-
 variable "github_teams" {
   type = map(object({
     slug        = string
