@@ -5,7 +5,7 @@ resource "github_repository_ruleset" "main" {
   enforcement = "active"
 
   dynamic "bypass_actors" {
-    for_each = contains(local.preview_ruleset_bypass_for_app_repos, data.github_repository.this.name) ? [1] : []
+    for_each = contains(local.preview_ruleset_bypass_for_app_repos, github_repository.this.name) ? [1] : []
     content {
       actor_id    = local.github_avm_app_id
       actor_type  = "Integration"
