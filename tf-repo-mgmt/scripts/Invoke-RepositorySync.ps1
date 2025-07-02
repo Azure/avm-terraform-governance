@@ -19,7 +19,8 @@ param(
     [string]$repoType,
     [string]$repoSubType,
     [string]$outputDirectory = ".",
-    [string]$repoConfigFilePath = "../repository-config/config.json"
+    [string]$repoConfigFilePath = "./repository-config/config.json",
+    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv"
 )
 
 Write-Host "Running repo sync script"
@@ -54,6 +55,10 @@ $env:ARM_USE_AZUREAD = "true"
 $issueLog = @()
 
 $repoId = "avm-res-network-virtualnetwork"
+
+$repositoryMetaDate = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
+
+$moduleName = $repositoryMetaDate | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleName
 
 $respositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $repositoryGroups = $respositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
@@ -123,8 +128,9 @@ foreach($team in $teams) {
 $terraformVariables = @{
     github_repository_owner = $orgName
     github_repository_name = $repoName
-    github_owner_team_name = $githubTeams["@Azure/$($repoId)-module-owners-tf"].slug
-    github_contributor_team_name = $githubTeams["@Azure/$($repoId)-module-contributors-tf"].slug
+    module_provider = $moduleProvider
+    module_id = $repoId
+    module_name = $moduleName
     target_subscription_id = $targetSubscriptionId
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $isProtected
@@ -133,13 +139,17 @@ $terraformVariables = @{
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "terraform.tfvars.json"
 
-terraform init `
+terraform `
+    -chdir="./repository_sync" `
+    init `
     -backend-config="resource_group_name=$stateResourceGroupName" `
     -backend-config="storage_account_name=$stateStorageAccountName" `
     -backend-config="container_name=$stateContainerName" `
     -backend-config="key=$($repoId).tfstate"
 
-terraform plan `
+terraform `
+    -chdir="./repository_sync" `
+    plan `
     -out="$($repoId).tfplan"
 
 $plan = $(terraform show -json "$($repoId).tfplan") | ConvertFrom-Json
@@ -163,7 +173,9 @@ if(!$planOnly -and $plan.errored) {
 }
 
 if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
-    terraform apply "$($repoId).tfplan"
+    terraform `
+        -chdir="./repository_sync" `
+        apply "$($repoId).tfplan"
 }
 
 
