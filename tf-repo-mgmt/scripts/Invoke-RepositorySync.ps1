@@ -58,7 +58,7 @@ $repoId = "avm-res-network-virtualnetwork"
 
 $repositoryMetaDate = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
 
-$moduleName = $repositoryMetaDate | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleName
+$moduleName = $repositoryMetaDate | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
 
 $respositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $repositoryGroups = $respositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
