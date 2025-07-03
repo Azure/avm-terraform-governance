@@ -10,10 +10,10 @@ import {
 }
 
 resource "github_repository" "this" {
-  name        = var.github_repository_name
-  description = local.github_repository_description
+  name               = var.github_repository_name
+  description        = local.github_repository_description
   archive_on_destroy = true
-  auto_init   = false
+  auto_init          = false
 
   visibility   = "public"
   homepage_url = "https://registry.terraform.io/modules/Azure/${var.module_id}"

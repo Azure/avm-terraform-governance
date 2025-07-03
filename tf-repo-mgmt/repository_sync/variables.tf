@@ -43,9 +43,9 @@ variable "github_repository_no_approval_environment_name" {
 
 variable "github_teams" {
   type = map(object({
-    slug        = string
+    slug                         = string
     repository_access_permission = optional(string, "none")
-    environment_approval = optional(bool, false)
+    environment_approval         = optional(bool, false)
   }))
   description = <<DESCRIPTION
 Map of GitHub teams to be created or managed.
