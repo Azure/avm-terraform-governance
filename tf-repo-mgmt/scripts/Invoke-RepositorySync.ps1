@@ -58,14 +58,12 @@ $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
 
-$repoId = "avm-res-network-virtualnetwork"
-
 $repositoryMetaDate = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
 
 $moduleName = $repositoryMetaDate | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
 
-$respositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
-$repositoryGroups = $respositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
+$repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
+$repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
 
 $isProtected = ($repositoryGroups | Where-Object { $_.protected -eq $true }).Length -gt 0
 $repositoryGroupNames = @($repositoryGroups | ForEach-Object { $_.name })
@@ -74,7 +72,7 @@ $repositoryGroupNames += "all"
 $teams = @()
 
 foreach($repositoryGroupName in $repositoryGroupNames) {
-    $teamMappings = $respositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
+    $teamMappings = $repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
     if($teamMappings.Count -gt 0) {
         $teams += $teamMappings
     }
