@@ -143,7 +143,7 @@ $plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan"
 
 $hasDestroy = $false
 foreach($resource in $plan.resource_changes) {
-    if($resource.change.actions -contains "destroy") {
+    if($resource.change.actions -contains "delete") {
         Write-Warning "Planning to destroy: $($resource.address)"
         $hasDestroy = $true
     }
