@@ -16,7 +16,7 @@ locals {
   # of the GitHub Actions OIDC subject claim customization feature.
   gh_actions_job_workflow_ref_claim_suffix = contains(
     local.preview_gh_actions_oidc_subject_claim_customization_repos,
-    data.github_repository.this.name,
+    github_repository.this.name,
   ) ? ":job_workflow_ref:Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main" : ""
 
 }

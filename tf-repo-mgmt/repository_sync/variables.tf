@@ -19,6 +19,16 @@ variable "github_repository_name" {
   description = "Name of the GitHub repository."
 }
 
+variable "module_id" {
+  type        = string
+  description = "ID of the AVM (e.g. avm-ptn-alz-managment)"
+}
+
+variable "module_name" {
+  type        = string
+  description = "Description of the AVM (e.g. Azure Landing Zones Management Resources)"
+}
+
 variable "github_repository_environment_name" {
   type        = string
   description = "Name of the environment used to store secrets for the test environment."
@@ -31,20 +41,19 @@ variable "github_repository_no_approval_environment_name" {
   default     = "empty-no-approval"
 }
 
-variable "github_core_team_name" {
-  type        = string
-  description = "Name of the GitHub core team."
-  default     = "avm-core-team-technical-terraform"
-}
+variable "github_teams" {
+  type = map(object({
+    slug                         = string
+    repository_access_permission = optional(string, "none")
+    environment_approval         = optional(bool, false)
+  }))
+  description = <<DESCRIPTION
+Map of GitHub teams to be created or managed.
 
-variable "github_owner_team_name" {
-  type        = string
-  description = "Name of the GitHub owner team."
-}
-
-variable "github_contributor_team_name" {
-  type        = string
-  description = "Name of the GitHub owner team."
+- `slug`: The slug of the team.
+- `repository_access_level`: The access level for the team on the repository, can be `push` or `maintain` (default is "none").
+- `environment_approval`: Whether the team is an approver for the environment (default is false)
+DESCRIPTION
 }
 
 variable "location" {
@@ -53,16 +62,10 @@ variable "location" {
   default     = "eastus2"
 }
 
-variable "manage_github_environment" {
-  type        = bool
-  description = "Whether to manage the environment."
-  default     = false
-}
-
 variable "github_labels_source_path" {
   type        = string
   description = "Source csv for labels."
-  default     = "./temp/labels.csv"
+  default     = "../temp/labels.csv"
 }
 
 variable "is_protected_repo" {
