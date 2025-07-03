@@ -12,6 +12,7 @@ import {
 resource "github_repository" "this" {
   name        = var.github_repository_name
   description = local.github_repository_description
+  archive_on_destroy = true
   auto_init   = false
 
   visibility   = "public"
@@ -43,6 +44,8 @@ resource "github_repository" "this" {
       status = "enabled"
     }
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
-
-
