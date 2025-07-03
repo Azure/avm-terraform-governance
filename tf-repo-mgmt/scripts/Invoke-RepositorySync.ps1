@@ -21,7 +21,10 @@ param(
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
-    [string]$terraformModulePath = "./repository_sync"
+    [string]$terraformModulePath = "./repository_sync",
+    [string[]]$resourceTypesThatCannotBeDestroyed = @(
+        "github_repository"
+    )
 )
 
 Write-Host "Running repo sync script"
@@ -141,13 +144,17 @@ terraform `
 
 $plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
 
-    $hasDestroy = $false
-    foreach($resource in $plan.resource_changes) {
-        if($resource.change.actions -contains "delete") {
-            Write-Warning "Planning to destroy: $($resource.address)"
+$hasDestroy = $false
+foreach($resource in $plan.resource_changes) {
+    if($resource.change.actions -contains "delete") {
+        if($resourceTypesThatCannotBeDestroyed -contains $resource.type) {
+            Write-Warning "Planning to destroy: $($resource.address). Resource type: $($resource.type) cannot be destroyed, so skipping the apply."
             $hasDestroy = $true
+        } else {
+            Write-Host "Planning to destroy: $($resource.address). Resource type: $($resource.type) can be destroyed, so allowing the apply to continue."
         }
     }
+}
 
 if($hasDestroy) {
     Write-Warning "Skipping: $orgAndRepoName as it has at least one destroy actions."
