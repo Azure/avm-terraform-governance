@@ -2,6 +2,7 @@
 name: Repository Sync
 
 on:
+  repository_dispatch:
   workflow_dispatch:
     inputs:
       repositories:
@@ -13,7 +14,7 @@ on:
         default: true
         type: boolean
   schedule:
-    - cron: '0 0,4,8,12,16,20 * * *'
+    - cron: '30 15 * * 1-5'
 
 permissions:
   id-token: write
