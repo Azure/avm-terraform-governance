@@ -4,7 +4,7 @@ param (
     [string]$branchName = "chore-update-repo-sync", #"main",
     [string]$workflowFileName = "tf-repo-mgmt.yml",
     [hashtable]$inputs = @{
-        repositories = "avm-ptn-example-repo"
+        repositories = "avm-utl-naming"
         plan_only = $false
     },
     [int]$maximumRetries = 1,
