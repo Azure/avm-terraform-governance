@@ -133,7 +133,7 @@ foreach($team in $teams) {
 }
 
 $terraformVariables = @{
-    repository_creation_mode_enabled = $repositoryCreationModeEnabled
+    repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent
     github_repository_owner = $orgName
     github_repository_name = $repoName
     module_id = $repoId
