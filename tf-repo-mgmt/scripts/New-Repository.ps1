@@ -150,7 +150,7 @@ if($ownerPrimaryGitHubHandle -ne "") {
 $issueComment = @"
 $($ownerMention)The module repository has now been created. You can find it at $repositoryUrl.
 
-The final step of repository configuration is still in progress, but you will be able to start developing your code immediately by elevating with JIT in the open source portal.
+The final step of repository configuration is still in progress, but you will be able to start developing your code immediately.
 
 The final step is to create the environment and credentials require to run the end to end tests. If the environment called ``test`` is not available in 48 hours, please let me know.
 
