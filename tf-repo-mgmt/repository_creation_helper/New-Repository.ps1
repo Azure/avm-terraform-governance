@@ -156,7 +156,7 @@ if($ownerPrimaryGitHubHandle -ne "") {
 $issueComment = @"
 $($ownerMention)The module repository has now been created. You can find it at https://github.com/Azure/$repositoryName.
 
-The final step of repository configuration is still in progress, but you will be able to start developing your code immediately.
+The final step of repository configuration is still in progress, but you will be able to start developing your code immediately by elevating with JIT in the open source portal.
 
 The final step is to create the environment and credentials require to run the end to end tests. If the environment called ``test`` is not available in 48 hours, please let me know.
 
@@ -169,3 +169,15 @@ Write-Host $issueComment
 Write-Host ""
 Write-Host ""
 Write-Host "All done, thanks!" -ForegroundColor Green
+Write-Host ""
+Write-Host "Note that the repo sync happens once a day at 15:30 UTC. It will only run for this repository once the GitHub App has been installed in it." -ForegroundColor Yellow
+Write-Host "Should you wish to run the sync sooner, you can do so by running the following command once the open source team confirm the app has been installed:" -ForegroundColor Yellow
+$workflowDispatchScript = @"
+../scripts/Invoke-WorkflowDispatch.ps1 ``
+  -inputs @{
+    repositories = "$moduleName"
+    plan_only = `$false
+  }
+"@
+
+Write-Host $workflowDispatchScript -ForegroundColor Yellow

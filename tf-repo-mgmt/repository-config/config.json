@@ -32,7 +32,9 @@
         "all"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": true
     },
     {
       "name": "{{repoId}}-module-owners-tf",
@@ -40,7 +42,9 @@
         "all"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": true,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "{{repoId}}-module-contributors-tf",
@@ -48,7 +52,9 @@
         "all"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": true,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-accelerator-contributors-external",
@@ -56,7 +62,9 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-core-team",
@@ -64,7 +72,9 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "triage",
-      "environmentApproval": false
+      "environmentApproval": false,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": true
     },
     {
       "name": "alz-core-team-technical",
@@ -72,7 +82,9 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": true
     },
     {
       "name": "alz-non-core-team-contributors-terraform",
@@ -80,7 +92,9 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": false
     }
   ]
 }

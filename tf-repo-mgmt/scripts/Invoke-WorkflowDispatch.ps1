@@ -1,7 +1,7 @@
 param (
     [string]$organizationName = "Azure",
     [string]$repositoryName = "avm-terraform-governance",
-    [string]$branchName = "chore-update-repo-sync",
+    [string]$branchName = "main",
     [string]$workflowFileName = "tf-repo-mgmt.yml",
     [hashtable]$inputs = @{
         repositories = "avm-ptn-example-repo"
@@ -40,46 +40,46 @@ function Invoke-Workflow {
         $arguments += "$key=$value"
     }
 
-    $result = (& $command $arguments)
+    & $command $arguments
+    Start-Sleep -Seconds 5
 }
 
 function Wait-ForWorkflowRunToComplete {
     param (
         [string]$organizationName,
         [string]$repositoryName,
-        [hashtable]$headers
+        [string]$branchName = "main",
+        [string]$workflowName
     )
 
-    $workflowRunUrl = "https://api.github.com/repos/$organizationName/$repositoryName/actions/runs"
-    Write-Host "Workflow Run URL: $workflowRunUrl"
+    $user = (gh api user | ConvertFrom-Json).login
 
-    $workflowRun = $null
-    $workflowRunStatus = ""
-    $workflowRunConclusion = ""
-    while($workflowRunStatus -ne "completed") {
-        Start-Sleep -Seconds 10
+    $command = "gh"
 
-        $workflowRun = Invoke-RestMethod -Method GET -Uri $workflowRunUrl -Headers $headers -StatusCodeVariable statusCode
-        if ($statusCode -lt 300) {
-            $workflowRunStatus = $workflowRun.workflow_runs[0].status
-            $workflowRunConclusion = $workflowRun.workflow_runs[0].conclusion
-            Write-Host "Workflow Run Status: $workflowRunStatus - Conclusion: $workflowRunConclusion"
-        } else {
-            Write-Host "Failed to find the workflow run. Status Code: $statusCode"
-            throw "Failed to find the workflow run."
-        }
+    $arguments = @(
+        "run",
+        "ls",
+        "--workflow", $workflowName,
+        "--event", "workflow_dispatch",
+        "--repo", "$organizationName/$repositoryName",
+        "--branch", $branchName,
+        "--json", "databaseId",
+        "--limit", "1",
+        "--user", $user
+    )
+
+    $workflowRun = (& $command $arguments) | ConvertFrom-Json
+    $workflowRunId = $workflowRun.databaseId
+
+    Write-Host "Workflow Run ID: $workflowRunId"
+
+    gh run watch $workflowRunId --repo "$organizationName/$repositoryName"
+
+    $result = gh run view $workflowRunId --json conclusion,status | ConvertFrom-Json
+
+    if($result.conclusion -ne "success") {
+        throw "The workflow run did not complete successfully. Conclusion: $($result.conclusion), Status: $($result.status)"
     }
-
-    if($workflowRunConclusion -ne "success") {
-        throw "The workflow run did not complete successfully. Conclusion: $workflowRunConclusion"
-    }
-}
-
-# Setup Variables
-$token = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(":$personalAccessToken"))
-$headers = @{
-    "Authorization" = "Basic $token"
-    "Accept" = "application/vnd.github+json"
 }
 
 # Run the Module in a retry loop
@@ -100,7 +100,11 @@ try {
 
     # Wait for the apply workflow to complete
     Write-Host "Waiting for the $workflowAction workflow to complete"
-    Wait-ForWorkflowRunToComplete -organizationName $organizationName -repositoryName $repositoryName -headers $headers
+    Wait-ForWorkflowRunToComplete `
+        -organizationName $organizationName `
+        -repositoryName $repositoryName `
+        -branchName $branchName `
+        -workflowName $workflowFileName
     Write-Host "$workflowAction workflow completed successfully"
 
     $success = $true
