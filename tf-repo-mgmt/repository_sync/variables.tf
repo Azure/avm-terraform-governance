@@ -115,3 +115,9 @@ variable "github_avm_app_id" {
   description = "The GitHub App ID for the AVM."
   default     = "1049636"
 }
+
+variable "module_owner_github_handles" {
+  type = map(string)
+  description = "Map of module owner GitHub handles."
+  default = {}
+}

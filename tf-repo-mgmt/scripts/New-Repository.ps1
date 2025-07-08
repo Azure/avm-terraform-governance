@@ -15,7 +15,8 @@ param (
   [switch]$metaDataOnly,
   [switch]$skipRepoCreation,
   [switch]$skipMetaDataCreation,
-  [string]$repositorySyncModulePath = "./repository_sync"
+  [string]$repositorySyncModulePath = "./repository_sync",
+  [switch]$skipCleanup
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -115,29 +116,26 @@ if(!$skipRepoCreation) {
   }
 }
 
-if(Test-Path "$repositorySyncModulePath/terraform.tfstate") {
-  Remove-Item "$repositorySyncModulePath/terraform.tfstate" -Force
-}
-if(Test-Path "$repositorySyncModulePath/.terraform") {
-  Remove-Item "$repositorySyncModulePath/.terraform" -Force -Recurse
-}
-if(Test-Path "$repositorySyncModulePath/.terraform.lock.hcl") {
-  Remove-Item "$repositorySyncModulePath/.terraform.lock.hcl" -Force
-}
+./scripts/Get-AvmLabels.ps1
 
 ./scripts/Invoke-RepositorySync.ps1 `
   -repositoryCreationModeEnabled `
   -planOnly $false `
   -repoId $moduleName `
-  -repoUrl $repositoryUrl
+  -repoUrl $repositoryUrl `
+  -skipCleanup:$skipCleanup.IsPresent `
+  -primaryModuleOwnerGitHubHandle $ownerPrimaryGitHubHandle `
+  -secondaryModuleOwnerGitHubHandle $ownerSecondaryGitHubHandle
 
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green
 
-Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
-Write-Host "Hit Enter to open the Pull Request in your browser and merge it:" -ForegroundColor Yellow
-Read-Host
-Start-Process $prUrl
+if(!$skipMetaDataCreation) {
+  Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
+  Write-Host "Hit Enter to open the Pull Request in your browser and merge it:" -ForegroundColor Yellow
+  Read-Host
+  Start-Process $prUrl
+}
 
 Write-Host ""
 Write-Host "Repository URL:" -ForegroundColor Cyan

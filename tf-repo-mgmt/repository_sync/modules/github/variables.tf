@@ -94,3 +94,8 @@ variable "custom_subject_claims_enabled" {
   type        = bool
   description = "Whether custom subject claims are enabled for the GitHub Actions OIDC integration."
 }
+
+variable "module_owner_github_handles" {
+  type = map(string)
+  description = "Map of module owner GitHub handles."
+}

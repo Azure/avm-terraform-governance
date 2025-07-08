@@ -24,7 +24,10 @@ param(
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
         "github_repository"
-    )
+    ),
+    [switch]$skipCleanup,
+    [string]$primaryModuleOwnerGitHubHandle = "",
+    [string]$secondaryModuleOwnerGitHubHandle = ""
 )
 
 Write-Host "Running repo sync script"
@@ -83,12 +86,23 @@ foreach($repositoryGroupName in $repositoryGroupNames) {
 }
 
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
-if(Test-Path "$terraformModulePath/.terraform") {
-    Remove-Item "$terraformModulePath/.terraform" -Recurse -Force
-}
 
-if(Test-Path "$terraformModulePath/terraform.tfvars.json") {
-    Remove-Item"$terraformModulePath/terraform.tfvars.json" -Force
+if(!$skipCleanup) {
+    if(Test-Path "$terraformModulePath/.terraform") {
+        Remove-Item "$terraformModulePath/.terraform" -Recurse -Force
+    }
+
+    if(Test-Path "$terraformModulePath/terraform.tfvars.json") {
+        Remove-Item "$terraformModulePath/terraform.tfvars.json" -Force
+    }
+
+    if(Test-Path "$terraformModulePath/terraform.tfstate") {
+        Remove-Item "$terraformModulePath/terraform.tfstate" -Force
+    }
+
+    if(Test-Path "$terraformModulePath/.terraform.lock.hcl") {
+        Remove-Item "$terraformModulePath/.terraform.lock.hcl" -Force
+    }
 }
 
 $repoSplit = $repoUrl.Split("/")
@@ -135,6 +149,14 @@ foreach($team in $teams) {
     }
 }
 
+$moduleOwners = @{}
+if($repositoryCreationModeEnabled) {
+    $moduleOwners = @{
+        primary = $primaryModuleOwnerGitHubHandle
+        secondary = $secondaryModuleOwnerGitHubHandle
+    }
+}
+
 $terraformVariables = @{
     repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent
     github_repository_owner = $orgName
@@ -145,6 +167,7 @@ $terraformVariables = @{
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $isProtected
     github_teams = $githubTeams
+    module_owner_github_handles = $moduleOwners
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"

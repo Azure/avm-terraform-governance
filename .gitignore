@@ -7,3 +7,6 @@ tf-repo-mgmt/TerraformUtilityModules.csv
 tf-repo-mgmt/warning.log.json
 tf-repo-mgmt/azure-verified-modules.pem
 tf-repo-mgmt/temp
+issue.log
+issue.log.json
+*.tfplan

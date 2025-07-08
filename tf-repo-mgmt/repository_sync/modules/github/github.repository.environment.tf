@@ -1,3 +1,7 @@
+locals {
+  environment_approval_teams = { for k, v in var.github_teams : k => try(github_team.this[k].id, data.github_team.this[k].id) if v.environment_approval }
+}
+
 resource "github_repository_environment" "this" {
   count               = var.repository_creation_mode_enabled ? 0 : 1
   environment         = var.github_repository_environment_name
