@@ -14,7 +14,6 @@ module "azure" {
 
 module "github" {
   source = "./modules/github"
-  count  = var.repository_creation_mode_enabled ? 0 : 1
 
   repository_creation_mode_enabled               = var.repository_creation_mode_enabled
   github_repository_owner                        = var.github_repository_owner
@@ -32,4 +31,9 @@ module "github" {
   module_id                                      = var.module_id
   module_name                                    = var.module_name
   custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
+}
+
+import {
+  id = var.github_repository_name
+  to = module.github.github_repository.this
 }

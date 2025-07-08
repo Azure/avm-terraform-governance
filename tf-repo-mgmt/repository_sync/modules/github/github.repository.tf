@@ -4,11 +4,6 @@ locals {
   github_repository_description = "Terraform Azure Verified ${local.module_type_name} Module for ${var.module_name}"
 }
 
-import {
-  id = var.github_repository_name
-  to = github_repository.this
-}
-
 resource "github_repository" "this" {
   name               = var.github_repository_name
   description        = local.github_repository_description
