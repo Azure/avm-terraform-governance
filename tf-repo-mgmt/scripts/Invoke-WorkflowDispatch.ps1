@@ -1,10 +1,10 @@
 param (
     [string]$organizationName = "Azure",
     [string]$repositoryName = "avm-terraform-governance",
-    [string]$branchName = "chore-update-repo-sync", #"main",
+    [string]$branchName = "main",
     [string]$workflowFileName = "tf-repo-mgmt.yml",
     [hashtable]$inputs = @{
-        repositories = "avm-utl-naming"
+        repositories = "avm-ptn-example-repo"
         plan_only = $false
     },
     [int]$maximumRetries = 1,
