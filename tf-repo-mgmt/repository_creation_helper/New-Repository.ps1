@@ -84,7 +84,6 @@ if(!$skipRepoCreation) {
   Write-Host "Created repository $moduleName" -ForegroundColor Green
   Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
   Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
-  Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
 
   Write-Host "Hit Enter to open the open source portal in your browser and complete the setup:" -ForegroundColor Yellow
   Read-Host
@@ -107,7 +106,7 @@ if(!$skipRepoCreation) {
 
   $response = ""
   while($response -ne "yes") {
-    Write-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue:" -ForegroundColor Yellow
+    Write-Host "Once the form is complete, type 'yes' and hit Enter to continue:" -ForegroundColor Yellow
     $response = Read-Host
   }
 }

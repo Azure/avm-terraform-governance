@@ -9,20 +9,9 @@ variable "module_owner_github_handles" {
   description = "GitHub handles of the module owners."
 }
 
-variable "module_provider" {
-  type        = string
-  description = "Terraform Provider of the AVM (e.g. azurerm or azapi)"
-  default     = "azurerm"
-}
-
 variable "module_id" {
   type        = string
   description = "ID of the AVM (e.g. avm-ptn-alz-managment)"
-}
-
-variable "module_name" {
-  type        = string
-  description = "Description of the AVM (e.g. Azure Landing Zones Management Resources)"
 }
 
 variable "github_owner_team_name_postfix" {
