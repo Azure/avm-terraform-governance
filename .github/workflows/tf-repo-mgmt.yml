@@ -106,8 +106,6 @@ jobs:
             -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `
-            -repoType "${{ matrix.repoType }}" `
-            -repoSubType "${{ matrix.repoSubType }}" `
             -outputDirectory "${{ github.workspace }}"
         shell: pwsh
         env:

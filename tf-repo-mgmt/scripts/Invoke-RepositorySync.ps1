@@ -9,16 +9,15 @@
 
 param(
     [switch]$repositoryCreationModeEnabled,
-    [string]$stateStorageAccountName,
-    [string]$stateResourceGroupName,
-    [string]$stateContainerName,
-    [string]$targetSubscriptionId,
-    [string]$identityResourceGroupName,
+    [string]$stateStorageAccountName = "",
+    [string]$stateResourceGroupName = "",
+    [string]$stateContainerName = "",
+    [string]$targetSubscriptionId = "",
+    [string]$identityResourceGroupName = "",
     [bool]$planOnly = $false,
     [string]$repoId,
     [string]$repoUrl,
-    [string]$repoType,
-    [string]$repoSubType,
+    [string]$moduleDisplayName = "",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
@@ -59,9 +58,13 @@ $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
 
-$repositoryMetaDate = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
+$moduleName = $moduleDisplayName
 
-$moduleName = $repositoryMetaDate | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
+if(!$repositoryCreationModeEnabled){
+    $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
+    $moduleName = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
+}
+
 
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
