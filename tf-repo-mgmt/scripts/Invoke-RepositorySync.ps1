@@ -8,6 +8,7 @@
 # Must run gh auth login -h "GitHub.com" before running this script
 
 param(
+    [switch]$repositoryCreationModeEnabled,
     [string]$stateStorageAccountName,
     [string]$stateResourceGroupName,
     [string]$stateContainerName,
@@ -99,22 +100,40 @@ Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 $githubTeams = @{}
 
 foreach($team in $teams) {
+    $skipCheck = $false
+    if($repositoryCreationModeEnabled -and $team.createdWithRepository) {
+        Write-Host "Skipping team: $($team.name) as it is created with repository."
+        $skipCheck = $true
+    }
     $teamName = $team.name.Replace("{{repoId}}", $repoId)
-    $existingTeam = $(gh api "orgs/$orgName/teams/$($teamName)" 2> $null) | ConvertFrom-Json
-    if($existingTeam.status -eq 404) {
+    $teamDescription = $team.description.Replace("{{repoId}}", $repoId)
+    $teamExists = $false
+
+    if($skipCheck) {
+        $teamExists = $true
+    } else {
+        $existingTeam = $(gh api "orgs/$orgName/teams/$($teamName)" 2> $null) | ConvertFrom-Json
+        $teamExists = $existingTeam.status -ne 404
+    }
+
+    if(!$teamExists) {
         Write-Warning "Team does not exist: $($teamName)"
         $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-missing" -message "Team $teamName does not exist." -data $teamName -issueLog $issueLog
     } else {
         Write-Host "Team exists: $($teamName)"
         $githubTeams[$teamName] = @{
             slug        = $teamName
+            description = $teamDescription
             repository_access_permission = $team.repositoryPermission
             environment_approval = $team.environmentApproval
+            created_with_repository = $team.createdWithRepository
+            members_are_team_maintainers = $team.membersAreTeamMaintainers
         }
     }
 }
 
 $terraformVariables = @{
+    repository_creation_mode_enabled = $repositoryCreationModeEnabled
     github_repository_owner = $orgName
     github_repository_name = $repoName
     module_id = $repoId
@@ -127,13 +146,25 @@ $terraformVariables = @{
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
 
-terraform `
-    -chdir="$terraformModulePath" `
-    init `
-    -backend-config="resource_group_name=$stateResourceGroupName" `
-    -backend-config="storage_account_name=$stateStorageAccountName" `
-    -backend-config="container_name=$stateContainerName" `
-    -backend-config="key=$($repoId).tfstate"
+if($repositoryCreationModeEnabled) {
+    Set-Content -Path "$terraformModulePath/backend_override.tf" -Value @"
+terraform {
+    backend "local" {}
+}
+"@
+
+    terraform `
+        -chdir="$terraformModulePath" `
+        init
+} else {
+    terraform `
+        -chdir="$terraformModulePath" `
+        init `
+        -backend-config="resource_group_name=$stateResourceGroupName" `
+        -backend-config="storage_account_name=$stateStorageAccountName" `
+        -backend-config="container_name=$stateContainerName" `
+        -backend-config="key=$($repoId).tfstate"
+}
 
 terraform `
     -chdir="$terraformModulePath" `

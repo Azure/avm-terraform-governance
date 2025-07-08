@@ -1,75 +1,35 @@
-data "azapi_client_config" "current" {}
+module "azure" {
+  source = "./modules/azure"
+  count  = var.repository_creation_mode_enabled ? 0 : 1
 
-resource "azapi_resource" "identity" {
-  type      = "Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview"
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.identity_resource_group_name}"
-  name      = local.owner_repo_name
-  location  = var.location
-  body      = {} # empty body as HCL object is reqired to force output to be HCL and not JSON string.
-  response_export_values = [
-    "properties.principalId",
-    "properties.clientId",
-    "properties.tenantId"
-  ]
+  target_subscription_id             = var.target_subscription_id
+  github_repository_owner            = var.github_repository_owner
+  github_repository_name             = var.github_repository_name
+  github_repository_environment_name = var.github_repository_environment_name
+  identity_resource_group_name       = var.identity_resource_group_name
+  location                           = var.location
+  github_job_workflow_ref_suffix     = local.github_job_workflow_ref_suffix
+  is_protected_repo                  = var.is_protected_repo
 }
 
-resource "azapi_resource" "identity_federated_credentials" {
-  type      = "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-07-31-preview"
-  name      = local.owner_repo_name
-  parent_id = azapi_resource.identity.id
-  locks     = [azapi_resource.identity.id] # not needed but added if we configure more than one environment
-  body = {
-    properties = {
-      audiences = ["api://AzureADTokenExchange"]
-      issuer    = "https://token.actions.githubusercontent.com"
-      subject   = "repo:${var.github_repository_owner}/${var.github_repository_name}:environment:${var.github_repository_environment_name}${local.gh_actions_job_workflow_ref_claim_suffix}"
-    }
-  }
-}
+module "github" {
+  source = "./modules/github"
+  count  = var.repository_creation_mode_enabled ? 0 : 1
 
-# Add owner role assignment.
-# The condition prevents the assignee from creating new role assignments for owner, user access administratior, or role based access control administrator.
-resource "azapi_resource" "identity_role_assignment" {
-  type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
-  name      = uuidv5("url", "${var.github_repository_owner}${var.github_repository_name}${var.target_subscription_id}${data.azapi_client_config.current.tenant_id}")
-  parent_id = "/subscriptions/${var.target_subscription_id}"
-  body = {
-    properties = {
-      roleDefinitionId = "/subscriptions/${var.target_subscription_id}/providers/Microsoft.Authorization/roleDefinitions/${local.role_definition_name_owner}"
-      principalType    = "ServicePrincipal"
-      principalId      = azapi_resource.identity.output.properties.principalId
-      description      = "Role assignment for AVM testing. Repo: ${var.github_repository_owner}/${var.github_repository_name}"
-      conditionVersion = "2.0"
-      condition        = <<CONDITION
-(
- (
-  !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})
- )
- OR
- (
-  @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals {18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}
- )
-)
-AND
-(
- (
-  !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})
- )
- OR
- (
-  @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAllValues:GuidNotEquals {18d7d88d-d35e-4fb5-a5c3-7773c20a72d9, f58310d9-a9f6-439a-9e8d-f62e7b41a168}
- )
-)
-CONDITION
-    }
-  }
-}
-
-data "azuread_group" "entra_readers" {
-  display_name = "grp-sec-avm-tf-end-to-end-testing-entra-readers"
-}
-
-resource "azuread_group_member" "example" {
-  group_object_id  = data.azuread_group.entra_readers.object_id
-  member_object_id = azapi_resource.identity.output.properties.principalId
+  repository_creation_mode_enabled               = var.repository_creation_mode_enabled
+  github_repository_owner                        = var.github_repository_owner
+  github_repository_name                         = var.github_repository_name
+  github_repository_environment_name             = var.github_repository_environment_name
+  github_repository_no_approval_environment_name = var.github_repository_no_approval_environment_name
+  is_protected_repo                              = var.is_protected_repo
+  bypass_ruleset_for_approval_enabled            = local.feature_flags.preview_ruleset_bypass_for_app_repos
+  github_teams                                   = var.github_teams
+  github_avm_app_id                              = var.github_avm_app_id
+  labels                                         = local.labels
+  arm_client_id                                  = var.repository_creation_mode_enabled ? "" : module.azure[0].client_id
+  arm_subscription_id                            = var.repository_creation_mode_enabled ? "" : var.target_subscription_id
+  arm_tenant_id                                  = var.repository_creation_mode_enabled ? "" : module.azure[0].tenant_id
+  module_id                                      = var.module_id
+  module_name                                    = var.module_name
+  custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
 }

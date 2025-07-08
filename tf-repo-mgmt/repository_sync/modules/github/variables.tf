@@ -1,23 +1,26 @@
 variable "repository_creation_mode_enabled" {
   type        = bool
   description = "Whether we are running in repository creation mode."
-  default     = false
 }
 
-variable "target_subscription_id" {
+variable "arm_subscription_id" {
   type        = string
   description = "Id of the subscription to run tests in."
 }
 
-variable "identity_resource_group_name" {
+variable "arm_client_id" {
   type        = string
-  description = "Name of the resource group to create the identities in."
+  description = "Client ID of the service principal to use for ARM operations."
+}
+
+variable "arm_tenant_id" {
+  type        = string
+  description = "Tenant of the service principal to use for ARM operations."
 }
 
 variable "github_repository_owner" {
   type        = string
   description = "Owner of the GitHub repositories."
-  default     = "Azure"
 }
 
 variable "github_repository_name" {
@@ -38,13 +41,11 @@ variable "module_name" {
 variable "github_repository_environment_name" {
   type        = string
   description = "Name of the environment used to store secrets for the test environment."
-  default     = "test"
 }
 
 variable "github_repository_no_approval_environment_name" {
   type        = string
   description = "Name of the environment used as a dummy no approval environment."
-  default     = "empty-no-approval"
 }
 
 variable "github_teams" {
@@ -65,53 +66,31 @@ Map of GitHub teams to be created or managed.
 DESCRIPTION
 }
 
-variable "location" {
-  type        = string
-  description = "Location of the resources."
-  default     = "eastus2"
-}
-
-variable "github_labels_source_path" {
-  type        = string
+variable "labels" {
+  type = map(object({
+    name        = string
+    color       = string
+    description = string
+  }))
   description = "Source csv for labels."
-  default     = "../temp/labels.csv"
 }
 
 variable "is_protected_repo" {
   type        = bool
   description = "Whether the repository is protected and requires pull request approval."
-  default     = false
 }
 
-variable "github_job_workflow_ref_suffix" {
-  type        = string
-  description = "GitHub job workflow ref to use for the federated identity credentials."
-  default     = ":job_workflow_ref:Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main"
-}
-
-variable "feature_flags" {
-  type        = map(set(string))
-  description = "The feature flags to enable for the job."
-  default = {
-    preview_github_actions_oidc_subject_claim_customization = [
-      "terraform-azure-avm-utl-interfaces",
-      "terraform-azurerm-avm-res-keyvault-vault",
-    ]
-    preview_ruleset_bypass_for_app_repos = [
-      "terraform-azure-avm-utl-interfaces",
-      "terraform-azurerm-avm-ptn-alz-connectivity-hub-and-spoke-vnet",
-      "terraform-azurerm-avm-ptn-alz-connectivity-virtual-wan",
-      "terraform-azurerm-avm-ptn-alz-management",
-      "terraform-azurerm-avm-ptn-alz",
-      "terraform-azurerm-avm-ptn-hubnetworking",
-      "terraform-azurerm-avm-ptn-virtualwan",
-      "terraform-azurerm-avm-res-keyvault-vault",
-    ]
-  }
+variable "bypass_ruleset_for_approval_enabled" {
+  type        = bool
+  description = "Whether to bypass the ruleset for approval for the GitHub App."
 }
 
 variable "github_avm_app_id" {
   type        = string
   description = "The GitHub App ID for the AVM."
-  default     = "1049636"
+}
+
+variable "custom_subject_claims_enabled" {
+  type        = bool
+  description = "Whether custom subject claims are enabled for the GitHub Actions OIDC integration."
 }

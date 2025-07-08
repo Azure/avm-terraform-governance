@@ -1,4 +1,5 @@
 resource "github_repository_environment" "this" {
+  count               = var.repository_creation_mode_enabled ? 0 : 1
   environment         = var.github_repository_environment_name
   repository          = github_repository.this.name
   can_admins_bypass   = true
@@ -9,24 +10,27 @@ resource "github_repository_environment" "this" {
 }
 
 resource "github_actions_environment_secret" "tenant_id" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
   repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_TENANT_ID"
-  plaintext_value = data.azapi_client_config.current.tenant_id
+  plaintext_value = var.arm_tenant_id
 }
 
 resource "github_actions_environment_secret" "subscription_id" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
   repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_SUBSCRIPTION_ID"
-  plaintext_value = var.target_subscription_id
+  plaintext_value = var.arm_subscription_id
 }
 
 resource "github_actions_environment_secret" "client_id" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
   repository      = github_repository.this.name
   environment     = github_repository_environment.this.environment
   secret_name     = "ARM_CLIENT_ID"
-  plaintext_value = azapi_resource.identity.output.properties.clientId
+  plaintext_value = var.arm_client_id
 }
 
 # This environment is used for jobs that do not require authentication.

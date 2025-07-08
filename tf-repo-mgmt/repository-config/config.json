@@ -28,6 +28,7 @@
   "teamMappings": [
     {
       "name": "avm-core-team-technical-terraform",
+      "description": "Core team for Azure Virtual Modules Terraform Governance",
       "repositoryGroups": [
         "all"
       ],
@@ -38,6 +39,7 @@
     },
     {
       "name": "{{repoId}}-module-owners-tf",
+      "description": "Owners of the {{repoId}} Azure Verified Module.",
       "repositoryGroups": [
         "all"
       ],
@@ -48,6 +50,7 @@
     },
     {
       "name": "{{repoId}}-module-contributors-tf",
+      "description": "Contributors of the {{repoId}} Azure Verified Module.",
       "repositoryGroups": [
         "all"
       ],
@@ -58,6 +61,7 @@
     },
     {
       "name": "alz-accelerator-contributors-external",
+      "description": "Contributors to the Azure Landing Zones Accelerator repository.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
@@ -68,6 +72,7 @@
     },
     {
       "name": "alz-core-team",
+      "description": "Core team for Azure Landing Zones.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
@@ -78,6 +83,7 @@
     },
     {
       "name": "alz-core-team-technical",
+      "description": "Core team for Azure Landing Zones Terraform Governance.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
@@ -88,6 +94,7 @@
     },
     {
       "name": "alz-non-core-team-contributors-terraform",
+      "description": "Contributors to the Azure Landing Zones Terraform repositories.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
