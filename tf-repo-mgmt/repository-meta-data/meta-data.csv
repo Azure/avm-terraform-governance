@@ -20,6 +20,7 @@ avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Fr
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,
 avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,
 avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,
+avm-ptn-example-repo-two,,,Example Repository 2 for Testing,,jaredfholgate,Jared Holgate,,
 avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoint-secured Storage,,donovm4,Donovan McCoy,,
 avm-ptn-hci-ad-provisioner,,,Arc for AD registration,,xhy8759,Hangyu Xu,,
 avm-ptn-hci-server-provisioner,,,Arc for Server registration,,xhy8759,Hangyu Xu,,
