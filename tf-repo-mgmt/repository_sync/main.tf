@@ -33,6 +33,11 @@ module "github" {
   custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
 }
 
+moved {
+  from = github_repository.this
+  to = module.github.github_repository.this
+}
+
 import {
   id = var.github_repository_name
   to = module.github.github_repository.this

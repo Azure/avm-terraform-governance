@@ -1,13 +1,13 @@
 param (
     [string]$organizationName = "Azure",
     [string]$repositoryName = "avm-terraform-governance",
-    [string]$branchName = "main",
+    [string]$branchName = "chore-update-repo-sync", #"main",
     [string]$workflowFileName = "tf-repo-mgmt.yml",
     [hashtable]$inputs = @{
         repositories = "avm-ptn-example-repo"
         plan_only = $false
     },
-    [int]$maximumRetries = 10,
+    [int]$maximumRetries = 1,
     [int]$retryCount = 0,
     [int]$retryDelay = 10000
 )
@@ -86,32 +86,32 @@ function Wait-ForWorkflowRunToComplete {
 $success = $false
 
 do {
-$retryCount++
-try {
-    # Trigger the apply workflow
-    Write-Host "Triggering the $workflowAction workflow"
-    Invoke-Workflow `
-        -organizationName $organizationName `
-        -repositoryName $repositoryName `
-        -branchName $branchName `
-        -workflowName $workflowFileName `
-        -inputs $inputs
-    Write-Host "$workflowAction workflow triggered successfully"
+    $retryCount++
+    try {
+        # Trigger the apply workflow
+        Write-Host "Triggering the $workflowAction workflow"
+        Invoke-Workflow `
+            -organizationName $organizationName `
+            -repositoryName $repositoryName `
+            -branchName $branchName `
+            -workflowName $workflowFileName `
+            -inputs $inputs
+        Write-Host "$workflowAction workflow triggered successfully"
 
-    # Wait for the apply workflow to complete
-    Write-Host "Waiting for the $workflowAction workflow to complete"
-    Wait-ForWorkflowRunToComplete `
-        -organizationName $organizationName `
-        -repositoryName $repositoryName `
-        -branchName $branchName `
-        -workflowName $workflowFileName
-    Write-Host "$workflowAction workflow completed successfully"
+        # Wait for the apply workflow to complete
+        Write-Host "Waiting for the $workflowAction workflow to complete"
+        Wait-ForWorkflowRunToComplete `
+            -organizationName $organizationName `
+            -repositoryName $repositoryName `
+            -branchName $branchName `
+            -workflowName $workflowFileName
+        Write-Host "$workflowAction workflow completed successfully"
 
-    $success = $true
-} catch {
-    Write-Host $_
-    Write-Host "Failed to trigger the workflow successfully, trying again..."
-}
+        $success = $true
+    } catch {
+        Write-Host $_
+        Write-Host "Failed to trigger the workflow successfully, trying again..."
+    }
 } while ($success -eq $false -and $retryCount -lt $maximumRetries)
 
 if ($success -eq $false) {
