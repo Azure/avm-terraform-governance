@@ -65,9 +65,15 @@ $moduleName = $moduleDisplayName
 
 if(!$repositoryCreationModeEnabled){
     $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
-    $moduleName = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
+    $moduleMetaData = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId }
+    if(!$moduleMetaData) {
+        Write-Warning "Module metadata missing for: $($repoId)"
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist." -data $repoId -issueLog $issueLog
+        $moduleName = $repoId
+    } else {
+        $moduleName = $moduleMetaData.moduleDisplayName
+    }
 }
-
 
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }

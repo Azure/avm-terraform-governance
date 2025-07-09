@@ -149,6 +149,7 @@ avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,
 avm-res-network-trafficmanagerprofile,Microsoft.Network,trafficmanagerprofiles,Traffic Manager Profile,,AnubhaR94,Anubha Rana,,
 avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,
 avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin
+avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Database Autonomous,,sihbher,Gerardo Reyes,,
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
 avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
 avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,
@@ -168,6 +169,7 @@ avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Env
 avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
 avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,
 avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,
+avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,
 avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,
 avm-utl-naming,,,AVM Naming,,Nepomuceno,Gabriel Monteiro Nepomuceno,,
 avm-utl-network-ip-addresses,,,AVM Network IP Addresses,IPv4 CIDR,jaredfholgate,Jared Holgate,,
