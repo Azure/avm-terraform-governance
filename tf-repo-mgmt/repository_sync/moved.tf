@@ -4,8 +4,13 @@ moved {
 }
 
 moved {
-  from = github_repository_environment.this
+  from = github_repository_environment.this[0]
   to = module.github.github_repository_environment.this[0]
+}
+
+moved {
+  from = github_repository_environment.dummy_no_approval[0]
+  to = module.github.github_repository_environment.dummy_no_approval
 }
 
 moved {
@@ -21,6 +26,21 @@ moved {
 moved {
   from = github_actions_environment_secret.client_id[0]
   to = module.github.github_actions_environment_secret.client_id[0]
+}
+
+moved {
+  from = github_repository_ruleset.main
+  to = module.github.github_repository_ruleset.main
+}
+
+moved {
+  from = github_repository_ruleset.tag_deny_non_v
+  to = module.github.github_repository_ruleset.tag_deny_non_v
+}
+
+moved {
+  from = github_repository_ruleset.tag_prevent_delete_version_tags
+  to = module.github.github_repository_ruleset.tag_prevent_delete_version_tags
 }
 
 moved {
