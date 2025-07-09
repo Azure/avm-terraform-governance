@@ -149,6 +149,7 @@ avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,
 avm-res-network-trafficmanagerprofile,Microsoft.Network,trafficmanagerprofiles,Traffic Manager Profile,,AnubhaR94,Anubha Rana,,
 avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,
 avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin
+avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Database Autonomous,,sihbher,Gerardo Reyes,,
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
 avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
 avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,
