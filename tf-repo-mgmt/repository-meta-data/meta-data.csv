@@ -169,6 +169,7 @@ avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Env
 avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
 avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,
 avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,
+avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,
 avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,
 avm-utl-naming,,,AVM Naming,,Nepomuceno,Gabriel Monteiro Nepomuceno,,
 avm-utl-network-ip-addresses,,,AVM Network IP Addresses,IPv4 CIDR,jaredfholgate,Jared Holgate,,
