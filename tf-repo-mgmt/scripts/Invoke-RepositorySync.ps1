@@ -8,21 +8,26 @@
 # Must run gh auth login -h "GitHub.com" before running this script
 
 param(
-    [string]$stateStorageAccountName,
-    [string]$stateResourceGroupName,
-    [string]$stateContainerName,
-    [string]$targetSubscriptionId,
-    [string]$identityResourceGroupName,
+    [switch]$repositoryCreationModeEnabled,
+    [string]$stateStorageAccountName = "",
+    [string]$stateResourceGroupName = "",
+    [string]$stateContainerName = "",
+    [string]$targetSubscriptionId = "",
+    [string]$identityResourceGroupName = "",
     [bool]$planOnly = $false,
-    [bool]$firstRun = $false,
     [string]$repoId,
     [string]$repoUrl,
-    [string]$repoType,
-    [string]$repoSubType,
-    [string]$repoOwnerTeam,
-    [string]$repoContributorTeam,
-    [bool]$repoIsProtected,
-    [string]$outputDirectory = "."
+    [string]$moduleDisplayName = "",
+    [string]$outputDirectory = ".",
+    [string]$repoConfigFilePath = "./repository-config/config.json",
+    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
+    [string]$terraformModulePath = "./repository_sync",
+    [string[]]$resourceTypesThatCannotBeDestroyed = @(
+        "github_repository"
+    ),
+    [switch]$skipCleanup,
+    [string]$primaryModuleOwnerGitHubHandle = "",
+    [string]$secondaryModuleOwnerGitHubHandle = ""
 )
 
 Write-Host "Running repo sync script"
@@ -56,125 +61,172 @@ $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
 
-$secretNames = @("ARM_TENANT_ID", "ARM_SUBSCRIPTION_ID", "ARM_CLIENT_ID")
+$moduleName = $moduleDisplayName
 
-
-Write-Host "Checking $($repoId)"
-if(Test-Path "imports.tf") {
-    Remove-Item "imports.tf" -Force
+if(!$repositoryCreationModeEnabled){
+    $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
+    $moduleName = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId } | Select-Object -ExpandProperty moduleDisplayName
 }
 
-if(Test-Path ".terraform") {
-    Remove-Item ".terraform" -Recurse -Force
+
+$repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
+$repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
+
+$isProtected = ($repositoryGroups | Where-Object { $_.protected -eq $true }).Length -gt 0
+$repositoryGroupNames = @($repositoryGroups | ForEach-Object { $_.name })
+$repositoryGroupNames += "all"
+
+$teams = @()
+
+foreach($repositoryGroupName in $repositoryGroupNames) {
+    $teamMappings = $repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
+    if($teamMappings.Count -gt 0) {
+        $teams += $teamMappings
+    }
 }
 
-$repoUrl = $repoUrl
+Write-Host "$([Environment]::NewLine)Checking $($repoId)"
+
+if(!$skipCleanup) {
+    if(Test-Path "$terraformModulePath/.terraform") {
+        Remove-Item "$terraformModulePath/.terraform" -Recurse -Force
+    }
+
+    if(Test-Path "$terraformModulePath/terraform.tfvars.json") {
+        Remove-Item "$terraformModulePath/terraform.tfvars.json" -Force
+    }
+
+    if(Test-Path "$terraformModulePath/terraform.tfstate") {
+        Remove-Item "$terraformModulePath/terraform.tfstate" -Force
+    }
+
+    if(Test-Path "$terraformModulePath/.terraform.lock.hcl") {
+        Remove-Item "$terraformModulePath/.terraform.lock.hcl" -Force
+    }
+}
+
 $repoSplit = $repoUrl.Split("/")
 $orgName = $repoSplit[3]
 $repoName = $repoSplit[4]
 $orgAndRepoName = "$orgName/$repoName"
 
-$existingRepo = $(gh api "repos/$orgAndRepoName" 2> $null) | ConvertFrom-Json
+Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
+Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
+Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
-if ($existingRepo.status -eq 404) {
-    Write-Warning "Skipping: $orgAndRepoName has not been created yet."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "repo-missing" -message "Repo $orgAndRepoName does not exist." -issueLog $issueLog
-} else {
-    Write-Host "<--->" -ForegroundColor Green
-    Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
-    Write-Host "<--->" -ForegroundColor Green
+$githubTeams = @{}
 
-    $existingEnvironment = $(gh api "repos/$orgAndRepoName/environments/test" 2> $null) | ConvertFrom-Json
+foreach($team in $teams) {
+    $skipCheck = $false
+    if($repositoryCreationModeEnabled -and $team.createdWithRepository) {
+        Write-Host "Skipping team: $($team.name) as it is created with repository."
+        $skipCheck = $true
+    }
+    $teamName = $team.name.Replace("{{repoId}}", $repoId)
+    $teamDescription = $team.description.Replace("{{repoId}}", $repoId)
+    $teamExists = $false
 
-    if (($existingEnvironment.status -ne 404) -and ($repoType -eq "avm") -and $firstRun) {
-        Write-Host "First Run: Taking ownership of test environment for $orgAndRepoName"
-        $import = @"
-import {
-to = github_repository_environment.this[0]
-id = "$($repoName):test"
+    if($skipCheck) {
+        $teamExists = $true
+    } else {
+        $existingTeam = $(gh api "orgs/$orgName/teams/$($teamName)" 2> $null) | ConvertFrom-Json
+        $teamExists = $existingTeam.status -ne 404
+    }
+
+    if(!$teamExists) {
+        Write-Warning "Team does not exist: $($teamName)"
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-missing" -message "Team $teamName does not exist." -data $teamName -issueLog $issueLog
+    } else {
+        Write-Host "Team exists: $($teamName)"
+        $githubTeams[$teamName] = @{
+            slug        = $teamName
+            description = $teamDescription
+            repository_access_permission = $team.repositoryPermission
+            environment_approval = $team.environmentApproval
+            created_with_repository = $team.createdWithRepository
+            members_are_team_maintainers = $team.membersAreTeamMaintainers
+        }
+    }
 }
 
+$moduleOwners = @{}
+if($repositoryCreationModeEnabled) {
+    $moduleOwners = @{
+        primary = $primaryModuleOwnerGitHubHandle
+        secondary = $secondaryModuleOwnerGitHubHandle
+    }
+}
+
+$terraformVariables = @{
+    repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent
+    github_repository_owner = $orgName
+    github_repository_name = $repoName
+    module_id = $repoId
+    module_name = $moduleName
+    target_subscription_id = $targetSubscriptionId
+    identity_resource_group_name = $identityResourceGroupName
+    is_protected_repo = $isProtected
+    github_teams = $githubTeams
+    module_owner_github_handles = $moduleOwners
+}
+
+$terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
+
+if($repositoryCreationModeEnabled) {
+    Set-Content -Path "$terraformModulePath/backend_override.tf" -Value @"
+terraform {
+    backend "local" {}
+}
 "@
 
-        Add-Content -Path "imports.tf" -Value $import
-
-        foreach($secretName in $secretNames) {
-            $existingSecret = $(gh api "repos/$orgAndRepoName/environments/test/secrets/$secretName" 2> $null) | ConvertFrom-Json
-            if($existingSecret.status -ne 404) {
-
-                if(!$planOnly) {
-                    Write-Host "Deleting secret: $secretName"
-                    gh api -X DELETE "repos/$orgAndRepoName/environments/test/secrets/$secretName"
-                } else {
-                    Write-Host "Planning to delete secret: $secretName"
-                }
-            }
-        }
-    }
-
-    $ownerTeamName = ""
-    if($null -ne $repoOwnerTeam) {
-        $ownerTeamName = $repoOwnerTeam.Replace("@Azure/", "")
-        $existingOwnerTeam = $(gh api "orgs/$orgName/teams/$($ownerTeamName)" 2> $null) | ConvertFrom-Json
-        if($existingOwnerTeam.status -eq 404) {
-            Write-Warning "Owner team does not exist: $($ownerTeamName)"
-            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "owner-team-missing" -message "Team $ownerTeamName does not exist." -data $ownerTeamName -issueLog $issueLog
-            $ownerTeamName = ""
-        }
-    }
-
-    $contributorTeamName = ""
-    if($null -ne $repoContributorTeam) {
-        $contributorTeamName = $repoContributorTeam.Replace("@Azure/", "")
-        $existingContributorTeam = $(gh api "orgs/$orgName/teams/$($contributorTeamName)" 2> $null) | ConvertFrom-Json
-        if($existingContributorTeam.status -eq 404) {
-            Write-Warning "Contributor team does not exist: $($contributorTeamName)"
-            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "contributor-team-missing" -message "Team $contributorTeamName does not exist." -data $contributorTeamName -issueLog $issueLog
-            $contributorTeamName = ""
-        }
-    }
-
-    terraform init `
+    terraform `
+        -chdir="$terraformModulePath" `
+        init
+} else {
+    terraform `
+        -chdir="$terraformModulePath" `
+        init `
         -backend-config="resource_group_name=$stateResourceGroupName" `
         -backend-config="storage_account_name=$stateStorageAccountName" `
         -backend-config="container_name=$stateContainerName" `
         -backend-config="key=$($repoId).tfstate"
+}
 
-    terraform plan `
-        -out="$($repoId).tfplan" `
-        -var="github_repository_owner=$orgName" `
-        -var="github_repository_name=$repoName" `
-        -var="github_owner_team_name=$($ownerTeamName)" `
-        -var="github_contributor_team_name=$($contributorTeamName)" `
-        -var="manage_github_environment=$(($repoType -eq "avm").ToString().ToLower())" `
-        -var="target_subscription_id"=$($targetSubscriptionId) `
-        -var="identity_resource_group_name=$($identityResourceGroupName)" `
-        -var="is_protected_repo=$(($repoIsProtected).ToString().ToLower())"
+terraform `
+    -chdir="$terraformModulePath" `
+    plan `
+    -out="$($repoId).tfplan"
 
-    $plan = $(terraform show -json "$($repoId).tfplan") | ConvertFrom-Json
+$plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
 
-    $hasDestroy = $false
-    foreach($resource in $plan.resource_changes) {
-        if($resource.change.actions -contains "delete") {
-            Write-Warning "Planning to destroy: $($resource.address)"
+$hasDestroy = $false
+foreach($resource in $plan.resource_changes) {
+    if($resource.change.actions -contains "delete") {
+        if($resourceTypesThatCannotBeDestroyed -contains $resource.type) {
+            Write-Warning "Planning to destroy: $($resource.address). Resource type: $($resource.type) cannot be destroyed, so skipping the apply."
             $hasDestroy = $true
+        } else {
+            Write-Host "Planning to destroy: $($resource.address). Resource type: $($resource.type) can be destroyed, so allowing the apply to continue."
         }
     }
-
-    if($hasDestroy) {
-        Write-Warning "Skipping: $orgAndRepoName as it has at least one destroy actions."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-includes-destroy" -message "Plan includes destroy for $orgAndRepoName." -data $plan -issueLog $issueLog
-    }
-
-    if(!$planOnly -and $plan.errored) {
-        Write-Warning "Skipping: Plan failed for $orgAndRepoName."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Plan failed for $orgAndRepoName." -data $plan -issueLog $issueLog
-    }
-
-    if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
-        terraform apply "$($repoId).tfplan"
-    }
 }
+
+if($hasDestroy) {
+    Write-Warning "Skipping: $orgAndRepoName as it has at least one destroy actions."
+    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-includes-destroy" -message "Plan includes destroy for $orgAndRepoName." -data $plan -issueLog $issueLog
+}
+
+if(!$planOnly -and $plan.errored) {
+    Write-Warning "Skipping: Plan failed for $orgAndRepoName."
+    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Plan failed for $orgAndRepoName." -data $plan -issueLog $issueLog
+}
+
+if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
+    terraform `
+        -chdir="$terraformModulePath" `
+        apply "$($repoId).tfplan"
+}
+
 
 if($issueLog.Count -eq 0) {
     Write-Host "No issues found for $repoId"

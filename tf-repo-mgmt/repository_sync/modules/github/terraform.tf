@@ -6,8 +6,3 @@ terraform {
     }
   }
 }
-
-
-provider "github" {
-  owner = var.github_repository_owner
-}
