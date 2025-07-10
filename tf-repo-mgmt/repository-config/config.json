@@ -38,6 +38,17 @@
       "membersAreTeamMaintainers": true
     },
     {
+      "name": "avm-core-team-non-technical-terraform",
+      "description": "Core team for Azure Virtual Modules Terraform Triage",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": false
+    },
+    {
       "name": "{{repoId}}-module-owners-tf",
       "description": "Owners of the {{repoId}} Azure Verified Module.",
       "repositoryGroups": [
