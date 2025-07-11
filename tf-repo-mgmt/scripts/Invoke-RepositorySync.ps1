@@ -31,7 +31,8 @@ param(
     [string[]]$extraTeamsToIgnore = @(
         "security",
         "azurecla-write"
-    )
+    ),
+    [switch]$forceUserRemoval
 )
 
 Write-Host "Running repo sync script"
@@ -190,6 +191,14 @@ if(!$repositoryCreationModeEnabled) {
 
         if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
             Write-Warning "User has direct access to $orgAndRepoName, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
+            if($forceUserRemoval) {
+                Write-Warning "Force user removal is enabled, removing access now: $($userLogin) - role: $($user.role_name)"
+                if($planOnly) {
+                    Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
+                } else {
+                    gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+                }
+            }
         } else {
             Write-Warning "User has direct access to $orgAndRepoName, but AVM repos cannot have direct user access outside of JIT, removing access now: $($userLogin) - role: $($user.role_name)"
             if($planOnly) {
