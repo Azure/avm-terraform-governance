@@ -189,10 +189,10 @@ if(!$repositoryCreationModeEnabled) {
         $userLogin = $user.login
 
         if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
-            Write-Warning "User has direct access, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
+            Write-Warning "User has direct access to $orgAndRepoName, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
         } else {
-            Write-Warning "User has direct access, but AVM repos cannot have direct user access outside of JIT: $($userLogin) - role: $($user.role_name)"
-            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "direct-user-access" -message "User $userLogin has direct access to $orgAndRepoName with role $($user.role_name)" -data $userLogin -issueLog $issueLog
+            Write-Warning "User has direct access to $orgAndRepoName, but AVM repos cannot have direct user access outside of JIT, removing access now: $($userLogin) - role: $($user.role_name)"
+            gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
         }
     }
 
