@@ -38,8 +38,8 @@
       "membersAreTeamMaintainers": true
     },
     {
-      "name": "avm-core-team-non-technical-terraform",
-      "description": "Core team for Azure Virtual Modules Terraform Triage",
+      "name": "avm-core-team-non-technical",
+      "description": "Core team for Azure Virtual Modules Triage",
       "repositoryGroups": [
         "all"
       ],

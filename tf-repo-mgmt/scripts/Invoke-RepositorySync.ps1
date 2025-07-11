@@ -15,9 +15,9 @@ param(
     [string]$targetSubscriptionId = "",
     [string]$identityResourceGroupName = "",
     [bool]$planOnly = $false,
-    [string]$repoId,
-    [string]$repoUrl,
-    [string]$moduleDisplayName = "",
+    [string]$repoId = "avm-ptn-example-repo",
+    [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
+    [string]$moduleDisplayName = "Example Repository",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
@@ -66,6 +66,8 @@ $env:ARM_USE_AZUREAD = "true"
 $issueLog = @()
 
 $moduleName = $moduleDisplayName
+
+$moduleMetaData = $null
 
 if(!$repositoryCreationModeEnabled){
     $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
@@ -162,13 +164,36 @@ foreach($team in $teams) {
 if(!$repositoryCreationModeEnabled) {
     Write-Host "Checking repository: $orgAndRepoName for existing teams and users."
 
+    $allowedUsers = @()
+
+    if($moduleMetaData) {
+        $allowedUsers = @(
+            $moduleMetaData.primaryOwnerGitHubHandle,
+            $moduleMetaData.secondaryOwnerGitHubHandle
+        )
+    }
+
+    $teamsWithMaintainers = $githubTeams.GetEnumerator() | Where-Object { $_.Value.members_are_team_maintainers -eq $true }
+
+    foreach($teamWithMaintainers in $teamsWithMaintainers) {
+        $teamMembers = $(gh api "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members" --paginate) | ConvertFrom-Json
+        foreach($member in $teamMembers) {
+            $allowedUsers += $member.login
+        }
+    }
+
     $repoUsers = $(gh api "repos/$orgAndRepoName/collaborators?affiliation=direct" --paginate) | ConvertFrom-Json
 
     Write-Host "Found $($repoUsers.Count) users in repository: $orgAndRepoName"
     foreach($user in $repoUsers) {
         $userLogin = $user.login
-        Write-Warning "User exists in repository but AVM repos cannot have direct user access outside of JIT: $($userLogin)"
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "direct-user-access" -message "User $userLogin has direct access to $orgAndRepoName." -data $userLogin -issueLog $issueLog
+
+        if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
+            Write-Warning "User has direct access, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
+        } else {
+            Write-Warning "User has direct access, but AVM repos cannot have direct user access outside of JIT: $($userLogin) - role: $($user.role_name)"
+            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "direct-user-access" -message "User $userLogin has direct access to $orgAndRepoName with role $($user.role_name)" -data $userLogin -issueLog $issueLog
+        }
     }
 
     $repoTeams = $(gh api "repos/$orgAndRepoName/teams" --paginate) | ConvertFrom-Json
