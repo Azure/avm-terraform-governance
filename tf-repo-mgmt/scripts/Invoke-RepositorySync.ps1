@@ -192,7 +192,11 @@ if(!$repositoryCreationModeEnabled) {
             Write-Warning "User has direct access to $orgAndRepoName, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
         } else {
             Write-Warning "User has direct access to $orgAndRepoName, but AVM repos cannot have direct user access outside of JIT, removing access now: $($userLogin) - role: $($user.role_name)"
-            gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+            if($planOnly) {
+                Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
+            } else {
+                gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+            }
         }
     }
 
@@ -207,7 +211,11 @@ if(!$repositoryCreationModeEnabled) {
         }
         if(!$githubTeams.ContainsKey($teamName)) {
             Write-Warning "Team exists in repository but not in config, will be removed: $($teamName)"
-            gh api "orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName" -X DELETE
+            if($planOnly) {
+                Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName' -X DELETE"
+            } else {
+                gh api "orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName" -X DELETE
+            }
         }
     }
 }
