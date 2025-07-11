@@ -27,7 +27,11 @@ param(
     ),
     [switch]$skipCleanup,
     [string]$primaryModuleOwnerGitHubHandle = "",
-    [string]$secondaryModuleOwnerGitHubHandle = ""
+    [string]$secondaryModuleOwnerGitHubHandle = "",
+    [string[]]$extraTeamsToIgnore = @(
+        "security",
+        "azurecla-write"
+    )
 )
 
 Write-Host "Running repo sync script"
@@ -151,6 +155,34 @@ foreach($team in $teams) {
             environment_approval = $team.environmentApproval
             created_with_repository = $team.createdWithRepository
             members_are_team_maintainers = $team.membersAreTeamMaintainers
+        }
+    }
+}
+
+if(!$repositoryCreationModeEnabled) {
+    Write-Host "Checking repository: $orgAndRepoName for existing teams and users."
+
+    $repoUsers = $(gh api "repos/$orgAndRepoName/collaborators?affiliation=direct" --paginate) | ConvertFrom-Json
+
+    Write-Host "Found $($repoUsers.Count) users in repository: $orgAndRepoName"
+    foreach($user in $repoUsers) {
+        $userLogin = $user.login
+        Write-Warning "User exists in repository but AVM repos cannot have direct user access outside of JIT: $($userLogin)"
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "direct-user-access" -message "User $userLogin has direct access to $orgAndRepoName." -data $userLogin -issueLog $issueLog
+    }
+
+    $repoTeams = $(gh api "repos/$orgAndRepoName/teams" --paginate) | ConvertFrom-Json
+
+    Write-Host "Found $($repoTeams.Count) teams in repository: $orgAndRepoName"
+    foreach($team in $repoTeams) {
+        $teamName = $team.name
+        if($extraTeamsToIgnore -contains $teamName) {
+            Write-Host "Skipping team: $($teamName) as it is in the ignore list."
+            continue
+        }
+        if(!$githubTeams.ContainsKey($teamName)) {
+            Write-Warning "Team exists in repository but not in config, will be removed: $($teamName)"
+            gh api "orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName" -X DELETE
         }
     }
 }
