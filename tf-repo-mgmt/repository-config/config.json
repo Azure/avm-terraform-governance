@@ -28,7 +28,7 @@
   "teamMappings": [
     {
       "name": "avm-core-team-technical-terraform",
-      "description": "Core team for Azure Virtual Modules Terraform Governance",
+      "description": "Core team for Azure Verified Modules Terraform Governance",
       "repositoryGroups": [
         "all"
       ],
