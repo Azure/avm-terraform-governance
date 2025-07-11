@@ -17,7 +17,9 @@ param(
     "avm-gh-app",
     "avm-container-images-cicd-agents-and-runners",
     "Azure-Verified-Modules-Workflows",
-    "avm-terraform-governance"
+    "avm-terraform-governance",
+    "terraform-azurerm-avm-ptn-ai-foundry-enterprise",
+    "terraform-azurerm-avm-ptn-enterprise-rag"
   ),
   [string]$outputDirectory = "."
 )
