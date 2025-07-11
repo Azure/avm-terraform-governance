@@ -28,7 +28,7 @@
   "teamMappings": [
     {
       "name": "avm-core-team-technical-terraform",
-      "description": "Core team for Azure Virtual Modules Terraform Governance",
+      "description": "Core team for Azure Verified Modules Terraform Governance",
       "repositoryGroups": [
         "all"
       ],
@@ -36,6 +36,17 @@
       "environmentApproval": true,
       "createdWithRepository": false,
       "membersAreTeamMaintainers": true
+    },
+    {
+      "name": "avm-core-team-non-technical",
+      "description": "Core team for Azure Verified Modules Triage",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false,
+      "createdWithRepository": false,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "{{repoId}}-module-owners-tf",

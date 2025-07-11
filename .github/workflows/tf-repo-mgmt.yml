@@ -13,6 +13,10 @@ on:
         description: 'Whether to only plan the changes'
         default: true
         type: boolean
+      force_user_removal:
+        description: 'Force removal of users with direct access, even if they are JIT elevated.'
+        default: false
+        type: boolean
   schedule:
     - cron: '30 15 * * 1-5'
 
@@ -85,14 +89,17 @@ jobs:
           $triggerType = "${{ github.event_name }}"
 
           $planOnly = $false
+          $forceUserRemoval = $false
 
           if($triggerType -eq "workflow_dispatch") {
             $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
+            $forceUserRemoval = "${{ inputs.force_user_removal }}".ToLower() -eq "true"
           }
 
           Write-Output "Token: $env:GH_TOKEN"
           Write-Output "Repositories: $repositories"
           Write-Output "Plan Only: $planOnly"
+          Write-Output "Force User Removal: $forceUserRemoval"
 
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
@@ -106,7 +113,9 @@ jobs:
             -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `
-            -outputDirectory "${{ github.workspace }}"
+            -outputDirectory "${{ github.workspace }}" `
+            -forceUserRemoval:$forceUserRemoval
+
         shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}

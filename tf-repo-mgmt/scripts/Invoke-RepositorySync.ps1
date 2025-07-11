@@ -15,9 +15,9 @@ param(
     [string]$targetSubscriptionId = "",
     [string]$identityResourceGroupName = "",
     [bool]$planOnly = $false,
-    [string]$repoId,
-    [string]$repoUrl,
-    [string]$moduleDisplayName = "",
+    [string]$repoId = "avm-ptn-example-repo",
+    [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
+    [string]$moduleDisplayName = "Example Repository",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
@@ -27,7 +27,12 @@ param(
     ),
     [switch]$skipCleanup,
     [string]$primaryModuleOwnerGitHubHandle = "",
-    [string]$secondaryModuleOwnerGitHubHandle = ""
+    [string]$secondaryModuleOwnerGitHubHandle = "",
+    [string[]]$extraTeamsToIgnore = @(
+        "security",
+        "azurecla-write"
+    ),
+    [switch]$forceUserRemoval
 )
 
 Write-Host "Running repo sync script"
@@ -62,6 +67,8 @@ $env:ARM_USE_AZUREAD = "true"
 $issueLog = @()
 
 $moduleName = $moduleDisplayName
+
+$moduleMetaData = $null
 
 if(!$repositoryCreationModeEnabled){
     $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
@@ -151,6 +158,73 @@ foreach($team in $teams) {
             environment_approval = $team.environmentApproval
             created_with_repository = $team.createdWithRepository
             members_are_team_maintainers = $team.membersAreTeamMaintainers
+        }
+    }
+}
+
+if(!$repositoryCreationModeEnabled) {
+    Write-Host "Checking repository: $orgAndRepoName for existing teams and users."
+
+    $allowedUsers = @()
+
+    if($moduleMetaData) {
+        $allowedUsers = @(
+            $moduleMetaData.primaryOwnerGitHubHandle,
+            $moduleMetaData.secondaryOwnerGitHubHandle
+        )
+    }
+
+    $teamsWithMaintainers = $githubTeams.GetEnumerator() | Where-Object { $_.Value.members_are_team_maintainers -eq $true }
+
+    foreach($teamWithMaintainers in $teamsWithMaintainers) {
+        $teamMembers = $(gh api "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members" --paginate) | ConvertFrom-Json
+        foreach($member in $teamMembers) {
+            $allowedUsers += $member.login
+        }
+    }
+
+    $repoUsers = $(gh api "repos/$orgAndRepoName/collaborators?affiliation=direct" --paginate) | ConvertFrom-Json
+
+    Write-Host "Found $($repoUsers.Count) users in repository: $orgAndRepoName"
+    foreach($user in $repoUsers) {
+        $userLogin = $user.login
+
+        if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
+            Write-Warning "User has direct access to $orgAndRepoName, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
+            if($forceUserRemoval) {
+                Write-Warning "Force user removal is enabled, removing access now: $($userLogin) - role: $($user.role_name)"
+                if($planOnly) {
+                    Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
+                } else {
+                    gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+                }
+            }
+        } else {
+            Write-Warning "User has direct access to $orgAndRepoName, but AVM repos cannot have direct user access outside of JIT, removing access now: $($userLogin) - role: $($user.role_name)"
+            if($planOnly) {
+                Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
+            } else {
+                gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+            }
+        }
+    }
+
+    $repoTeams = $(gh api "repos/$orgAndRepoName/teams" --paginate) | ConvertFrom-Json
+
+    Write-Host "Found $($repoTeams.Count) teams in repository: $orgAndRepoName"
+    foreach($team in $repoTeams) {
+        $teamName = $team.name
+        if($extraTeamsToIgnore -contains $teamName) {
+            Write-Host "Skipping team: $($teamName) as it is in the ignore list."
+            continue
+        }
+        if(!$githubTeams.ContainsKey($teamName)) {
+            Write-Warning "Team exists in repository but not in config, will be removed: $($teamName)"
+            if($planOnly) {
+                Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName' -X DELETE"
+            } else {
+                gh api "orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName" -X DELETE
+            }
         }
     }
 }
