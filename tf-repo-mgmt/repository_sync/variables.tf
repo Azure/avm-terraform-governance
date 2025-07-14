@@ -97,16 +97,6 @@ variable "feature_flags" {
       "terraform-azure-avm-utl-interfaces",
       "terraform-azurerm-avm-res-keyvault-vault",
     ]
-    preview_ruleset_bypass_for_app_repos = [
-      "terraform-azure-avm-utl-interfaces",
-      "terraform-azurerm-avm-ptn-alz-connectivity-hub-and-spoke-vnet",
-      "terraform-azurerm-avm-ptn-alz-connectivity-virtual-wan",
-      "terraform-azurerm-avm-ptn-alz-management",
-      "terraform-azurerm-avm-ptn-alz",
-      "terraform-azurerm-avm-ptn-hubnetworking",
-      "terraform-azurerm-avm-ptn-virtualwan",
-      "terraform-azurerm-avm-res-keyvault-vault",
-    ]
   }
 }
 
@@ -117,7 +107,7 @@ variable "github_avm_app_id" {
 }
 
 variable "module_owner_github_handles" {
-  type = map(string)
+  type        = map(string)
   description = "Map of module owner GitHub handles."
-  default = {}
+  default     = {}
 }

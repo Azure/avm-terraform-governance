@@ -21,7 +21,7 @@ module "github" {
   github_repository_environment_name             = var.github_repository_environment_name
   github_repository_no_approval_environment_name = var.github_repository_no_approval_environment_name
   is_protected_repo                              = var.is_protected_repo
-  bypass_ruleset_for_approval_enabled            = local.feature_flags.preview_ruleset_bypass_for_app_repos
+  bypass_ruleset_for_approval_enabled            = true
   github_teams                                   = var.github_teams
   github_avm_app_id                              = var.github_avm_app_id
   labels                                         = local.labels
@@ -31,7 +31,7 @@ module "github" {
   module_id                                      = var.module_id
   module_name                                    = var.module_name
   custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
-  module_owner_github_handles = var.module_owner_github_handles
+  module_owner_github_handles                    = var.module_owner_github_handles
 }
 
 import {
