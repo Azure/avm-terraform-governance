@@ -20,6 +20,7 @@ on:
         description: 'Percentage of repositories to run migrate step on (0-100)'
         default: 20
         type: number
+        required: true
   schedule:
     - cron: '34 4 * * 1,4'
 
@@ -124,7 +125,7 @@ jobs:
         if: steps.check.outputs.continue
         id: migrate-eligibility
         run: |
-          ROLLOUT_PERCENTAGE=${{ inputs.migrate_rollout_percentage != '' && inputs.migrate_rollout_percentage || 0 }}
+          ROLLOUT_PERCENTAGE=${{inputs.migrate_rollout_percentage}}
 
           if [[ "$ROLLOUT_PERCENTAGE" -eq 0 ]]; then
             echo "Migrate rollout is disabled (0%)"
@@ -141,8 +142,7 @@ jobs:
           # Create a deterministic hash based on repository name
           REPO_HASH=$(echo -n "${{ matrix.repoName }}" | sha256sum | cut -d' ' -f1)
           # Convert first 8 characters of hash to decimal and get modulo 100
-          REPO_BUCKET=$(echo "ibase=16; $(echo ${REPO_HASH:0:8} | tr '[:lower:]' '[:upper:]')" | bc)
-          REPO_BUCKET=$((REPO_BUCKET % 100))
+          REPO_BUCKET=$(( $(printf '%d' "0x${REPO_HASH:0:8}") % 100 ))
 
           echo "Repository: ${{ matrix.repoName }}"
           echo "Hash bucket: $REPO_BUCKET"
