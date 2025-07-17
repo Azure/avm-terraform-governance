@@ -16,8 +16,13 @@ on:
         description: 'Whether to run in first run mode'
         default: false
         type: boolean
+      migrate_rollout_percentage:
+        description: 'Percentage of repositories to run migrate step on (0-100)'
+        default: 20
+        type: number
+        required: true
   schedule:
-    - cron: '34 4 * * 0,3,5'
+    - cron: '34 4 * * 1,4'
 
 permissions:
   id-token: write
@@ -116,6 +121,49 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
 
+      - name: Calculate migrate rollout eligibility
+        if: steps.check.outputs.continue
+        id: migrate-eligibility
+        run: |
+          ROLLOUT_PERCENTAGE=${{inputs.migrate_rollout_percentage}}
+
+          if [[ "$ROLLOUT_PERCENTAGE" -eq 0 ]]; then
+            echo "Migrate rollout is disabled (0%)"
+            echo "run_migrate=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [[ "$ROLLOUT_PERCENTAGE" -ge 100 ]]; then
+            echo "Migrate rollout is enabled for all repositories (100%)"
+            echo "run_migrate=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Create a deterministic hash based on repository name
+          REPO_HASH=$(echo -n "${{ matrix.repoName }}" | sha256sum | cut -d' ' -f1)
+          # Convert first 8 characters of hash to decimal and get modulo 100
+          REPO_BUCKET=$(( $(printf '%d' "0x${REPO_HASH:0:8}") % 100 ))
+
+          echo "Repository: ${{ matrix.repoName }}"
+          echo "Hash bucket: $REPO_BUCKET"
+          echo "Rollout percentage: $ROLLOUT_PERCENTAGE%"
+
+          if [[ "$REPO_BUCKET" -ge "$ROLLOUT_PERCENTAGE" ]]; then
+            echo "✗ Repository is excluded from rollout"
+            echo "run_migrate=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✓ Repository is included in rollout"
+          echo "run_migrate=true" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: run migrate
+        if: steps.check.outputs.continue && steps.migrate-eligibility.outputs.run_migrate == 'true'
+        run: |
+          ./avm migrate
+        shell: bash
+        continue-on-error: true
 
       - name: Run pre-commit
         if: steps.check.outputs.continue
