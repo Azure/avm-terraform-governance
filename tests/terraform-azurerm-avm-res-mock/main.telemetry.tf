@@ -19,7 +19,6 @@ resource "modtm_telemetry" "telemetry" {
     module_version  = one(data.modtm_module_source.telemetry).module_version
     random_id       = one(random_uuid.telemetry).result
   }, { location = local.main_location })
-
 }
 locals {
   main_location = var.location
@@ -32,7 +31,6 @@ locals {
     "git::https://github\\.com/[A|a]zure/.+",
     "git::ssh:://git@github\\.com/[A|a]zure/.+",
   ]
-
 }
 
 locals {
@@ -49,7 +47,6 @@ locals {
     avm_module_source  = one(data.modtm_module_source.telemetry).module_source
     avm_module_version = one(data.modtm_module_source.telemetry).module_version
   })
-
 }
 
 locals {
