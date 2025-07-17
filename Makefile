@@ -7,7 +7,7 @@ help:
 
 .PHONY: migrate
 migrate:
-  @echo "This is a no-op. This repo has already been migrated."
+	@echo "This is a no-op. This repo has already been migrated."
 
 .PHONY: pre-commit
 pre-commit:
