@@ -207,7 +207,7 @@ jobs:
         if: steps.check.outputs.continue && steps.changes.outputs.pr_url != ''
         run: |
           # Close older pre-commit PRs
-          gh pr list --state open --base main --json url --jq '.[] | select(.title | startswith("chore: pre-commit updates")) | .url' | while read -r pr_url; do
+          gh pr list --state open --base main --json url,title --jq '.[] | select(.title | startswith("chore: pre-commit updates")) | .url' | while read -r pr_url; do
             if [[ "$pr_url" != "${{ steps.changes.outputs.pr_url }}" ]]; then
               echo "Closing older pre-commit PR $pr_url"
               gh pr close $pr_url --delete-branch
