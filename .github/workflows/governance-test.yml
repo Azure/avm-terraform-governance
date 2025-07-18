@@ -129,7 +129,7 @@ jobs:
         run: |
           if [[ -s trivy.txt ]]; then
             {
-              echo "### Security Output"
+              echo "## Trivy Output"
               echo "<details><summary>Click to expand</summary>"
               echo ""
               echo '```terraform'
