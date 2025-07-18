@@ -116,18 +116,28 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         id: trivy
-        uses: aquasecurity/trivy-action@76071ef0d7ec797419534a183b498b4d6366cf37 # 0.31.0
+        uses: aquasecurity/trivy-action@dc5a429b52fcf669ce959baa2c2dd26090d2a6c4 # v0.32.0
         with:
           image-ref: ${{ env.CONTAINER_IMAGE }}
-          exit-code: '1'
+          exit-code: 0
           ignore-unfixed: true
+          hide-progress: true
           scanners: vuln
-        continue-on-error: true
+          output: trivy.txt
 
-      - name: Annotate job
-        if: steps.trivy.outcome == 'failure'
+      - name: Publish Trivy Output to Summary
         run: |
-          echo "## [error]Trivy found vulnerabilities in the image. Please review the scan results." >> $GITHUB_STEP_SUMMARY
+          if [[ -s trivy.txt ]]; then
+            {
+              echo "## Trivy Output"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '```terraform'
+              cat trivy.txt
+              echo '```'
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
+          fi
 
   test-governance:
     runs-on: ubuntu-latest
