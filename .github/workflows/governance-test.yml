@@ -124,7 +124,6 @@ jobs:
           hide-progress: true
           scanners: vuln
           output: trivy.txt
-        continue-on-error: true
 
       - name: Publish Trivy Output to Summary
         run: |
