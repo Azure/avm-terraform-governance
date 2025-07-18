@@ -173,7 +173,7 @@ commands:
             command_line: mapotf clean-backup --tf-dir .
             runs_on_condition: always
 
-          - type: parallel
+          - type: serial
             name: avmfix
             commands:
               - type: serial
@@ -184,7 +184,7 @@ commands:
                 name: submodules
                 working_directory: "./modules"
                 depth: 1
-                mode: parallel
+                mode: serial
                 skip_on_not_exist: true
                 working_directory_strategy: "item_relative"
                 command_group: avmfix
@@ -193,7 +193,7 @@ commands:
                 name: examples
                 working_directory: "./examples"
                 depth: 1
-                mode: parallel
+                mode: serial
                 skip_on_not_exist: true
                 working_directory_strategy: "item_relative"
                 command_group: avmfix
