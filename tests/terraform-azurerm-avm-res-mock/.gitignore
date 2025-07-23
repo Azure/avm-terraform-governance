@@ -22,3 +22,4 @@ crash.log
 examples/*/policy
 terraform.rc
 .avm
+.vscode/mcp.json
