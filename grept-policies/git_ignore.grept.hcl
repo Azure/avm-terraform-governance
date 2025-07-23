@@ -24,6 +24,7 @@ locals {
     "README-generated.md",
     "terraform.rc",
     ".avm",
+    ".vscode/mcp.json",
   ])
 }
 
