@@ -28,11 +28,11 @@ commands:
         name: Check for Ignore File
         command_line: |
           if [ -e .e2eignore ]; then
-            echo "Found the .e2eignore file, so skipping the example $ITEM"
+            echo "Found the .e2eignore file, so skipping the example $ITEM" 1>&2
             exit 99
           fi
         skip_exit_codes: [99]
-    
+
       - type: shell
         name: Clean Terraform
         command_line: |
