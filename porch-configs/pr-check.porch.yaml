@@ -283,6 +283,15 @@ commands:
         working_directory_strategy: "item_relative"
         commands:
           - type: shell
+            name: Check for Ignore File
+            command_line: |
+              if [ -e .e2eignore ]; then
+                echo "Found the .e2eignore file, so skipping the example $ITEM"
+                exit 99
+              fi
+            skip_exit_codes: [99]
+        
+          - type: shell
             name: run pre.sh if exists
             command_line: |
               if [ -f pre.sh ]; then
