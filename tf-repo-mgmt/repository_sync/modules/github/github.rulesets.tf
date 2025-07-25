@@ -1,4 +1,5 @@
 resource "github_repository_ruleset" "main" {
+  count       = var.repository_creation_mode_enabled ? 0 : 1
   name        = "Azure Verified Modules"
   repository  = github_repository.this.name
   target      = "branch"
