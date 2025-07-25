@@ -155,6 +155,7 @@ avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM 
 avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,
 avm-res-recoveryservices-vault,Microsoft.RecoveryServices,vaults,Recovery Services Vault,,elsalvos,Cesar Abrego,,
 avm-res-redhatopenshift-openshiftcluster,Microsoft.RedHatOpenShift,openShiftClusters,OpenShift Cluster,,ljtill,Lyon Till,,
+avm-res-relay-namespace,Microsoft.Relay,namespaces,Relay Namespace,,sujaypillai,Sujay Pillai,,
 avm-res-resourcegraph-query,Microsoft.ResourceGraph,queries,Resource Graph Query,,SJAYAP,S Jayaprakash,,
 avm-res-resources-resourcegroup,Microsoft.Resources,resourceGroups,Resource Group,RG,Jfolberth,John Folberth,,
 avm-res-search-searchservice,Microsoft.Search,searchServices,Search Service,,seekerofsai,Bhanu Neti,,
