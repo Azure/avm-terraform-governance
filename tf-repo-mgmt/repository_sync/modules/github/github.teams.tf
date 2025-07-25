@@ -24,13 +24,13 @@ locals {
   }]]) : final_members.composite_key => final_members.username }
   final_team_maintainers = merge(local.team_maintainers, { for k, v in var.module_owner_github_handles : k => v if v != "" })
 
-  final_maintainer_mapped_to_teams = { for final_mapped_members in  flatten([ for k, v in local.github_team_to_create : [
+  final_maintainer_mapped_to_teams = { for final_mapped_members in flatten([for k, v in local.github_team_to_create : [
     for k_member, v_member in local.final_team_maintainers : {
       composite_key = "${k}-${k_member}"
-      team_id = github_team.this[k].id
-      username  = v_member
+      team_id       = github_team.this[k].id
+      username      = v_member
     }
-  ] ]) : final_mapped_members.composite_key => {
+    ]]) : final_mapped_members.composite_key => {
     team_id  = final_mapped_members.team_id
     username = final_mapped_members.username
   } }

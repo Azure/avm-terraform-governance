@@ -96,6 +96,6 @@ variable "custom_subject_claims_enabled" {
 }
 
 variable "module_owner_github_handles" {
-  type = map(string)
+  type        = map(string)
   description = "Map of module owner GitHub handles."
 }
