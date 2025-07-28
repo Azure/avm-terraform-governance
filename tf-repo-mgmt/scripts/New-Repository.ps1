@@ -49,6 +49,12 @@ if (!$skipMetaDataCreation) {
   Set-Location -Path $tempPath
   git clone $governanceRepoUrl $tempRepoFolderName
   Set-Location -Path $tempRepoFolderName
+
+  $randomNumber = Get-Random -Minimum 1000 -Maximum 9999
+  gh fork --remote --fork-name "avm-terraform-governance-$randomNumber" --default-branch-only
+  gh repo set-default 'Azure/avm-terraform-governance'
+  git fetch upstream
+  git reset --hard upstream/main
   git checkout -b "chore/add/$moduleName"
 
   $csvPath = "./tf-repo-mgmt/repository-meta-data/meta-data.csv"
@@ -61,7 +67,7 @@ if (!$skipMetaDataCreation) {
   git commit -m "chore: add $moduleName metadata"
   git push --set-upstream origin "chore/add/$moduleName"
 
-  $prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR adds metadata for the $moduleName module." --base main --head "chore/add/$moduleName" -a "@me" --repo $governanceRepoUrl
+  $prUrl = gh pr create --title "chore: add $moduleName metadata" --body "This PR adds metadata for the $moduleName module."
 
   Write-Host "Created PR for repo meta data: $prUrl"
 
@@ -132,13 +138,6 @@ if (!$skipRepoCreation) {
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green
 
-if (!$skipMetaDataCreation) {
-  Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
-  Write-Host "Hit Enter to open the Pull Request in your browser and merge it:" -ForegroundColor Yellow
-  Read-Host
-  Start-Process $prUrl
-}
-
 Write-Host ""
 Write-Host "Repository URL:" -ForegroundColor Cyan
 Write-Host $repositoryUrl
@@ -154,7 +153,7 @@ if (!$skipCreateAppInstallationRequest) {
   $template = Get-Content -Path "./issue-templates/install-app-request.md" -Raw
   $template = $template -replace "{{REPOSITORY_NAME}}", $repositoryName
   $appInstallIssueUrl = gh issue create --repo $appInstallationRequestRepo --title "[GitHub App] Installation Request ``Azure/$repositoryName``" --body $template
-  Write-Host "Created app installation request: $appInstallIssueUrl" -ForegroundColor Green
+  Write-Host "Created app installation request: $appInstallIssueUrl" -ForegroundColor Cyan
 }
 
 $completionMessage = @"
@@ -170,4 +169,5 @@ If you do not see this environment in your repository after 48 hours, please let
 Thanks!
 "@
 
+Write-Host ""
 Write-Host $completionMessage -ForegroundColor Green
