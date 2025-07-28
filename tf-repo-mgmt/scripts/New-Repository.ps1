@@ -47,11 +47,8 @@ if (!$skipMetaDataCreation) {
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
-  git clone $governanceRepoUrl $tempRepoFolderName
+  gh repo fork --remote --clone --default-branch-only $governanceRepoUrl
   Set-Location -Path $tempRepoFolderName
-
-  $randomNumber = Get-Random -Minimum 1000 -Maximum 9999
-  gh fork --remote --fork-name "avm-terraform-governance-$randomNumber" --default-branch-only
   gh repo set-default 'Azure/avm-terraform-governance'
   git fetch upstream
   git reset --hard upstream/main
