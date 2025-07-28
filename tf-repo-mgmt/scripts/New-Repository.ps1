@@ -16,30 +16,32 @@ param (
   [switch]$skipRepoCreation,
   [switch]$skipMetaDataCreation,
   [string]$repositorySyncModulePath = "./repository_sync",
-  [switch]$skipCleanup
+  [switch]$skipCleanup,
+  [switch]$skipCreateAppInstallationRequest,
+  [string]$appInstallationRequestRepo = "microsoft/github-operations"
 )
 
 $ProgressPreference = "SilentlyContinue"
 
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
-if($moduleName -notmatch $moduleNameRegex) {
+if ($moduleName -notmatch $moduleNameRegex) {
   Write-Error "Module name must be in the format '$moduleNameRegex'" -Category InvalidArgument
   return
 }
 
-if(!$skipMetaDataCreation) {
+if (!$skipMetaDataCreation) {
 
   $metaDataVariables = [PSCustomObject]@{
-    moduleId = $moduleName
-    providerNamespace = $resourceProviderNamespace
-    providerResourceType = $resourceType
-    moduleDisplayName = $moduleDisplayName
-    alternativeNames = $moduleAlternativeNames
-    primaryOwnerGitHubHandle = $ownerPrimaryGitHubHandle
-    primaryOwnerDisplayName = $ownerPrimaryDisplayName
+    moduleId                   = $moduleName
+    providerNamespace          = $resourceProviderNamespace
+    providerResourceType       = $resourceType
+    moduleDisplayName          = $moduleDisplayName
+    alternativeNames           = $moduleAlternativeNames
+    primaryOwnerGitHubHandle   = $ownerPrimaryGitHubHandle
+    primaryOwnerDisplayName    = $ownerPrimaryDisplayName
     secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
-    secondaryOwnerDisplayName = $ownerSecondaryDisplayName
+    secondaryOwnerDisplayName  = $ownerSecondaryDisplayName
   }
 
   $currentPath = Get-Location
@@ -68,7 +70,7 @@ if(!$skipMetaDataCreation) {
 
   Set-Location $currentPath
 
-  if($metaDataOnly) {
+  if ($metaDataOnly) {
     Write-Host "Metadata only creation completed. Exiting."
     return
   }
@@ -77,7 +79,7 @@ if(!$skipMetaDataCreation) {
 $repositoryName = "terraform-$moduleProvider-$moduleName"
 $repositoryUrl = "https://github.com/Azure/$repositoryName"
 
-if(!$skipRepoCreation) {
+if (!$skipRepoCreation) {
   Write-Host ""
   Write-Host "Creating repository $moduleName"
 
@@ -110,7 +112,7 @@ if(!$skipRepoCreation) {
   Write-Host ""
 
   $response = ""
-  while($response -ne "yes") {
+  while ($response -ne "yes") {
     Write-Host "Once the form is complete and you have elevated with JIT, type 'yes' and hit Enter to continue:" -ForegroundColor Yellow
     $response = Read-Host
   }
@@ -130,7 +132,7 @@ if(!$skipRepoCreation) {
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green
 
-if(!$skipMetaDataCreation) {
+if (!$skipMetaDataCreation) {
   Write-Host "Please approve and merge the repo meta data Pull Request: $prUrl" -ForegroundColor Yellow
   Write-Host "Hit Enter to open the Pull Request in your browser and merge it:" -ForegroundColor Yellow
   Read-Host
@@ -143,35 +145,29 @@ Write-Host $repositoryUrl
 
 $ownerMention = ""
 
-if($ownerPrimaryGitHubHandle -ne "") {
+if ($ownerPrimaryGitHubHandle -ne "") {
   $ownerMention = "@$ownerPrimaryGitHubHandle "
 }
 
-$issueComment = @"
+if (!$skipCreateAppInstallationRequest) {
+  Write-Host "Creating app installation request..." -ForegroundColor Yellow
+  $template = Get-Content -Path "./issue-templates/install-app-request.md" -Raw
+  $template = $template -replace "{{REPOSITORY_NAME}}", $repositoryName
+  $appInstallIssueUrl = gh issue create --repo $appInstallationRequestRepo --title "[GitHub App] Installation Request ``Azure/$repositoryName``" --body $template
+  Write-Host "Created app installation request: $appInstallIssueUrl" -ForegroundColor Green
+}
+
+$completionMessage = @"
 $($ownerMention)The module repository has now been created. You can find it at $repositoryUrl.
 
 The final step of repository configuration is still in progress, but you will be able to start developing your code immediately.
 
-The final step is to create the environment and credentials require to run the end to end tests. If the environment called ``test`` is not available in 48 hours, please let me know.
+Once the app installation request is approved, your repo will be configured with an environment called ``test``.
+Monitor the issue above for updates on the app installation request.
+This provides secrets for the test workflows and grants access to an Azure subscription and allows you to run your tests.
+If you do not see this environment in your repository after 48 hours, please let us know.
 
-Thanks
+Thanks!
 "@
 
-Write-Host ""
-Write-Host "Here is some text for the GitHub issue comment to notify the module owner about the repository creation:" -ForegroundColor Cyan
-Write-Host $issueComment
-Write-Host ""
-Write-Host ""
-Write-Host "All done, thanks!" -ForegroundColor Green
-Write-Host ""
-Write-Host "Note that the repo sync happens once a day at 15:30 UTC. It will only run for this repository once the GitHub App has been installed in it." -ForegroundColor Yellow
-Write-Host "Should you wish to run the sync sooner, you can do so by running the following command once the open source team confirm the app has been installed:" -ForegroundColor Yellow
-$workflowDispatchScript = @"
-./scripts/Invoke-WorkflowDispatch.ps1 ``
-  -inputs @{
-    repositories = "$moduleName"
-    plan_only = `$false
-  }
-"@
-
-Write-Host $workflowDispatchScript -ForegroundColor Yellow
+Write-Host $completionMessage -ForegroundColor Green
