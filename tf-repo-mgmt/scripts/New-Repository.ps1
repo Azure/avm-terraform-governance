@@ -17,7 +17,7 @@ param (
   [switch]$skipMetaDataCreation,
   [string]$repositorySyncModulePath = "./repository_sync",
   [switch]$skipCleanup,
-  [switch]$skipCreateAppInstallationRequest = $false,
+  [switch]$skipCreateAppInstallationRequest,
   [string]$appInstallationRequestRepo = "microsoft/github-operations"
 )
 
