@@ -163,6 +163,7 @@ $($ownerMention)The module repository has now been created. You can find it at $
 The final step of repository configuration is still in progress, but you will be able to start developing your code immediately.
 
 Once the app installation request is approved, your repo will be configured with an environment called ``test``.
+Monitor the issue above for updates on the app installation request.
 This provides secrets for the test workflows and grants access to an Azure subscription and allows you to run your tests.
 If you do not see this environment in your repository after 48 hours, please let us know.
 
