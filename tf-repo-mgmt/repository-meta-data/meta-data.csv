@@ -31,11 +31,11 @@ avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,
 avm-ptn-odaa,,,Oracle Exedata Workload,,terrymandin,Terry Mandin,,
 avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,
 avm-ptn-openai-cognitivesearch,,,Corporate Line of Business (LoB) ChatBot ,,mikestiers,Mike Stiers,,
-avm-ptn-policyassignment,,,Policy assignment,,steph409,Stephanie Lanius,bjornhofer,Bjorn Hofer
+avm-ptn-policyassignment,,,Policy assignment,,bjornhofer,Bjorn Hofer,,
 avm-ptn-subnets-nsgs-routes,,,Network Security Groups,NSG,swathialuganti,Swathi Aluganti Narasimhulu,,
 avm-ptn-subscription-service-health-alerts,,,Subscription Service Health Alerts,,ASHR4,Rhys Ash,,
 avm-ptn-virtualwan,,,Virtual WAN,vWAN,khushal08,Khush Kaviraj,,
-avm-ptn-vnetgateway,,,Virtual Network Gateway,VNET GW,luke-taylor,Luke Taylor,matt-FFFFFF,Matt White
+avm-ptn-vnetgateway,,,Virtual Network Gateway,VNET GW,matt-FFFFFF,Matt White,,
 avm-res-alertsmanagement-actionrule,Microsoft.AlertsManagement,actionRules,Alert Action Rules,,JoeyBarnes,Joseph Barnes,ASHR4,Rhys Ash
 avm-res-analysisservices-server,Microsoft.AnalysisServices,servers,Analysis Services Server,,Bhavyasree08,Bhavyasree Damarla,,
 avm-res-apimanagement-service,Microsoft.ApiManagement,service,API Management Service,,swatilekhapaul,Swatilekha Paul,,
@@ -165,7 +165,7 @@ avm-res-sql-server,Microsoft.Sql,servers,Azure SQL Server,,mbilalamjad,Bilal Amj
 avm-res-sqlvirtualmachine-sqlvirtualmachine,Microsoft.SqlVirtualMachine,sqlVirtualMachines,Sql Virtual Machine,SQL VM,timchapman,Tim Chapman,,
 avm-res-storage-storageaccount,Microsoft.Storage,storageAccounts,Storage Account,,chinthakaru,Chinthaka Rupasinghe,,
 avm-res-synapse-workspace,Microsoft.Synapse,workspaces,Synapse Workspace,,Karni-G,Karni Gupta,,
-avm-res-web-connection,Microsoft.Web,connection,API Connection,,dukumili,Sandhya Kumili,,
+avm-res-web-connection,Microsoft.Web,connection,API Connection,,donovm4,Donovan McCoy,,
 avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Environment,ASE,ibersanoMS,Isabelle Bersano,,
 avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
 avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,
