@@ -87,6 +87,7 @@ avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Po
 avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
+avm-res-documentdb-mongocluster,Microsoft.DocumentDB,mongoClusters,Cosmos DB for MongoDB (vCore),,sujaypillai,Sujay Pillai,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
 avm-res-eventgrid-domain,Microsoft.EventGrid,domains,EventGrid Domain,,fafriha,Farouk Friha,,
 avm-res-eventgrid-namespace,Microsoft.EventGrid,namespaces,EventGrid Namespace,,dassbernd,Berna Sandalli,,
