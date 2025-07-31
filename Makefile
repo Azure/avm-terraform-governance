@@ -3,7 +3,12 @@ AVM_PORCH_REF := main
 
 .PHONY: help
 help:
-	@echo "please use 'make <target>'"
+	@echo "Available targets:"
+	@echo "  pre-commit          - Run pre-commit checks. Formates files and generates documentation."
+	@echo "  pr-check            - Run PR checks. Checks that pre-commit has been run and runs linters."
+	@echo "  test-examples       - Test examples. Will orchestrate terraform plan/apply/destroy and check for idempotent configuration. Set \`AVM_EXAMPLE\` to the example directory name to run a single example."
+	@echo "  tf-test-unit        - Run Terraform unit tests, if they exist in \`tests/unit\`."
+	@echo "  tf-test-integration - Run Terraform integration tests, if they exist in \`tests/integration\`."
 
 .PHONY: migrate
 migrate:
