@@ -26,8 +26,6 @@ param(
         "github_repository"
     ),
     [switch]$skipCleanup,
-    [string]$primaryModuleOwnerGitHubHandle = "",
-    [string]$secondaryModuleOwnerGitHubHandle = "",
     [string[]]$extraTeamsToIgnore = @(
         "security",
         "azurecla-write"
