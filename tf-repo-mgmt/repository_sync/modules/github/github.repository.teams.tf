@@ -1,6 +1,6 @@
 locals {
   repository_teams = { for k, v in var.github_teams : k => {
-    id         = try(github_team.this[k].id, data.github_team.this[k].id)
+    id         = data.github_team.this[k].id
     permission = v.repository_access_permission
   } if v.repository_access_permission != "none" }
 }
