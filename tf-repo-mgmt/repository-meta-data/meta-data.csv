@@ -125,6 +125,7 @@ avm-res-network-azurefirewall,Microsoft.Network,azureFirewalls,Azure Firewall,Az
 avm-res-network-bastionhost,Microsoft.Network,bastionHosts,Bastion Host,,humanascode,Itamar Hirosh,,
 avm-res-network-connection,Microsoft.Network,connections,Virtual Network Gateway Connection,,jchancellor-ms,Jon Chancellor,,
 avm-res-network-ddosprotectionplan,Microsoft.Network,ddosProtectionPlans,DDoS Protection,,sitarant,Simona Tarantola,jtracey93,Jack Tracey
+avm-res-network-dnsforwardingruleset,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Ruleset,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-network-dnsforwardingrulesets,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Rulesets,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-network-dnsresolver,Microsoft.Network,dnsResolvers,DNS Resolver,,humanascode,Itamar Hirosh,,
 avm-res-network-dnszone,Microsoft.Network,dnsZones,Public DNS Zone,,sharmilamusunuru,Sharmila Musunuru,,
