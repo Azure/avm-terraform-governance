@@ -4,8 +4,6 @@ param(
             repoId = "avm-res-network-virtualnetwork"
             repoUrl = "https://github.com/Azure/terraform-azurerm-avm-res-network-virtualnetwork"
             repoSubType = "Resource"
-            repoOwnerTeam = "@Azure/avm-res-network-virtualnetwork-module-owners-tf"
-            repoContributorTeam = "@Azure/avm-res-network-virtualnetwork-module-contributors-tf"
         }
     ),
     [string]$metaDataConfigFilePath = "./repository-meta-data/config.json",
@@ -27,8 +25,6 @@ foreach($repository in $repositories) {
     $repositoryDataMap["repo.moduleID"] = $repository.repoId
     $repositoryDataMap["repo.repositoryUrl"] = $repository.repoUrl
     $repositoryDataMap["repo.moduleType"] = $repository.repoSubType
-    $repositoryDataMap["repo.repoOwnerTeam"] = $repository.repoOwnerTeam
-    $repositoryDataMap["repo.repoContributorTeam"] = $repository.repoContributorTeam
 
     $repoSplit = $repository.repoUrl.Split("/")
 

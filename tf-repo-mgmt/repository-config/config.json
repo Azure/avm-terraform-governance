@@ -34,7 +34,6 @@
       ],
       "repositoryPermission": "maintain",
       "environmentApproval": true,
-      "createdWithRepository": false,
       "membersAreTeamMaintainers": true
     },
     {
@@ -45,29 +44,16 @@
       ],
       "repositoryPermission": "triage",
       "environmentApproval": false,
-      "createdWithRepository": false,
       "membersAreTeamMaintainers": false
     },
     {
-      "name": "{{repoId}}-module-owners-tf",
-      "description": "Owners of the {{repoId}} Azure Verified Module.",
-      "repositoryGroups": [
-        "all"
-      ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "createdWithRepository": true,
-      "membersAreTeamMaintainers": false
-    },
-    {
-      "name": "{{repoId}}-module-contributors-tf",
-      "description": "Contributors of the {{repoId}} Azure Verified Module.",
+      "name": "avm-module-owners-terraform",
+      "description": "Azure Verified Module Owners.",
       "repositoryGroups": [
         "all"
       ],
       "repositoryPermission": "push",
       "environmentApproval": true,
-      "createdWithRepository": true,
       "membersAreTeamMaintainers": false
     },
     {
@@ -78,7 +64,6 @@
       ],
       "repositoryPermission": "push",
       "environmentApproval": true,
-      "createdWithRepository": false,
       "membersAreTeamMaintainers": false
     },
     {
@@ -89,8 +74,7 @@
       ],
       "repositoryPermission": "triage",
       "environmentApproval": false,
-      "createdWithRepository": false,
-      "membersAreTeamMaintainers": true
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-core-team-technical",
@@ -100,8 +84,7 @@
       ],
       "repositoryPermission": "maintain",
       "environmentApproval": true,
-      "createdWithRepository": false,
-      "membersAreTeamMaintainers": true
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-non-core-team-contributors-terraform",
@@ -111,7 +94,6 @@
       ],
       "repositoryPermission": "maintain",
       "environmentApproval": true,
-      "createdWithRepository": false,
       "membersAreTeamMaintainers": false
     }
   ]

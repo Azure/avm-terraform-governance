@@ -1,5 +1,5 @@
 locals {
-  environment_approval_teams = { for k, v in var.github_teams : k => try(github_team.this[k].id, data.github_team.this[k].id) if v.environment_approval }
+  environment_approval_teams = { for k, v in var.github_teams : k => data.github_team.this[k].id if v.environment_approval }
 }
 
 resource "github_repository_environment" "this" {

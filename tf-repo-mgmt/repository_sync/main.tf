@@ -31,7 +31,6 @@ module "github" {
   module_id                                      = var.module_id
   module_name                                    = var.module_name
   custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
-  module_owner_github_handles                    = var.module_owner_github_handles
 }
 
 import {

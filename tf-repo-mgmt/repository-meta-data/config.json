@@ -344,50 +344,6 @@
             ]
         },
         {
-            "name": "repoOwnerTeam",
-            "description": "The GitHub Team for the module owners",
-            "source": "repo.repoOwnerTeam",
-            "mapsTo": [
-                {
-                    "output": "resourceModulesCsv",
-                    "outputColumnName": "ModuleOwnersGHTeam",
-                    "outputColumnOrder": 13
-                },
-                {
-                    "output": "patternModulesCsv",
-                    "outputColumnName": "ModuleOwnersGHTeam",
-                    "outputColumnOrder": 11
-                },
-                {
-                    "output": "utilityModulesCsv",
-                    "outputColumnName": "ModuleOwnersGHTeam",
-                    "outputColumnOrder": 11
-                }
-            ]
-        },
-        {
-            "name": "repoContributorTeam",
-            "description": "The GitHub Team for the module contributors",
-            "source": "repo.repoContributorTeam",
-            "mapsTo": [
-                {
-                    "output": "resourceModulesCsv",
-                    "outputColumnName": "ModuleContributorsGHTeam",
-                    "outputColumnOrder": 13
-                },
-                {
-                    "output": "patternModulesCsv",
-                    "outputColumnName": "ModuleContributorsGHTeam",
-                    "outputColumnOrder": 11
-                },
-                {
-                    "output": "utilityModulesCsv",
-                    "outputColumnName": "ModuleContributorsGHTeam",
-                    "outputColumnOrder": 11
-                }
-            ]
-        },
-        {
             "name": "moduleDescription",
             "description": "A description of the module",
             "source": "calculated.moduleDescription",
