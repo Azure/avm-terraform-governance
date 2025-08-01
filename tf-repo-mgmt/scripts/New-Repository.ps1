@@ -30,6 +30,32 @@ if ($moduleName -notmatch $moduleNameRegex) {
   return
 }
 
+if($moduleDisplayName -eq "") {
+  Write-Error "Module display name must be provided." -Category InvalidArgument
+  return
+}
+
+if($moduleName.StartsWith("avm-res")) {
+  if($resourceProviderNamespace -eq "") {
+    Write-Error "Resource provider namespace must be provided for resource modules." -Category InvalidArgument
+    return
+  }
+  if($resourceType -eq "") {
+    Write-Error "Resource type must be provided for resource modules." -Category InvalidArgument
+    return
+  }
+}
+
+if($ownerPrimaryGitHubHandle -eq "") {
+  Write-Error "Primary owner GitHub handle must be provided." -Category InvalidArgument
+  return
+}
+
+if($ownerPrimaryDisplayName -eq "") {
+  Write-Error "Primary owner display name must be provided." -Category InvalidArgument
+  return
+}
+
 if (!$skipMetaDataCreation) {
 
   $metaDataVariables = [PSCustomObject]@{
