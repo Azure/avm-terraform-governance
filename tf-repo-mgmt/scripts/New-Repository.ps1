@@ -128,9 +128,7 @@ if (!$skipRepoCreation) {
   -planOnly $false `
   -repoId $moduleName `
   -repoUrl $repositoryUrl `
-  -skipCleanup:$skipCleanup.IsPresent `
-  -primaryModuleOwnerGitHubHandle $ownerPrimaryGitHubHandle `
-  -secondaryModuleOwnerGitHubHandle $ownerSecondaryGitHubHandle
+  -skipCleanup:$skipCleanup.IsPresent
 
 Write-Host ""
 Write-Host "Terraform apply completed successfully." -ForegroundColor Green

@@ -26,8 +26,6 @@ param(
         "github_repository"
     ),
     [switch]$skipCleanup,
-    [string]$primaryModuleOwnerGitHubHandle = "",
-    [string]$secondaryModuleOwnerGitHubHandle = "",
     [string[]]$extraTeamsToIgnore = @(
         "security",
         "azurecla-write"
@@ -130,14 +128,8 @@ Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 $githubTeams = @{}
 
 foreach($team in $teams) {
-    $skipCheck = $false
-    if($repositoryCreationModeEnabled -and $team.createdWithRepository) {
-        Write-Host "Skipping team: $($team.name) as it is created with repository."
-        $skipCheck = $true
-    }
-    $teamName = $team.name.Replace("{{repoId}}", $repoId)
-    $teamDescription = $team.description.Replace("{{repoId}}", $repoId)
     $teamExists = $false
+    $teamName = $team.name
 
     if($skipCheck) {
         $teamExists = $true
@@ -156,7 +148,6 @@ foreach($team in $teams) {
             description = $teamDescription
             repository_access_permission = $team.repositoryPermission
             environment_approval = $team.environmentApproval
-            created_with_repository = $team.createdWithRepository
             members_are_team_maintainers = $team.membersAreTeamMaintainers
         }
     }
@@ -229,14 +220,6 @@ if(!$repositoryCreationModeEnabled) {
     }
 }
 
-$moduleOwners = @{}
-if($repositoryCreationModeEnabled) {
-    $moduleOwners = @{
-        primary = $primaryModuleOwnerGitHubHandle
-        secondary = $secondaryModuleOwnerGitHubHandle
-    }
-}
-
 $terraformVariables = @{
     repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent
     github_repository_owner = $orgName
@@ -247,7 +230,6 @@ $terraformVariables = @{
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $isProtected
     github_teams = $githubTeams
-    module_owner_github_handles = $moduleOwners
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"

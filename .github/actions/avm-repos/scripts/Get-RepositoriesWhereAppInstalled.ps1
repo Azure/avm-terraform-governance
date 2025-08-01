@@ -132,8 +132,6 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
     repoUrl             = $installedRepository.html_url
     repoType            = "avm"
     repoSubType         = $moduleType
-    repoOwnerTeam       = "@Azure/$($moduleName)-module-owners-tf"
-    repoContributorTeam = "@Azure/$($moduleName)-module-contributors-tf"
   }
 }
 

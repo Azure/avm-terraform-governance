@@ -54,8 +54,6 @@ variable "github_teams" {
     description                  = optional(string, "")
     repository_access_permission = optional(string, "none")
     environment_approval         = optional(bool, false)
-    created_with_repository      = optional(bool, false)
-    members_are_team_maintainers = optional(bool, false)
   }))
   description = <<DESCRIPTION
 Map of GitHub teams to be created or managed.
@@ -93,9 +91,4 @@ variable "github_avm_app_id" {
 variable "custom_subject_claims_enabled" {
   type        = bool
   description = "Whether custom subject claims are enabled for the GitHub Actions OIDC integration."
-}
-
-variable "module_owner_github_handles" {
-  type        = map(string)
-  description = "Map of module owner GitHub handles."
 }
