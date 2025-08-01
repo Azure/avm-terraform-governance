@@ -129,6 +129,7 @@ $githubTeams = @{}
 
 foreach($team in $teams) {
     $teamExists = $false
+    $teamName = $team.name
 
     if($skipCheck) {
         $teamExists = $true
