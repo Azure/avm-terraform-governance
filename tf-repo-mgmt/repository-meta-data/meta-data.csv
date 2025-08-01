@@ -1,4 +1,5 @@
 moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
+avm-ptn-aca-lza-hosting-environment,,,,,sam-cogan,Sam Cogan,,
 avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,
 avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,
 avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,
@@ -56,6 +57,7 @@ avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Ven
 avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,
 avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,
 avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,
+avm-res-compute-capacityreservationgroup,,,,,chianw,Chian Wong,,
 avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,
 avm-res-compute-diskencryptionset,Microsoft.Compute,diskEncryptionSets,Disk Encryption Set,,Akashc0807,Akash Choudhary,,
 avm-res-compute-gallery,Microsoft.Compute,galleries,Azure Compute Gallery,,Akashc0807,Akash Choudhary,,
@@ -87,6 +89,7 @@ avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Po
 avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,
 avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
+avm-res-documentdb-mongocluster,Microsoft.DocumentDB,mongoClusters,Cosmos DB for MongoDB (vCore),,sujaypillai,Sujay Pillai,,
 avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
 avm-res-eventgrid-domain,Microsoft.EventGrid,domains,EventGrid Domain,,fafriha,Farouk Friha,,
 avm-res-eventgrid-namespace,Microsoft.EventGrid,namespaces,EventGrid Namespace,,dassbernd,Berna Sandalli,,
@@ -125,6 +128,7 @@ avm-res-network-azurefirewall,Microsoft.Network,azureFirewalls,Azure Firewall,Az
 avm-res-network-bastionhost,Microsoft.Network,bastionHosts,Bastion Host,,humanascode,Itamar Hirosh,,
 avm-res-network-connection,Microsoft.Network,connections,Virtual Network Gateway Connection,,jchancellor-ms,Jon Chancellor,,
 avm-res-network-ddosprotectionplan,Microsoft.Network,ddosProtectionPlans,DDoS Protection,,sitarant,Simona Tarantola,jtracey93,Jack Tracey
+avm-res-network-dnsforwardingruleset,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Ruleset,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-network-dnsforwardingrulesets,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Rulesets,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-network-dnsresolver,Microsoft.Network,dnsResolvers,DNS Resolver,,humanascode,Itamar Hirosh,,
 avm-res-network-dnszone,Microsoft.Network,dnsZones,Public DNS Zone,,sharmilamusunuru,Sharmila Musunuru,,
