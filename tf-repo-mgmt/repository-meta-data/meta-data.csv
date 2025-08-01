@@ -57,6 +57,7 @@ avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Ven
 avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,
 avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,
 avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,
+avm-res-compute-capacityreservationgroup,,,,,chianw,Chian Wong,,
 avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,
 avm-res-compute-diskencryptionset,Microsoft.Compute,diskEncryptionSets,Disk Encryption Set,,Akashc0807,Akash Choudhary,,
 avm-res-compute-gallery,Microsoft.Compute,galleries,Azure Compute Gallery,,Akashc0807,Akash Choudhary,,
