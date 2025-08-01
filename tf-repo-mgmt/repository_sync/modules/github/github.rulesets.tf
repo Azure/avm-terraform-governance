@@ -38,6 +38,7 @@ resource "github_repository_ruleset" "main" {
 }
 
 resource "github_repository_ruleset" "tag_deny_non_v" {
+  count       = var.repository_creation_mode_enabled ? 0 : 1
   name        = "Only allow v tags"
   repository  = github_repository.this.name
   target      = "tag"
@@ -57,6 +58,7 @@ resource "github_repository_ruleset" "tag_deny_non_v" {
 }
 
 resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
+  count       = var.repository_creation_mode_enabled ? 0 : 1
   name        = "Must not delete/update version tags"
   repository  = github_repository.this.name
   target      = "tag"
@@ -74,4 +76,14 @@ resource "github_repository_ruleset" "tag_prevent_delete_version_tags" {
       exclude = []
     }
   }
+}
+
+moved {
+  from = github_repository_ruleset.tag_deny_non_v
+  to   = github_repository_ruleset.tag_deny_non_v[0]
+}
+
+moved {
+  from = github_repository_ruleset.tag_prevent_delete_version_tags
+  to   = github_repository_ruleset.tag_prevent_delete_version_tags[0]
 }
