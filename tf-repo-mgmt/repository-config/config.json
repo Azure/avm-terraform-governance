@@ -33,7 +33,8 @@
         "all"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": true
     },
     {
       "name": "avm-core-team-non-technical",
@@ -42,7 +43,8 @@
         "all"
       ],
       "repositoryPermission": "triage",
-      "environmentApproval": false
+      "environmentApproval": false,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "avm-module-owners-terraform",
@@ -51,7 +53,8 @@
         "all"
       ],
       "repositoryPermission": "write",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-accelerator-contributors-external",
@@ -60,7 +63,8 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-core-team",
@@ -69,7 +73,8 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "triage",
-      "environmentApproval": false
+      "environmentApproval": false,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-core-team-technical",
@@ -78,7 +83,8 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": false
     },
     {
       "name": "alz-non-core-team-contributors-terraform",
@@ -87,7 +93,8 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": false
     }
   ]
 }
