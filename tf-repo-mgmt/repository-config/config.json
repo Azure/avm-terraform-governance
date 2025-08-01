@@ -52,7 +52,7 @@
       "repositoryGroups": [
         "all"
       ],
-      "repositoryPermission": "write",
+      "repositoryPermission": "push",
       "environmentApproval": true,
       "membersAreTeamMaintainers": false
     },
