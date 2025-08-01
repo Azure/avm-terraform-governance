@@ -1,4 +1,5 @@
 moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
+avm-ptn-aca-lza-hosting-environment,,,,,sam-cogan,Sam Cogan,,
 avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,
 avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,
 avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,
