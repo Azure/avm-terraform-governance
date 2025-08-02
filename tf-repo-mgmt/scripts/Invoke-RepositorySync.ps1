@@ -211,10 +211,11 @@ if(!$repositoryCreationModeEnabled) {
         }
         if(!$githubTeams.ContainsKey($teamName)) {
             Write-Warning "Team exists in repository but not in config, will be removed: $($teamName)"
+            $teamSlug = $team.slug
             if($planOnly) {
-                Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName' -X DELETE"
+                Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName' -X DELETE"
             } else {
-                gh api "orgs/$orgName/teams/$($teamName)/repos/$orgAndRepoName" -X DELETE
+                gh api "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName" -X DELETE
             }
         }
     }
