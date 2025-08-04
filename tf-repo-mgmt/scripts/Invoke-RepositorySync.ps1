@@ -147,7 +147,7 @@ function Invoke-CommandWithRetry {
 
       Write-Host "Running $parentCommand with arguments: $($arguments -join ' ')"
       $process = Start-Process `
-        -FilePath parentCommand `
+        -FilePath $parentCommand `
         -ArgumentList $arguments `
         -RedirectStandardOutput $localLogPath `
         -RedirectStandardError $errorLog `
