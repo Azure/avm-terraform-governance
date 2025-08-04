@@ -70,7 +70,8 @@ function Invoke-TerraformWithRetry {
     [int]$retryDelayIncremental = 10,
     [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers"),
     [switch]$printOutput,
-    [switch]$printOutputOnError
+    [switch]$printOutputOnError,
+    [switch]$returnOutputParsedFromJson
   )
 
   foreach($command in $commands) {
@@ -85,8 +86,9 @@ function Invoke-TerraformWithRetry {
     -maxRetries $maxRetries `
     -retryDelayIncremental $retryDelayIncremental `
     -retryOn $retryOn `
-    -printOutput $printOutput `
-    -printOutputOnError $printOutputOnError
+    -printOutput:$printOutput.IsPresent `
+    -printOutputOnError:$printOutputOnError.IsPresent `
+    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
 }
 
 function Invoke-GitHubCliWithRetry {
@@ -110,9 +112,9 @@ function Invoke-GitHubCliWithRetry {
     -maxRetries $maxRetries `
     -retryDelayIncremental $retryDelayIncremental `
     -retryOn $retryOn `
-    -printOutput $printOutput `
-    -printOutputOnError $printOutputOnError `
-    -returnOutputParsedFromJson $returnOutputParsedFromJson
+    -printOutput:$printOutput.IsPresent `
+    -printOutputOnError:$printOutputOnError.IsPresent `
+    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
 }
 
 function Invoke-CommandWithRetry {
