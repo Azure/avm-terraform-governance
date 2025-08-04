@@ -238,6 +238,10 @@ function Invoke-GitHubCliWithRetry {
             success = $true
             output = $parsedOutput
           }
+        } else {
+            $returnOutputs += @{
+                success = $true
+            }
         }
       }
     }
