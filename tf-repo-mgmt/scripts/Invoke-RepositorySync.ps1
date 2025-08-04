@@ -73,84 +73,51 @@ function Invoke-TerraformWithRetry {
     [switch]$printOutputOnError
   )
 
-  $retryCount = 0
-  $shouldRetry = $true
-
-  while ($shouldRetry -and $retryCount -le $maxRetries) {
-    $shouldRetry = $false
-
-    foreach ($command in $commands) {
-      $commandName = $command.Command
-      $arguments = $command.Arguments
-
-      $localLogPath = $outputLog
-      if($command.OutputLog) {
-        $localLogPath = $command.OutputLog
-      }
-
-      $commandArguments = @("-chdir=$workingDirectory", $commandName) + $arguments
-
-      Write-Host "Running Terraform $commandName with arguments: $($commandArguments -join ' ')"
-      $process = Start-Process `
-        -FilePath "terraform" `
-        -ArgumentList $commandArguments `
-        -RedirectStandardOutput $localLogPath `
-        -RedirectStandardError $errorLog `
-        -PassThru `
-        -NoNewWindow `
-        -Wait
-
-      if ($process.ExitCode -ne 0) {
-        Write-Host "Terraform $commandName failed with exit code $($process.ExitCode)."
-
-        if($retryOn -contains "*") {
-          $shouldRetry = $true
-        } else {
-          $errorOutput = Get-Content -Path $errorLog
-          foreach($line in $errorOutput) {
-            foreach($retryError in $retryOn) {
-              if ($line -like "*$retryError*") {
-                Write-Host "Retrying Terraform $commandName due to error: $line"
-                $shouldRetry = $true
-              }
-            }
-          }
-        }
-
-        if ($shouldRetry) {
-          Write-Host "Retrying Terraform $commandName due to error:"
-          Get-Content -Path $errorLog | Write-Host
-          $retryCount++
-          break
-        } else {
-          Write-Host "Terraform $commandName failed with exit code $($process.ExitCode). Check the logs for details."
-          if($printOutputOnError) {
-            Write-Host "Output Log:"
-            Get-Content -Path $localLogPath | Write-Host
-          }
-          Write-Host "Error Log:"
-          Get-Content -Path $errorLog | Write-Host
-          return $false
-        }
-      } else {
-        if($printOutput) {
-          Write-Host "Output Log:"
-          Get-Content -Path $localLogPath | Write-Host
-        }
-      }
-    }
-    if ($shouldRetry) {
-      Write-Host "Retrying Terraform commands (attempt $retryCount of $maxRetries)..."
-      $retryDelay = $retryDelayIncremental * $retryCount
-      Write-Host "Waiting for $retryDelay seconds before retrying..."
-      Start-Sleep -Seconds $retryDelay
-    }
+  foreach($command in $commands) {
+    $command.Arguments = @("-chdir=$workingDirectory") + $command.Arguments
   }
-  return $true
+
+  return Invoke-CommandWithRetry `
+    -parentCommand "terraform" `
+    -commands $commands `
+    -outputLog $outputLog `
+    -errorLog $errorLog `
+    -maxRetries $maxRetries `
+    -retryDelayIncremental $retryDelayIncremental `
+    -retryOn $retryOn `
+    -printOutput $printOutput `
+    -printOutputOnError $printOutputOnError
 }
 
 function Invoke-GitHubCliWithRetry {
   param(
+    [hashtable[]]$commands,
+    [string]$outputLog = "output.log",
+    [string]$errorLog = "error.log",
+    [int]$maxRetries = 10,
+    [int]$retryDelayIncremental = 10,
+    [string[]]$retryOn = @("API rate limit exceeded"),
+    [switch]$printOutput,
+    [switch]$printOutputOnError,
+    [switch]$returnOutputParsedFromJson
+  )
+
+  return Invoke-CommandWithRetry `
+    -parentCommand "gh" `
+    -commands $commands `
+    -outputLog $outputLog `
+    -errorLog $errorLog `
+    -maxRetries $maxRetries `
+    -retryDelayIncremental $retryDelayIncremental `
+    -retryOn $retryOn `
+    -printOutput $printOutput `
+    -printOutputOnError $printOutputOnError `
+    -returnOutputParsedFromJson $returnOutputParsedFromJson
+}
+
+function Invoke-CommandWithRetry {
+  param(
+    $parentCommand,
     [hashtable[]]$commands,
     [string]$outputLog = "output.log",
     [string]$errorLog = "error.log",
@@ -171,7 +138,6 @@ function Invoke-GitHubCliWithRetry {
     $shouldRetry = $false
 
     foreach ($command in $commands) {
-      $commandName = $command.Command
       $arguments = $command.Arguments
 
       $localLogPath = $outputLog
@@ -179,12 +145,10 @@ function Invoke-GitHubCliWithRetry {
         $localLogPath = $command.OutputLog
       }
 
-      $commandArguments = @($commandName) + $arguments
-
-      Write-Host "Running GitHub $commandName with arguments: $($commandArguments -join ' ')"
+      Write-Host "Running $parentCommand with arguments: $($arguments -join ' ')"
       $process = Start-Process `
-        -FilePath "gh" `
-        -ArgumentList $commandArguments `
+        -FilePath parentCommand `
+        -ArgumentList $arguments `
         -RedirectStandardOutput $localLogPath `
         -RedirectStandardError $errorLog `
         -PassThru `
@@ -192,7 +156,7 @@ function Invoke-GitHubCliWithRetry {
         -Wait
 
       if ($process.ExitCode -ne 0) {
-        Write-Host "GitHub $commandName failed with exit code $($process.ExitCode)."
+        Write-Host "$parentCommand failed with exit code $($process.ExitCode)."
 
         if($retryOn -contains "*") {
           $shouldRetry = $true
@@ -201,7 +165,7 @@ function Invoke-GitHubCliWithRetry {
           foreach($line in $errorOutput) {
             foreach($retryError in $retryOn) {
               if ($line -like "*$retryError*") {
-                Write-Host "Retrying GitHub $commandName due to error: $line"
+                Write-Host "Retrying GitHub due to error: $line"
                 $shouldRetry = $true
               }
             }
@@ -209,12 +173,12 @@ function Invoke-GitHubCliWithRetry {
         }
 
         if ($shouldRetry) {
-          Write-Host "Retrying GitHub $commandName due to error:"
+          Write-Host "Retrying $parentCommand due to error:"
           Get-Content -Path $errorLog | Write-Host
           $retryCount++
           break
         } else {
-          Write-Host "GitHub $commandName failed with exit code $($process.ExitCode). Check the logs for details."
+          Write-Host "$parentCommand failed with exit code $($process.ExitCode). Check the logs for details."
           if($printOutputOnError) {
             Write-Host "Output Log:"
             Get-Content -Path $localLogPath | Write-Host
@@ -246,7 +210,7 @@ function Invoke-GitHubCliWithRetry {
       }
     }
     if ($shouldRetry) {
-      Write-Host "Retrying GitHub commands (attempt $retryCount of $maxRetries)..."
+      Write-Host "Retrying $parentCommand commands (attempt $retryCount of $maxRetries)..."
       $retryDelay = $retryDelayIncremental * $retryCount
       Write-Host "Waiting for $retryDelay seconds before retrying..."
       Start-Sleep -Seconds $retryDelay
@@ -329,8 +293,7 @@ foreach($team in $teams) {
     $existingTeam = Invoke-GitHubCliWithRetry `
         -commands @(
             @{
-                Command = "api"
-                Arguments = @("orgs/$orgName/teams/$($teamName)")
+                Arguments = @("api", "orgs/$orgName/teams/$($teamName)")
                 OutputLog = "team-exists.json"
             }
         ) `
@@ -372,8 +335,7 @@ if(!$repositoryCreationModeEnabled) {
         $teamMembers = Invoke-GitHubCliWithRetry `
             -commands @(
                 @{
-                    Command = "api"
-                    Arguments = @("orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members")
+                    Arguments = @("api", "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members")
                     OutputLog = "team-members.json"
                 }
             ) `
@@ -394,8 +356,7 @@ if(!$repositoryCreationModeEnabled) {
     $repoUsers = Invoke-GitHubCliWithRetry `
         -commands @(
             @{
-                Command = "api"
-                Arguments = @("repos/$orgAndRepoName/collaborators?affiliation=direct")
+                Arguments = @("api", "repos/$orgAndRepoName/collaborators?affiliation=direct")
                 OutputLog = "repo-users.json"
             }
         ) `
@@ -421,8 +382,7 @@ if(!$repositoryCreationModeEnabled) {
                     Invoke-GitHubCliWithRetry `
                         -commands @(
                             @{
-                                Command = "api"
-                                Arguments = @("repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
+                                Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
                                 OutputLog = "remove-user.json"
                             }
                         ) `
@@ -437,8 +397,7 @@ if(!$repositoryCreationModeEnabled) {
                 Invoke-GitHubCliWithRetry `
                     -commands @(
                         @{
-                            Command = "api"
-                            Arguments = @("repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
+                            Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
                             OutputLog = "remove-user.json"
                         }
                     ) `
@@ -450,8 +409,7 @@ if(!$repositoryCreationModeEnabled) {
     $repoTeams = Invoke-GitHubCliWithRetry `
         -commands @(
             @{
-                Command = "api"
-                Arguments = @("repos/$orgAndRepoName/teams", "--paginate")
+                Arguments = @("api", "repos/$orgAndRepoName/teams", "--paginate")
                 OutputLog = "repo-teams.json"
             }
         ) `
@@ -479,8 +437,7 @@ if(!$repositoryCreationModeEnabled) {
                 Invoke-GitHubCliWithRetry `
                     -commands @(
                         @{
-                            Command = "api"
-                            Arguments = @("orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName", "-X", "DELETE")
+                            Arguments = @("api", "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName", "-X", "DELETE")
                             OutputLog = "remove-team.json"
                         }
                     ) `
@@ -516,8 +473,7 @@ terraform {
     $success = Invoke-TerraformWithRetry `
     -commands @(
       @{
-        Command = "init"
-        Arguments = @()
+        Arguments = @( "init")
         OutputLog = "init.log"
       }
     ) `
@@ -528,8 +484,8 @@ terraform {
     $success = Invoke-TerraformWithRetry `
     -commands @(
       @{
-        Command = "init"
         Arguments = @(
+            "init",
             "-backend-config=`"resource_group_name=$stateResourceGroupName`"",
             "-backend-config=`"storage_account_name=$stateStorageAccountName`"",
             "-backend-config=`"container_name=$stateContainerName`"",
@@ -551,8 +507,7 @@ if(!$success) {
 $success = Invoke-TerraformWithRetry `
 -commands @(
     @{
-        Command = "plan"
-        Arguments = @("-out=`"$($repoId).tfplan`"")
+        Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
         OutputLog = "plan.log"
     }
 ) `
@@ -595,8 +550,7 @@ if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
     $success = Invoke-TerraformWithRetry `
         -commands @(
             @{
-                Command = "apply"
-                Arguments = @("$($repoId).tfplan")
+                Arguments = @("apply", "$($repoId).tfplan")
                 OutputLog = "apply.log"
             }
         ) `
