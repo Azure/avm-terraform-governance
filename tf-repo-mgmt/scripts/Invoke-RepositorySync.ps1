@@ -388,7 +388,7 @@ if(!$repositoryCreationModeEnabled) {
                                 OutputLog = "remove-user.json"
                             }
                         ) `
-                        -printOutput
+                        -printOutputOnError
 
                     if(!$result.success) {
                         Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
@@ -409,7 +409,7 @@ if(!$repositoryCreationModeEnabled) {
                             OutputLog = "remove-user.json"
                         }
                     ) `
-                    -printOutput
+                    -printOutputOnError
 
                 if(!$result.success) {
                     Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
@@ -455,7 +455,7 @@ if(!$repositoryCreationModeEnabled) {
                             OutputLog = "remove-team.json"
                         }
                     ) `
-                    -printOutput
+                    -printOutputOnError
 
                 if(!$result.success) {
                     Write-Warning "Failed to remove team: $($teamName) from repository: $orgAndRepoName. Exiting."
