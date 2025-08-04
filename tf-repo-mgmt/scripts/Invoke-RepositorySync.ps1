@@ -463,8 +463,6 @@ $terraformVariables = @{
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
 
-$success = $false
-
 if($repositoryCreationModeEnabled) {
     Set-Content -Path "$terraformModulePath/backend_override.tf" -Value @"
 terraform {
@@ -472,7 +470,7 @@ terraform {
 }
 "@
 
-    $success = Invoke-TerraformWithRetry `
+    $result = Invoke-TerraformWithRetry `
     -commands @(
       @{
         Arguments = @( "init")
@@ -482,8 +480,14 @@ terraform {
     -workingDirectory $terraformModulePath `
     -printOutput
 
+    if(!$result.success) {
+        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
+
 } else {
-    $success = Invoke-TerraformWithRetry `
+    $result = Invoke-TerraformWithRetry `
     -commands @(
       @{
         Arguments = @(
@@ -498,15 +502,15 @@ terraform {
     ) `
     -workingDirectory $terraformModulePath `
     -printOutput
+
+    if(!$result.success) {
+        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
 }
 
-if(!$success) {
-    Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
-    exit 1
-}
-
-$success = Invoke-TerraformWithRetry `
+$result = Invoke-TerraformWithRetry `
 -commands @(
     @{
         Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
@@ -516,13 +520,19 @@ $success = Invoke-TerraformWithRetry `
 -workingDirectory $terraformModulePath `
 -printOutput
 
-if(!$success) {
+if(!$result.success) {
     Write-Warning "Terraform plan failed for $orgAndRepoName. Exiting."
     $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Terraform plan failed for $orgAndRepoName." -data $null -issueLog $issueLog
     exit 1
 }
 
 $plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
+
+if(!$plan -or !$plan.resource_changes) {
+    Write-Warning "Failed to parse Terraform plan for $orgAndRepoName. Exiting."
+    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-parse-failed" -message "Failed to parse Terraform plan for $orgAndRepoName." -data $null -issueLog $issueLog
+    exit 1
+}
 
 $hasDestroy = $false
 foreach($resource in $plan.resource_changes) {
@@ -549,7 +559,7 @@ if(!$planOnly -and $plan.errored) {
 if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
 
     Write-Host "Applying plan for $orgAndRepoName"
-    $success = Invoke-TerraformWithRetry `
+    $result = Invoke-TerraformWithRetry `
         -commands @(
             @{
                 Arguments = @("apply", "$($repoId).tfplan")
@@ -559,7 +569,7 @@ if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
         -workingDirectory $terraformModulePath `
         -printOutput
 
-    if(!$success) {
+    if(!$result.success) {
         Write-Warning "Terraform apply failed for $orgAndRepoName. Exiting."
         $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "apply-failed" -message "Terraform apply failed for $orgAndRepoName." -data $null -issueLog $issueLog
         exit 1
