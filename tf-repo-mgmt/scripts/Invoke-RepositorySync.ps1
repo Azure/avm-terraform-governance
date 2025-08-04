@@ -381,7 +381,7 @@ if(!$repositoryCreationModeEnabled) {
                 if($planOnly) {
                     Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
                 } else {
-                    Invoke-GitHubCliWithRetry `
+                    $result = Invoke-GitHubCliWithRetry `
                         -commands @(
                             @{
                                 Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
@@ -389,6 +389,12 @@ if(!$repositoryCreationModeEnabled) {
                             }
                         ) `
                         -printOutput
+
+                    if(!$result.success) {
+                        Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
+                        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                        exit 1
+                    }
                 }
             }
         } else {
@@ -396,7 +402,7 @@ if(!$repositoryCreationModeEnabled) {
             if($planOnly) {
                 Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
             } else {
-                Invoke-GitHubCliWithRetry `
+                $result = Invoke-GitHubCliWithRetry `
                     -commands @(
                         @{
                             Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
@@ -404,6 +410,12 @@ if(!$repositoryCreationModeEnabled) {
                         }
                     ) `
                     -printOutput
+
+                if(!$result.success) {
+                    Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
+                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                    exit 1
+                }
             }
         }
     }
@@ -436,7 +448,7 @@ if(!$repositoryCreationModeEnabled) {
             if($planOnly) {
                 Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName' -X DELETE"
             } else {
-                Invoke-GitHubCliWithRetry `
+                $result = Invoke-GitHubCliWithRetry `
                     -commands @(
                         @{
                             Arguments = @("api", "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName", "-X", "DELETE")
@@ -444,6 +456,12 @@ if(!$repositoryCreationModeEnabled) {
                         }
                     ) `
                     -printOutput
+
+                if(!$result.success) {
+                    Write-Warning "Failed to remove team: $($teamName) from repository: $orgAndRepoName. Exiting."
+                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-removal-failed" -message "Failed to remove team $($teamName) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                    exit 1
+                }
             }
         }
     }
