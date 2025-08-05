@@ -68,7 +68,7 @@ function Invoke-TerraformWithRetry {
     [string]$errorLog = "error.log",
     [int]$maxRetries = 10,
     [int]$retryDelayIncremental = 10,
-    [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers", "Error: Failed to install provider"),
+    [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers", "Error: Failed to install provider", "Error: Failed to query available provider packages"),
     [switch]$printOutput,
     [switch]$printOutputOnError,
     [switch]$returnOutputParsedFromJson
