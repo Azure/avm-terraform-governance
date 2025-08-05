@@ -60,6 +60,167 @@ function Add-IssueToLog {
     return $issueLog
 }
 
+function Invoke-TerraformWithRetry {
+  param(
+    [hashtable[]]$commands,
+    [string]$workingDirectory,
+    [string]$outputLog = "output.log",
+    [string]$errorLog = "error.log",
+    [int]$maxRetries = 10,
+    [int]$retryDelayIncremental = 10,
+    [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers"),
+    [switch]$printOutput,
+    [switch]$printOutputOnError,
+    [switch]$returnOutputParsedFromJson
+  )
+
+  foreach($command in $commands) {
+    $command.Arguments = @("-chdir=$workingDirectory") + $command.Arguments
+  }
+
+  return Invoke-CommandWithRetry `
+    -parentCommand "terraform" `
+    -commands $commands `
+    -outputLog $outputLog `
+    -errorLog $errorLog `
+    -maxRetries $maxRetries `
+    -retryDelayIncremental $retryDelayIncremental `
+    -retryOn $retryOn `
+    -printOutput:$printOutput.IsPresent `
+    -printOutputOnError:$printOutputOnError.IsPresent `
+    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
+}
+
+function Invoke-GitHubCliWithRetry {
+  param(
+    [hashtable[]]$commands,
+    [string]$outputLog = "output.log",
+    [string]$errorLog = "error.log",
+    [int]$maxRetries = 10,
+    [int]$retryDelayIncremental = 10,
+    [string[]]$retryOn = @("API rate limit exceeded"),
+    [switch]$printOutput,
+    [switch]$printOutputOnError,
+    [switch]$returnOutputParsedFromJson
+  )
+
+  return Invoke-CommandWithRetry `
+    -parentCommand "gh" `
+    -commands $commands `
+    -outputLog $outputLog `
+    -errorLog $errorLog `
+    -maxRetries $maxRetries `
+    -retryDelayIncremental $retryDelayIncremental `
+    -retryOn $retryOn `
+    -printOutput:$printOutput.IsPresent `
+    -printOutputOnError:$printOutputOnError.IsPresent `
+    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
+}
+
+function Invoke-CommandWithRetry {
+  param(
+    $parentCommand,
+    [hashtable[]]$commands,
+    [string]$outputLog = "output.log",
+    [string]$errorLog = "error.log",
+    [int]$maxRetries = 10,
+    [int]$retryDelayIncremental = 10,
+    [string[]]$retryOn = @("API rate limit exceeded"),
+    [switch]$printOutput,
+    [switch]$printOutputOnError,
+    [switch]$returnOutputParsedFromJson
+  )
+
+  $retryCount = 0
+  $shouldRetry = $true
+
+  $returnOutputs = @()
+
+  while ($shouldRetry -and $retryCount -le $maxRetries) {
+    $shouldRetry = $false
+
+    foreach ($command in $commands) {
+      $arguments = $command.Arguments
+
+      $localLogPath = $outputLog
+      if($command.OutputLog) {
+        $localLogPath = $command.OutputLog
+      }
+
+      Write-Host "Running $parentCommand with arguments: $($arguments -join ' ')"
+      $process = Start-Process `
+        -FilePath $parentCommand `
+        -ArgumentList $arguments `
+        -RedirectStandardOutput $localLogPath `
+        -RedirectStandardError $errorLog `
+        -PassThru `
+        -NoNewWindow `
+        -Wait
+
+      if ($process.ExitCode -ne 0) {
+        Write-Host "$parentCommand failed with exit code $($process.ExitCode)."
+
+        if($retryOn -contains "*") {
+          $shouldRetry = $true
+        } else {
+          $errorOutput = Get-Content -Path $errorLog
+          foreach($line in $errorOutput) {
+            foreach($retryError in $retryOn) {
+              if ($line -like "*$retryError*") {
+                Write-Host "Retrying GitHub due to error: $line"
+                $shouldRetry = $true
+              }
+            }
+          }
+        }
+
+        if ($shouldRetry) {
+          Write-Host "Retrying $parentCommand due to error:"
+          Get-Content -Path $errorLog | Write-Host
+          $retryCount++
+          break
+        } else {
+          Write-Host "$parentCommand failed with exit code $($process.ExitCode). Check the logs for details."
+          if($printOutputOnError) {
+            Write-Host "Output Log:"
+            Get-Content -Path $localLogPath | Write-Host
+          }
+          Write-Host "Error Log:"
+          Get-Content -Path $errorLog | Write-Host
+          $returnOutputs += @{
+            success = $false
+          }
+          return $returnOutputs
+        }
+      } else {
+        if($printOutput) {
+          Write-Host "Output Log:"
+          Get-Content -Path $localLogPath | Write-Host
+        }
+        if($returnOutputParsedFromJson) {
+          $outputContent = Get-Content -Path $localLogPath -Raw
+          $parsedOutput = $outputContent | ConvertFrom-Json
+          $returnOutputs += @{
+            success = $true
+            output = $parsedOutput
+          }
+        } else {
+            $returnOutputs += @{
+                success = $true
+            }
+        }
+      }
+    }
+    if ($shouldRetry) {
+      Write-Host "Retrying $parentCommand commands (attempt $retryCount of $maxRetries)..."
+      $retryDelay = $retryDelayIncremental * $retryCount
+      Write-Host "Waiting for $retryDelay seconds before retrying..."
+      Start-Sleep -Seconds $retryDelay
+    }
+  }
+  return $returnOutputs
+}
+
 $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
@@ -131,12 +292,16 @@ foreach($team in $teams) {
     $teamExists = $false
     $teamName = $team.name
 
-    if($skipCheck) {
-        $teamExists = $true
-    } else {
-        $existingTeam = $(gh api "orgs/$orgName/teams/$($teamName)" 2> $null) | ConvertFrom-Json
-        $teamExists = $existingTeam.status -ne 404
-    }
+    $existingTeam = Invoke-GitHubCliWithRetry `
+        -commands @(
+            @{
+                Arguments = @("api", "orgs/$orgName/teams/$($teamName)")
+                OutputLog = "team-exists.json"
+            }
+        ) `
+        -returnOutputParsedFromJson
+
+    $teamExists = $existingTeam.success -and $existingTeam.output.status -ne 404
 
     if(!$teamExists) {
         Write-Warning "Team does not exist: $($teamName)"
@@ -168,16 +333,45 @@ if(!$repositoryCreationModeEnabled) {
     $teamsWithMaintainers = $githubTeams.GetEnumerator() | Where-Object { $_.Value.members_are_team_maintainers -eq $true }
 
     foreach($teamWithMaintainers in $teamsWithMaintainers) {
-        $teamMembers = $(gh api "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members" --paginate) | ConvertFrom-Json
-        foreach($member in $teamMembers) {
+        Write-Host "Checking team: $($teamWithMaintainers.Value.slug) for maintainers."
+        $teamMembers = Invoke-GitHubCliWithRetry `
+            -commands @(
+                @{
+                    Arguments = @("api", "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members")
+                    OutputLog = "team-members.json"
+                }
+            ) `
+            -returnOutputParsedFromJson
+
+        if(!$teamMembers.success) {
+            Write-Warning "Failed to get team members for: $($teamWithMaintainers.Value.slug). Skipping."
+            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-members-fetch-failed" -message "Failed to fetch team members for $($teamWithMaintainers.Value.slug)." -data $null -issueLog $issueLog
+            exit 1
+        }
+
+        foreach($member in $teamMembers.output) {
             $allowedUsers += $member.login
         }
     }
 
-    $repoUsers = $(gh api "repos/$orgAndRepoName/collaborators?affiliation=direct" --paginate) | ConvertFrom-Json
+    Write-Host "Checking repository: $orgAndRepoName for existing users."
+    $repoUsers = Invoke-GitHubCliWithRetry `
+        -commands @(
+            @{
+                Arguments = @("api", "repos/$orgAndRepoName/collaborators?affiliation=direct")
+                OutputLog = "repo-users.json"
+            }
+        ) `
+        -returnOutputParsedFromJson
 
-    Write-Host "Found $($repoUsers.Count) users in repository: $orgAndRepoName"
-    foreach($user in $repoUsers) {
+    if(!$repoUsers.success) {
+        Write-Warning "Failed to get repository users for: $orgAndRepoName. Skipping."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "repo-users-fetch-failed" -message "Failed to fetch repository users for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
+
+    Write-Host "Found $($repoUsers.output.Count) users in repository: $orgAndRepoName"
+    foreach($user in $repoUsers.output) {
         $userLogin = $user.login
 
         if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
@@ -187,7 +381,20 @@ if(!$repositoryCreationModeEnabled) {
                 if($planOnly) {
                     Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
                 } else {
-                    gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+                    $result = Invoke-GitHubCliWithRetry `
+                        -commands @(
+                            @{
+                                Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
+                                OutputLog = "remove-user.json"
+                            }
+                        ) `
+                        -printOutputOnError
+
+                    if(!$result.success) {
+                        Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
+                        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                        exit 1
+                    }
                 }
             }
         } else {
@@ -195,15 +402,41 @@ if(!$repositoryCreationModeEnabled) {
             if($planOnly) {
                 Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
             } else {
-                gh api "repos/$orgAndRepoName/collaborators/$($userLogin)" -X DELETE
+                $result = Invoke-GitHubCliWithRetry `
+                    -commands @(
+                        @{
+                            Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
+                            OutputLog = "remove-user.json"
+                        }
+                    ) `
+                    -printOutputOnError
+
+                if(!$result.success) {
+                    Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
+                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                    exit 1
+                }
             }
         }
     }
 
-    $repoTeams = $(gh api "repos/$orgAndRepoName/teams" --paginate) | ConvertFrom-Json
+    $repoTeams = Invoke-GitHubCliWithRetry `
+        -commands @(
+            @{
+                Arguments = @("api", "repos/$orgAndRepoName/teams", "--paginate")
+                OutputLog = "repo-teams.json"
+            }
+        ) `
+        -returnOutputParsedFromJson
 
-    Write-Host "Found $($repoTeams.Count) teams in repository: $orgAndRepoName"
-    foreach($team in $repoTeams) {
+    if(!$repoTeams.success) {
+        Write-Warning "Failed to get repository teams for: $orgAndRepoName. Skipping."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "repo-teams-fetch-failed" -message "Failed to fetch repository teams for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
+
+    Write-Host "Found $($repoTeams.output.Count) teams in repository: $orgAndRepoName"
+    foreach($team in $repoTeams.output) {
         $teamName = $team.name
         if($extraTeamsToIgnore -contains $teamName) {
             Write-Host "Skipping team: $($teamName) as it is in the ignore list."
@@ -215,7 +448,20 @@ if(!$repositoryCreationModeEnabled) {
             if($planOnly) {
                 Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName' -X DELETE"
             } else {
-                gh api "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName" -X DELETE
+                $result = Invoke-GitHubCliWithRetry `
+                    -commands @(
+                        @{
+                            Arguments = @("api", "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName", "-X", "DELETE")
+                            OutputLog = "remove-team.json"
+                        }
+                    ) `
+                    -printOutputOnError
+
+                if(!$result.success) {
+                    Write-Warning "Failed to remove team: $($teamName) from repository: $orgAndRepoName. Exiting."
+                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-removal-failed" -message "Failed to remove team $($teamName) from repository $orgAndRepoName." -data $null -issueLog $issueLog
+                    exit 1
+                }
             }
         }
     }
@@ -242,25 +488,69 @@ terraform {
 }
 "@
 
-    terraform `
-        -chdir="$terraformModulePath" `
-        init
+    $result = Invoke-TerraformWithRetry `
+    -commands @(
+      @{
+        Arguments = @( "init")
+        OutputLog = "init.log"
+      }
+    ) `
+    -workingDirectory $terraformModulePath `
+    -printOutput
+
+    if(!$result.success) {
+        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
+
 } else {
-    terraform `
-        -chdir="$terraformModulePath" `
-        init `
-        -backend-config="resource_group_name=$stateResourceGroupName" `
-        -backend-config="storage_account_name=$stateStorageAccountName" `
-        -backend-config="container_name=$stateContainerName" `
-        -backend-config="key=$($repoId).tfstate"
+    $result = Invoke-TerraformWithRetry `
+    -commands @(
+      @{
+        Arguments = @(
+            "init",
+            "-backend-config=`"resource_group_name=$stateResourceGroupName`"",
+            "-backend-config=`"storage_account_name=$stateStorageAccountName`"",
+            "-backend-config=`"container_name=$stateContainerName`"",
+            "-backend-config=`"key=$($repoId).tfstate`""
+        )
+        OutputLog = "init.log"
+      }
+    ) `
+    -workingDirectory $terraformModulePath `
+    -printOutput
+
+    if(!$result.success) {
+        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    }
 }
 
-terraform `
-    -chdir="$terraformModulePath" `
-    plan `
-    -out="$($repoId).tfplan"
+$result = Invoke-TerraformWithRetry `
+-commands @(
+    @{
+        Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
+        OutputLog = "plan.log"
+    }
+) `
+-workingDirectory $terraformModulePath `
+-printOutput
+
+if(!$result.success) {
+    Write-Warning "Terraform plan failed for $orgAndRepoName. Exiting."
+    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Terraform plan failed for $orgAndRepoName." -data $null -issueLog $issueLog
+    exit 1
+}
 
 $plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
+
+if(!$plan -or !$plan.resource_changes) {
+    Write-Warning "Failed to parse Terraform plan for $orgAndRepoName. Exiting."
+    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-parse-failed" -message "Failed to parse Terraform plan for $orgAndRepoName." -data $null -issueLog $issueLog
+    exit 1
+}
 
 $hasDestroy = $false
 foreach($resource in $plan.resource_changes) {
@@ -285,9 +575,25 @@ if(!$planOnly -and $plan.errored) {
 }
 
 if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
-    terraform `
-        -chdir="$terraformModulePath" `
-        apply "$($repoId).tfplan"
+
+    Write-Host "Applying plan for $orgAndRepoName"
+    $result = Invoke-TerraformWithRetry `
+        -commands @(
+            @{
+                Arguments = @("apply", "$($repoId).tfplan")
+                OutputLog = "apply.log"
+            }
+        ) `
+        -workingDirectory $terraformModulePath `
+        -printOutput
+
+    if(!$result.success) {
+        Write-Warning "Terraform apply failed for $orgAndRepoName. Exiting."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "apply-failed" -message "Terraform apply failed for $orgAndRepoName." -data $null -issueLog $issueLog
+        exit 1
+    } else {
+        Write-Host "Terraform apply succeeded for $orgAndRepoName"
+    }
 }
 
 

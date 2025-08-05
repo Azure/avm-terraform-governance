@@ -9,3 +9,4 @@ tf-repo-mgmt/temp
 *.log
 *.log.json
 *.tfplan
+tf-repo-mgmt/*.json
