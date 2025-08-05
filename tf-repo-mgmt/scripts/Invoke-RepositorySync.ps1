@@ -167,7 +167,7 @@ function Invoke-CommandWithRetry {
           foreach($line in $errorOutput) {
             foreach($retryError in $retryOn) {
               if ($line -like "*$retryError*") {
-                Write-Host "Retrying GitHub due to error: $line"
+                Write-Host "Retrying $parentCommand due to error: $line"
                 $shouldRetry = $true
               }
             }
@@ -212,12 +212,20 @@ function Invoke-CommandWithRetry {
       }
     }
     if ($shouldRetry) {
-      Write-Host "Retrying $parentCommand commands (attempt $retryCount of $maxRetries)..."
-      $retryDelay = $retryDelayIncremental * $retryCount
-      Write-Host "Waiting for $retryDelay seconds before retrying..."
-      Start-Sleep -Seconds $retryDelay
+        if ($retryCount -gt $maxRetries) {
+            Write-Host "Max retries reached. Exiting."
+            $returnOutputs = @( @{
+                success = $false
+            })
+            return $returnOutputs
+        }
+        Write-Host "Retrying $parentCommand commands (attempt $retryCount of $maxRetries)..."
+        $retryDelay = $retryDelayIncremental * $retryCount
+        Write-Host "Waiting for $retryDelay seconds before retrying..."
+        Start-Sleep -Seconds $retryDelay
     }
   }
+
   return $returnOutputs
 }
 
@@ -301,7 +309,13 @@ foreach($team in $teams) {
         ) `
         -returnOutputParsedFromJson
 
-    $teamExists = $existingTeam.success -and $existingTeam.output.status -ne 404
+    if(!$existingTeam.success) {
+        Write-Warning "Failed to check if team exists: $($teamName)."
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-check-failed" -message "Failed to check if team $teamName exists." -data $null -issueLog $issueLog
+        exit 1
+    }
+
+    $teamExists = $existingTeam.output.slug -and $existingTeam.output.slug -eq $teamName
 
     if(!$teamExists) {
         Write-Warning "Team does not exist: $($teamName)"
@@ -585,7 +599,25 @@ if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
             }
         ) `
         -workingDirectory $terraformModulePath `
+        -printOutput `
+        -maxRetries 0
+
+    if(!$result.success) {
+        Write-Warning "Terraform apply first attempt failed for $orgAndRepoName. Entering plan apply retry loop..."
+        $result = Invoke-TerraformWithRetry `
+        -commands @(
+            @{
+                Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
+                OutputLog = "plan.log"
+            },
+            @{
+                Arguments = @("apply", "$($repoId).tfplan")
+                OutputLog = "apply.log"
+            }
+        ) `
+        -workingDirectory $terraformModulePath `
         -printOutput
+    }
 
     if(!$result.success) {
         Write-Warning "Terraform apply failed for $orgAndRepoName. Exiting."
