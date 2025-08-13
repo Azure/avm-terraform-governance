@@ -18,7 +18,7 @@ on:
         type: boolean
       migrate_rollout_percentage:
         description: 'Percentage of repositories to run migrate step on (0-100)'
-        default: 50
+        default: 100
         type: number
         required: true
   schedule:
