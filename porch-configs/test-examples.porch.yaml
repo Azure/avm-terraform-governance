@@ -79,13 +79,28 @@ commands:
         name: Terraform Plan Idempotency Check
         command_line: terraform plan -detailed-exitcode -out tfplan
 
-        # This command will run if the previous plan was not idempotent
+        # This command checks if the plan contains only no-op changes
+        # and exits successfully if all changes are no-ops
+      - type: shell
+        name: Check for No-Op Changes
+        command_line: |
+          terraform show -json tfplan > tf.json
+          if cat tf.json | jq '.resource_changes | map(.change.actions == ["no-op"]) | all' | grep -q true; then
+            echo "All changes are no-op actions, plan is idempotent"
+            exit 0
+          else
+            echo "Plan contains non-no-op changes, not idempotent" 1>&2
+            exit 1
+          fi
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [2]
+
+        # This command will run if the previous check failed (non-no-op changes detected)
         # and will output the plan to stderr.
       - type: shell
         name: Terraform Show Plan (if not idempotent)
         command_line: terraform show tfplan 1>&2
-        runs_on_condition: exit-codes
-        runs_on_exit_codes: [2]
+        runs_on_condition: failure
         success_exit_codes: []
 
       - type: shell
