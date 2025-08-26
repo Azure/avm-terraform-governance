@@ -85,7 +85,7 @@ commands:
         name: Check for No-Op Changes
         command_line: |
           terraform show -json tfplan > tf.json
-          if cat tf.json | jq '.resource_changes | map(.change.actions == ["no-op"]) | all' | grep -q true; then
+          if cat tf.json | jq '(.resource_changes // []) | map(.change.actions == ["no-op"]) | all' | grep -q true; then
             echo "All changes are no-op actions, plan is idempotent"
             exit 0
           else
