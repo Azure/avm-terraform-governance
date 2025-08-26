@@ -27,7 +27,7 @@ RUN mkdir /src && \
   echo "Build hcledit" && \
   git clone https://github.com/minamijoyo/hcledit.git && \
   cd hcledit && \
-  git checkout v${HCLEDIT_VERSION} && \
+  git checkout ${HCLEDIT_VERSION} && \
   go get go@1.24.4 && \
   go get gopkg.in/yaml.v2@v2.2.8 && \
   go mod tidy && \
