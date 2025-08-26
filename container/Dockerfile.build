@@ -13,9 +13,9 @@ ARG GOBUILDARGS='-trimpath'
 ARG TARGETARCH
 # Cross compile go binaries
 ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
 RUN mkdir /src && \
   cd /src && \
-  export CGO_ENABLED=0 && \
   echo "Build conftest" && \
   git clone https://github.com/open-policy-agent/conftest.git && \
   cd conftest && \
