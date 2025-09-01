@@ -1,6 +1,7 @@
 ARG GOLANG_IMAGE_TAG=1.24
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/oss/go/microsoft/golang:${GOLANG_IMAGE_TAG} AS builder
 ARG AVMFIX_VERSION=v0.6.0
+ARG CONFTEST_VERSION=0.62.0
 ARG GREPT_VERSION=60c71b2d8554c7ec562168a1ffd46a695a73322d
 ARG HCLEDIT_VERSION=0.2.17
 ARG HCLMERGE_VERSION=2dff14bd831a6f696d6572f03a5a61a11e4e3d66
@@ -19,10 +20,9 @@ RUN mkdir /src && \
   echo "Build conftest" && \
   git clone https://github.com/open-policy-agent/conftest.git && \
   cd conftest && \
-  git checkout ${CONFTEST_VERSION} && \
-  go get go@1.25.0 && \
+  git checkout v${CONFTEST_VERSION} && \
   go mod tidy && \
-  go build ${GOBUILDARGS} -o /go/bin/conftest . && \
+  go build ${GOBUILDARGS} -ldflags="-w -s -X github.com/open-policy-agent/conftest/internal/commands.version=v${CONFTEST_VERSION}" -o /go/bin/conftest . && \
   cd /src && \
   echo "Build hcledit" && \
   git clone https://github.com/minamijoyo/hcledit.git && \
