@@ -15,12 +15,12 @@ ARG TARGETARCH
 ENV GOARCH=${TARGETARCH}
 RUN mkdir /src && \
   cd /src && \
-  export CGO_ENABLED=0 && \
+  export CGO_ENABLED=1 && \
   echo "Build conftest" && \
   git clone https://github.com/open-policy-agent/conftest.git && \
   cd conftest && \
   git checkout ${CONFTEST_VERSION} && \
-  go get go@1.24.4 && \
+  go get go@${GOLANG_IMAGE_TAG} && \
   go mod tidy && \
   go build ${GOBUILDARGS} -o /go/bin/conftest . && \
   cd /src && \
@@ -28,7 +28,7 @@ RUN mkdir /src && \
   git clone https://github.com/minamijoyo/hcledit.git && \
   cd hcledit && \
   git checkout v${HCLEDIT_VERSION} && \
-  go get go@1.24.4 && \
+  go get go@${GOLANG_IMAGE_TAG} && \
   go get gopkg.in/yaml.v2@v2.2.8 && \
   go mod tidy && \
   go build ${GOBUILDARGS} -o /go/bin/hcledit . && \
@@ -60,7 +60,7 @@ RUN mkdir /src && \
   git clone https://github.com/terraform-docs/terraform-docs.git && \
   cd terraform-docs && \
   git checkout ${TERRAFORM_DOCS_VERSION} && \
-  go get go@1.24.4 && \
+  go get go@${GOLANG_IMAGE_TAG} && \
   go get golang.org/x/net@v0.38.0 && \
   go mod tidy && \
   go build ${GOBUILDARGS} -o /go/bin/terraform-docs . && \
