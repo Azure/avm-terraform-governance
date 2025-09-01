@@ -16,8 +16,7 @@ on:
         description: 'Whether to run in first run mode'
         default: false
         type: boolean
-
-   schedule:
+  schedule:
     - cron: '34 4 * * 1,4'
 
 permissions:
