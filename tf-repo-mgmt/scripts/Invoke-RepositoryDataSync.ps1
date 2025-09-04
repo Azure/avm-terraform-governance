@@ -65,13 +65,13 @@ foreach($repository in $repositories) {
             $repositoryDataMap["registry.$($registryEntryProperty.Name)"] = $registryEntryProperty.Value
         }
 
-        $firstVersionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
+        $firstVersionUrl = "https://registry.terraform.io/v2/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
         $firstVersionResponse = Invoke-RestMethod $firstVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
         if($statusCode -eq 200) {
             $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.version
             $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.tag
-            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.published_at
-            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published_at.ToString("yyyy-MM")
+            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.published-at
+            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published-at.ToString("yyyy-MM")
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
@@ -79,14 +79,14 @@ foreach($repository in $repositories) {
         if($includeDetailedVersionData) {
             $detailedVersionData = @()
             foreach($version in $registryEntry.versions) {
-                $versionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($version)"
+                $versionUrl = "https://registry.terraform.io/v2/modules/$orgName/$($repository.repoId)/$providerName/$($version)"
                 $versionResponse = Invoke-RestMethod $versionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
                 if($statusCode -eq 200) {
                     $detailedVersionData += @{
-                        version = $versionResponse.version
-                        releaseDate = $versionResponse.published_at
-                        tag = $versionResponse.version
-                        downloads = $versionResponse.downloads
+                        version = $versionResponse.data.attributes.version
+                        releaseDate = $versionResponse.data.attributes.published-at
+                        tag = $versionResponse.data.attributes.version
+                        downloads = $versionResponse.data.attributes.downloads
                     }
                 }
             }
@@ -268,6 +268,7 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
 
