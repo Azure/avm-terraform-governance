@@ -90,15 +90,15 @@ foreach($repository in $repositories) {
                 $versionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($version)"
                 $versionResponse = Invoke-RestMethod $versionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
                 if($statusCode -eq 200) {
-                    $detailedVersionData += ${
+                    $detailedVersionData += @{
                         Version = $versionResponse.version
                         ReleaseDate = $versionRespons.published_at
                         Tag = $versionResponse.version
                         Downloads = $versionResponse.downloads
                     }
-                    $repositoryDataMap["registry.versionsDetailed"] = $detailedVersionData
                 }
             }
+            $repositoryDataMap["registry.versionsDetailed"] = $detailedVersionData
         }
     } else {
         $repositoryDataMap["calculated.publishedStatus"] = "Not Published"
@@ -276,5 +276,6 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
