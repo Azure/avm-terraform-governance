@@ -13,6 +13,13 @@ commands:
     command_line: terraform -version
     cwd: "."
 
+  - type: shell
+    name: Clean Terraform
+    command_line: |
+      find . -type d -name .terraform | xargs -n1 rm -rf && \
+      find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+      find . -type f -name *.tfstate* | xargs -n1 rm -f
+
   - type: foreachdirectory
     name: for each example
     depth: 1
@@ -32,13 +39,6 @@ commands:
             exit 99
           fi
         skip_exit_codes: [99]
-
-      - type: shell
-        name: Clean Terraform
-        command_line: |
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: shell
         name: Check AVM_EXAMPLE
