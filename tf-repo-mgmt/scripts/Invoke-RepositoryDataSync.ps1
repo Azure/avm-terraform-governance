@@ -10,7 +10,8 @@ param(
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
     [string]$outputDirectory = ".",
     [string]$applicationName = "azure-verified-modules",
-    [string]$applicationId = "1049636"
+    [string]$applicationId = "1049636",
+    [switch]$includeDetailedVersionData
 )
 
 # Meta Data
@@ -83,6 +84,22 @@ foreach($repository in $repositories) {
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
         $repositoryDataMap["registry.versions"] = $registryEntry.versions
+        if($includeDetailedVersionData) {
+            $detailedVersionData = @()
+            foreach($version in $registryEntry.versions) {
+                $versionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($version)"
+                $versionResponse = Invoke-RestMethod $versionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
+                if($statusCode -eq 200) {
+                    $detailedVersionData += ${
+                        Version = $versionResponse.version
+                        ReleaseDate = $versionRespons.published_at
+                        Tag = $versionResponse.version
+                        Downloads = $versionResponse.downloads
+                    }
+                    $repositoryDataMap["registry.versionsDetailed"] = $detailedVersionData
+                }
+            }
+        }
     } else {
         $repositoryDataMap["calculated.publishedStatus"] = "Not Published"
         $repositoryDataMap["calculated.moduleStatus"] = "Proposed"
@@ -259,4 +276,5 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
