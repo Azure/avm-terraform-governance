@@ -92,7 +92,7 @@ foreach($repository in $repositories) {
                 if($statusCode -eq 200) {
                     $detailedVersionData += @{
                         Version = $versionResponse.version
-                        ReleaseDate = $versionRespons.published_at
+                        ReleaseDate = $versionResponse.published_at
                         Tag = $versionResponse.version
                         Downloads = $versionResponse.downloads
                     }
@@ -276,6 +276,7 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
 
