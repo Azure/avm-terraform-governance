@@ -68,10 +68,10 @@ foreach($repository in $repositories) {
         $firstVersionUrl = "https://registry.terraform.io/v2/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
         $firstVersionResponse = Invoke-RestMethod $firstVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
         if($statusCode -eq 200) {
-            $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.version
-            $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.tag
-            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse."published-at"
-            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse."published-at".ToString("yyyy-MM")
+            $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.data.attributes.version
+            $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.data.attributes.tag
+            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.data.attributes."published-at"
+            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.data.attributes."published-at".ToString("yyyy-MM")
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
@@ -268,6 +268,7 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
 
