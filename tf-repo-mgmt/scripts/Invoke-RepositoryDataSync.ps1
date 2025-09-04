@@ -82,6 +82,7 @@ foreach($repository in $repositories) {
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
+        $repositoryDataMap["registry.versions"] = $registryEntry.versions
     } else {
         $repositoryDataMap["calculated.publishedStatus"] = "Not Published"
         $repositoryDataMap["calculated.moduleStatus"] = "Proposed"
@@ -258,3 +259,4 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
