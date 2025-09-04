@@ -70,8 +70,8 @@ foreach($repository in $repositories) {
         if($statusCode -eq 200) {
             $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.version
             $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.tag
-            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.published-at
-            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published-at.ToString("yyyy-MM")
+            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse."published-at"
+            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse."published-at".ToString("yyyy-MM")
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
@@ -84,7 +84,7 @@ foreach($repository in $repositories) {
                 if($statusCode -eq 200) {
                     $detailedVersionData += @{
                         version = $versionResponse.data.attributes.version
-                        releaseDate = $versionResponse.data.attributes.published-at
+                        releaseDate = $versionResponse.data.attributes."published-at"
                         tag = $versionResponse.data.attributes.version
                         downloads = $versionResponse.data.attributes.downloads
                     }
@@ -268,6 +268,7 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
 
