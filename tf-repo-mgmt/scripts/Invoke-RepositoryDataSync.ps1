@@ -65,20 +65,12 @@ foreach($repository in $repositories) {
             $repositoryDataMap["registry.$($registryEntryProperty.Name)"] = $registryEntryProperty.Value
         }
 
-        $currentVersionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.version)"
-        $currentVersionResponse = Invoke-RestMethod $currentVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
-        if($statusCode -eq 200) {
-            foreach($currentVersionProperty in $currentVersionResponse.PSObject.Properties) {
-                $repositoryDataMap["registry.currentVersion.$($currentVersionProperty.Name)"] = $currentVersionProperty.Value
-            }
-        }
-
         $firstVersionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
         $firstVersionResponse = Invoke-RestMethod $firstVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
         if($statusCode -eq 200) {
-            foreach($firstVersionProperty in $firstVersionResponse.PSObject.Properties) {
-                $repositoryDataMap["registry.firstVersion.$($firstVersionProperty.Name)"] = $firstVersionProperty.Value
-            }
+            $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.version
+            $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.tag
+            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.published_at
             $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published_at.ToString("yyyy-MM")
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
@@ -91,10 +83,10 @@ foreach($repository in $repositories) {
                 $versionResponse = Invoke-RestMethod $versionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
                 if($statusCode -eq 200) {
                     $detailedVersionData += @{
-                        Version = $versionResponse.version
-                        ReleaseDate = $versionResponse.published_at
-                        Tag = $versionResponse.version
-                        Downloads = $versionResponse.downloads
+                        version = $versionResponse.version
+                        releaseDate = $versionResponse.published_at
+                        tag = $versionResponse.version
+                        downloads = $versionResponse.downloads
                     }
                 }
             }
@@ -276,6 +268,7 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
 
 
 
