@@ -94,6 +94,7 @@ commands:
           if [ ! -d ".terraform" ]; then
             exit 0
           fi
+          ls -al 1>&2
           terraform destroy -auto-approve
         runs_on_condition: always
 
