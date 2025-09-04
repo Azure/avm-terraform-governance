@@ -21,6 +21,7 @@ locals {
     "examples/.terraform-docs.yml",
     "LICENSE",
     "Makefile",
+    "modules/.terraform-docs.yml",
     "SECURITY.md",
     "SUPPORT.md",
   ])
