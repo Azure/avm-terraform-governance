@@ -1,4 +1,3 @@
-# Until we update the template repository, we need a way to keep core files updated.
 locals {
   managed_files = toset([
     "_footer.md",
