@@ -10,7 +10,6 @@ param(
     "terraform-azure-modules",
     "ALZ-PowerShell-Module",
     "Azure-Verified-Modules",
-    "terraform-azurerm-avm-template",
     "Azure-Verified-Modules-Grept",
     "avmtester",
     "tflint-ruleset-avm",
