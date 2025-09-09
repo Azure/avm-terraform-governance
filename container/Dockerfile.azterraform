@@ -5,6 +5,7 @@ ARG PREVIOUS_TAG_VERSION=656b12a97270ca29998ad62e3564d08e7d4369ba
 ARG TARGETARCH
 # Cross compile go binaries
 ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
 RUN go install github.com/lonegunmanb/previousTag@$PREVIOUS_TAG_VERSION && \
   mkdir /src && \
   cd /src && \
