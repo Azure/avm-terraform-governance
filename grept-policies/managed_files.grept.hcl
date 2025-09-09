@@ -12,6 +12,8 @@ locals {
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/workflows/pr-check.yml",
     ".terraform-docs.yml",
+    ".vscode/mcp.json",
+    "AGENTS.md",
     "avm.bat",
     "avm.ps1",
     "avm",
