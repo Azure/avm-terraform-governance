@@ -20,6 +20,7 @@ module "github" {
   github_repository_name                         = var.github_repository_name
   github_repository_environment_name             = var.github_repository_environment_name
   github_repository_no_approval_environment_name = var.github_repository_no_approval_environment_name
+  github_repository_copilot_environment_name     = var.github_repository_copilot_environment_name
   is_protected_repo                              = var.is_protected_repo
   bypass_ruleset_for_approval_enabled            = true
   github_teams                                   = var.github_teams
