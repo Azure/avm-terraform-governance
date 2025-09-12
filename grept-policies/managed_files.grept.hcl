@@ -11,7 +11,7 @@ locals {
     ".github/policies/eventResponder.yml",
     ".github/policies/scheduledSearches.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
-    ".github/workflows/copilot-setup-steps.yml",
+    # ".github/workflows/copilot-setup-steps.yml", disabled for now until we test more thoroughly
     ".github/workflows/pr-check.yml",
     ".terraform-docs.yml",
     ".vscode/mcp.json",
