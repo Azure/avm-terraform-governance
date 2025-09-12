@@ -4,6 +4,7 @@ locals {
     ".devcontainer/devcontainer.json",
     ".editorconfig",
     ".github/CODEOWNERS",
+    ".github/copilot-instructions.md",
     ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
     ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
     ".github/ISSUE_TEMPLATE/config.yml",
