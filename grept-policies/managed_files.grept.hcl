@@ -10,6 +10,7 @@ locals {
     ".github/policies/eventResponder.yml",
     ".github/policies/scheduledSearches.yml",
     ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/workflows/copilot-setup-steps.yml",
     ".github/workflows/pr-check.yml",
     ".terraform-docs.yml",
     ".vscode/mcp.json",

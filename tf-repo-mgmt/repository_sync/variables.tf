@@ -47,6 +47,12 @@ variable "github_repository_no_approval_environment_name" {
   default     = "empty-no-approval"
 }
 
+variable "github_repository_copilot_environment_name" {
+  type        = string
+  description = "Name of the environment used for copilot."
+  default     = "copilot"
+}
+
 variable "github_teams" {
   type = map(object({
     slug                         = string
