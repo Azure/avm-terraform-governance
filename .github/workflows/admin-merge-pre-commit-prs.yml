@@ -1,5 +1,5 @@
 ---
-name: pre-commit-cron
+name: admin-merge-pre-commit-prs
 
 on:
   workflow_dispatch:
@@ -71,7 +71,7 @@ jobs:
           for N in "${NOS[@]}"; do
             echo "Processing PR #$N"
             gh pr review "$N" --repo ${{ matrix.repoFullName }} --approve --body "Approved by admin-merge-pre-commit-prs workflow"
-            gh pr merge "$N" --repo ${{ matrix.repoFullName }} --merge --squash --delete-branch
+            gh pr merge "$N" --repo ${{ matrix.repoFullName }} --squash --delete-branch
           done
         env:
           GH_TOKEN: ${{ inputs.gh_token }}
