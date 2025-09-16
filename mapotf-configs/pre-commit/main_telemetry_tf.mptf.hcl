@@ -7,9 +7,8 @@ data "local" avm_azapi_header {
 }
 
 locals {
-  avm_azapi_header_exists = try(data.local.avm_azapi_header.result["avm_azapi_header"] != null, false)
-  azapi_headers_locals = {
-    valid_module_source_regex = <<-EOT
+  avm_azapi_header_exists       = try(data.local.avm_azapi_header.result["avm_azapi_header"] != null, false)
+  raw_valid_module_source_regex = <<-EOT
     [
       "registry.terraform.io/[A|a]zure/.+",
       "registry.opentofu.io/[A|a]zure/.+",
@@ -17,8 +16,7 @@ locals {
       "git::ssh:://git@github\\.com/[A|a]zure/.+",
     ]
 EOT
-    fork_avm                  = "!anytrue([for r in local.valid_module_source_regex : can(regex(r, one(data.modtm_module_source.telemetry).module_source))])"
-    avm_azapi_headers         = <<-EOT
+  raw_avm_azapi_headers         = <<-EOT
   !var.enable_telemetry ? {} : (local.fork_avm ? {
     fork_avm  = "true"
     random_id = one(random_uuid.telemetry).result
@@ -29,18 +27,24 @@ EOT
     avm_module_version = one(data.modtm_module_source.telemetry).module_version
   })
 EOT
+  azapi_headers_locals = {
+    valid_module_source_regex = trim(local.raw_valid_module_source_regex, "\r\n")
+    fork_avm                  = "!anytrue([for r in local.valid_module_source_regex : can(regex(r, one(data.modtm_module_source.telemetry).module_source))])"
+    avm_azapi_headers         = trim(local.raw_avm_azapi_headers, "\r\n")
   }
-  avm_azapi_header = "join(\" \", [ for k, v in local.avm_azapi_headers : \"$${k}=$${v}\" ])"
+  avm_azapi_header                    = "join(\" \", [ for k, v in local.avm_azapi_headers : \"$${k}=$${v}\" ])"
+  raw_new_avm_azapi_header_local_body = <<-EOT
+    # tflint-ignore: terraform_unused_declarations
+    avm_azapi_header = ${local.avm_azapi_header}
+EOT
+  new_avm_azapi_header_local_body     = trim(local.raw_new_avm_azapi_header_local_body, "\r\n")
 }
 
 transform "new_block" new_avm_azapi_header_local {
   for_each       = local.sync_main_telemetry_tf && !local.avm_azapi_header_exists ? toset([1]) : toset([])
   new_block_type = "locals"
   filename       = "main.telemetry.tf"
-  body           = <<-EOT
-    # tflint-ignore: terraform_unused_declarations
-    avm_azapi_header = ${local.avm_azapi_header}
-EOT
+  body           = local.new_avm_azapi_header_local_body
 }
 
 transform "ensure_local" azapi_headers_helper_local {
@@ -179,15 +183,8 @@ transform "ensure_local" main_location {
   value_as_string    = local.location_variable_exist ? "var.location" : "\"unknown\""
 }
 
-transform "new_block" new_modtm_telemetry_telemetry {
-  for_each       = local.sync_main_telemetry_tf && !local.resource_modtm_telemetry_telemetry_exists ? toset([1]) : toset([])
-  new_block_type = "resource"
-  labels         = ["modtm_telemetry", "telemetry"]
-  filename       = "main.telemetry.tf"
-  asstring {
-    count = "var.enable_telemetry ? 1 : 0"
-
-    tags = <<-EOT
+locals {
+  raw_telemetry_tags = <<-EOT
     merge({
       subscription_id = one(data.azapi_client_config.telemetry).subscription_id
       tenant_id       = one(data.azapi_client_config.telemetry).tenant_id
@@ -196,6 +193,18 @@ transform "new_block" new_modtm_telemetry_telemetry {
       random_id       = one(random_uuid.telemetry).result
     }, { location = local.main_location })
 EOT
+  telemetry_tags     = trim(local.raw_telemetry_tags, "\r\n")
+}
+
+transform "new_block" new_modtm_telemetry_telemetry {
+  for_each       = local.sync_main_telemetry_tf && !local.resource_modtm_telemetry_telemetry_exists ? toset([1]) : toset([])
+  new_block_type = "resource"
+  labels         = ["modtm_telemetry", "telemetry"]
+  filename       = "main.telemetry.tf"
+  asstring {
+    count = "var.enable_telemetry ? 1 : 0"
+
+    tags = local.telemetry_tags
   }
 }
 
@@ -205,14 +214,6 @@ transform "update_in_place" modtm_telemetry_telemetry {
   asstring {
     count = "var.enable_telemetry ? 1 : 0"
 
-    tags = <<-EOT
-    merge({
-      subscription_id = one(data.azapi_client_config.telemetry).subscription_id
-      tenant_id       = one(data.azapi_client_config.telemetry).tenant_id
-      module_source   = one(data.modtm_module_source.telemetry).module_source
-      module_version  = one(data.modtm_module_source.telemetry).module_version
-      random_id       = one(random_uuid.telemetry).result
-    }, { location = local.main_location })
-EOT
+    tags = local.telemetry_tags
   }
 }
