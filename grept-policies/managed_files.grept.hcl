@@ -15,6 +15,7 @@ locals {
     ".github/workflows/pr-check.yml",
     ".terraform-docs.yml",
     ".vscode/mcp.json",
+    ".vscode/settings.json",
     "AGENTS.md",
     "avm.bat",
     "avm.ps1",
