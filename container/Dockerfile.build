@@ -14,9 +14,13 @@ ARG GOBUILDARGS='-trimpath'
 ARG TARGETARCH
 # Cross compile go binaries
 ENV GOARCH=${TARGETARCH}
+ENV CC=gcc
+RUN if [ "${TARGETARCH}" = "arm64" ]; then apt-get update && \
+  apt-get install -y gcc-aarch64-linux-gnu; fi
 RUN mkdir /src && \
   cd /src && \
   export CGO_ENABLED=1 && \
+  if [ "${TARGETARCH}" = "arm64" ]; then export CC=aarch64-linux-gnu-gcc; fi && \
   echo "Build conftest" && \
   git clone https://github.com/open-policy-agent/conftest.git && \
   cd conftest && \
