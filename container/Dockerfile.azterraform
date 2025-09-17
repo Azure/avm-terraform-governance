@@ -5,12 +5,14 @@ ARG PREVIOUS_TAG_VERSION=656b12a97270ca29998ad62e3564d08e7d4369ba
 ARG TARGETARCH
 # Cross compile go binaries
 ENV GOARCH=${TARGETARCH}
-ENV CGO_ENABLED=1
-ENV CC=gcc
+# CGO not required for the tooling we compile here (previousTag, gofumpt, pkenv). Enabling CGO while
+# cross-compiling from ${BUILDPLATFORM} to ${TARGETARCH} without a fully configured cross toolchain
+# causes runtime/cgo to invoke the host (x86_64) assembler on AArch64 assembly, yielding errors like
+# "no such instruction: stp x29,x30,[sp,". Keep CGO disabled unless a dependency genuinely requires it.
+ENV CGO_ENABLED=0
 RUN if [ "${TARGETARCH}" = "arm64" ]; then apt-get update && \
   apt-get install -y gcc-aarch64-linux-gnu; fi
 RUN go install github.com/lonegunmanb/previousTag@$PREVIOUS_TAG_VERSION && \
-  if [ "${TARGETARCH}" = "arm64" ]; then export CC=aarch64-linux-gnu-gcc; fi && \
   mkdir /src && \
   cd /src && \
   git clone https://github.com/iamhsa/pkenv.git && \
