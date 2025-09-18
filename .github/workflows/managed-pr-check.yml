@@ -38,6 +38,9 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
+
           ./avm pr-check
 
   getexamples:
@@ -87,6 +90,9 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
+
           ./avm global-teardown
         shell: bash
 
@@ -119,6 +125,9 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
 
           ./avm test-examples
 
@@ -155,8 +164,8 @@ jobs:
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
-          source ../prepare-credential.sh
-
+          source ../prepare-credential.shell
+          
           ./avm global-teardown
         id: global-teardown
         shell: bash
