@@ -170,6 +170,7 @@ avm-res-resourcegraph-query,Microsoft.ResourceGraph,queries,Resource Graph Query
 avm-res-resources-resourcegroup,Microsoft.Resources,resourceGroups,Resource Group,RG,Jfolberth,John Folberth,,
 avm-res-search-searchservice,Microsoft.Search,searchServices,Search Service,,seekerofsai,Bhanu Neti,,
 avm-res-servicebus-namespace,Microsoft.ServiceBus,namespaces,Service Bus Namespace,,bryansan-msft,Bryan Sanchez Pernia,,
+avm-res-servicenetworking-trafficcontroller,Microsoft.ServiceNetworking,trafficControllers,Application Gateway for Containers (Traffic Controller),,jaredfholgate,Mohamed Faizal,,
 avm-res-sql-managedinstance,Microsoft.Sql,managedInstances,SQL Managed Instance,SQL MI,mbilalamjad,Bilal Amjad,,
 avm-res-sql-server,Microsoft.Sql,servers,Azure SQL Server,,mbilalamjad,Bilal Amjad,,
 avm-res-sqlvirtualmachine-sqlvirtualmachine,Microsoft.SqlVirtualMachine,sqlVirtualMachines,Sql Virtual Machine,SQL VM,timchapman,Tim Chapman,,
