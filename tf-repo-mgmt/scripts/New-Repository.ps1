@@ -24,6 +24,8 @@ param (
 
 $ProgressPreference = "SilentlyContinue"
 
+./scripts/Test-Tooling.ps1
+
 $moduleNameRegex = "^avm-(res|ptn|utl)-[a-z-]+$"
 
 if ($moduleName -notmatch $moduleNameRegex) {
