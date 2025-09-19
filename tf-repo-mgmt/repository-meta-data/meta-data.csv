@@ -90,6 +90,7 @@ avm-res-desktopvirtualization-hostpool,Microsoft.DesktopVirtualization,hostPools
 avm-res-desktopvirtualization-scalingplan,Microsoft.DesktopVirtualization,scalingPlans,Azure Virtual Desktop (AVD) Scaling Plan,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-res-desktopvirtualization-workspace,Microsoft.DesktopVirtualization,workspaces,Azure Virtual Desktop (AVD) Workspace,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msft,Charles Shea,,
+avm-res-deviceregistry-assetendpointprofile,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profile,,lonegunmanb,Zijie He,,
 avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,
 avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,
 avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,
