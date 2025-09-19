@@ -1,7 +1,7 @@
 param (
   [string]$tempPath = "~/temp-avm-repo-creation",
-  [string]$tempRepoFolderName = "avm-terraform-governance",
   [string]$governanceRepoUrl = "https://github.com/Azure/avm-terraform-governance",
+  [string]$openSourceRepoUrl = "https://github.com/microsoft/github-operations",
   [string]$moduleProvider = "azurerm",
   [string]$moduleName,
   [string]$moduleDisplayName,
@@ -14,6 +14,7 @@ param (
   [string]$ownerSecondaryDisplayName = "",
   [switch]$metaDataOnly,
   [switch]$skipRepoCreation,
+  [switch]$skipRepoSync,
   [switch]$skipMetaDataCreation,
   [string]$repositorySyncModulePath = "./repository_sync",
   [switch]$skipCleanup,
@@ -74,8 +75,10 @@ if (!$skipMetaDataCreation) {
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
   gh repo fork --remote --clone --default-branch-only $governanceRepoUrl
+  $tempRepoFolderName = $governanceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
-  gh repo set-default 'Azure/avm-terraform-governance'
+  $tempOrgAndRepoName = $openSourceRepoUrl.Split('/')[-2..-1] -join '/'
+  gh repo set-default $tempOrgAndRepoName
   git fetch upstream
   git reset --hard upstream/main
   git checkout -b "chore/add/$moduleName"
@@ -117,28 +120,43 @@ if (!$skipRepoCreation) {
   Write-Host ""
   Write-Host "Created repository $moduleName" -ForegroundColor Green
   Write-Host "Open https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName" -ForegroundColor Yellow
-  Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
-  Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
+  if(!$env:CODESPACES) {
+    Write-Host "Hit Enter to open the open source portal in your browser now" -ForegroundColor Yellow
+    Read-Host
+    Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
+  }
 
+  $response = ""
+  while ($response -ne "yes" -and $response -ne "no") {
+    Write-Host "Do you see the 'Complete Setup' link? Type 'yes' or 'no' and hit Enter:" -ForegroundColor Yellow
+    $response = Read-Host
+  }
 
-  Write-Host "Hit Enter to open the open source portal in your browser and complete the setup:" -ForegroundColor Yellow
-  Read-Host
-  Start-Process "https://repos.opensource.microsoft.com/orgs/Azure/repos/$repositoryName"
+  if($response -eq "yes") {
+    Write-Host "Click 'Complete Setup' to finish the repository configuration" -ForegroundColor Yellow
+    Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
 
-  Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
-  Write-Host ""
-  Write-Host "Project name:" -ForegroundColor Cyan
-  Write-Host "Azure Verified Module (Terraform) for '$moduleName'"
-  Write-Host ""
-  Write-Host "Project description:" -ForegroundColor Cyan
-  Write-Host "Azure Verified Module (Terraform) for '$moduleName'. Part of AVM project - https://aka.ms/avm"
-  Write-Host ""
-  Write-Host "Business goals:" -ForegroundColor Cyan
-  Write-Host "Create IaC module that will accelerate deployment on Azure using Microsoft best practice."
-  Write-Host ""
-  Write-Host "Will this be used in a Microsoft product or service?:" -ForegroundColor Cyan
-  Write-Host "This is open source project and can be leveraged in Microsoft service and product."
-  Write-Host ""
+    Write-Host ""
+    Write-Host "You can copy and paste the following settings..." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Project name:" -ForegroundColor Cyan
+    Write-Host "Azure Verified Module (Terraform) for '$moduleName'"
+    Write-Host ""
+    Write-Host "Project description:" -ForegroundColor Cyan
+    Write-Host "Azure Verified Module (Terraform) for '$moduleName'. Part of AVM project - https://aka.ms/avm"
+    Write-Host ""
+    Write-Host "Business goals:" -ForegroundColor Cyan
+    Write-Host "Create IaC module that will accelerate deployment on Azure using Microsoft best practice."
+    Write-Host ""
+    Write-Host "Will this be used in a Microsoft product or service?:" -ForegroundColor Cyan
+    Write-Host "This is open source project and can be leveraged in Microsoft service and product."
+    Write-Host ""
+  }
+
+  if($response -eq "no") {
+    Write-Host "Click the 'Compliance' tab and fill out the 3 sections." -ForegroundColor Yellow
+    Write-Host "Elevate your permissions with JIT and then come back here to continue" -ForegroundColor Yellow
+  }
 
   $response = ""
   while ($response -ne "yes") {
@@ -147,17 +165,19 @@ if (!$skipRepoCreation) {
   }
 }
 
-./scripts/Get-AvmLabels.ps1
+if(!$skipRepoSync){
+  ./scripts/Get-AvmLabels.ps1
 
-./scripts/Invoke-RepositorySync.ps1 `
-  -repositoryCreationModeEnabled `
-  -planOnly $false `
-  -repoId $moduleName `
-  -repoUrl $repositoryUrl `
-  -skipCleanup:$skipCleanup.IsPresent
+  ./scripts/Invoke-RepositorySync.ps1 `
+    -repositoryCreationModeEnabled `
+    -planOnly $false `
+    -repoId $moduleName `
+    -repoUrl $repositoryUrl `
+    -skipCleanup:$skipCleanup.IsPresent
 
-Write-Host ""
-Write-Host "Terraform apply completed successfully." -ForegroundColor Green
+  Write-Host ""
+  Write-Host "Terraform apply completed successfully." -ForegroundColor Green
+}
 
 Write-Host ""
 Write-Host "Repository URL:" -ForegroundColor Cyan
@@ -171,10 +191,38 @@ if ($ownerPrimaryGitHubHandle -ne "") {
 
 if (!$skipCreateAppInstallationRequest) {
   Write-Host "Creating app installation request..." -ForegroundColor Yellow
-  $template = Get-Content -Path "./issue-templates/install-app-request.md" -Raw
-  $template = $template -replace "{{REPOSITORY_NAME}}", $repositoryName
-  $appInstallIssueUrl = gh issue create --repo $appInstallationRequestRepo --title "[GitHub App] Installation Request ``Azure/$repositoryName``" --body $template
-  Write-Host "Created app installation request: $appInstallIssueUrl" -ForegroundColor Cyan
+  $currentPath = Get-Location
+  New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
+  Set-Location -Path $tempPath
+  gh repo fork --remote --clone --default-branch-only $openSourceRepoUrl
+  $tempRepoFolderName = $openSourceRepoUrl.Split('/')[-1]
+  Set-Location -Path $tempRepoFolderName
+  $tempOrgAndRepoName = $openSourceRepoUrl.Split('/')[-2..-1] -join '/'
+  gh repo set-default $tempOrgAndRepoName
+  git fetch upstream
+  git reset --hard upstream/main
+  git checkout -b "chore/app-install-avm/$moduleName"
+
+  Install-Module powershell-yaml -Force
+  $yamlPath = "./apps/azure/azure-verified-modules.yaml"
+  $yamlData = Get-Content -Path $yamlPath | ConvertFrom-Yaml
+  $repoList = @($yamlData.repositories)
+  $repoList += $repositoryName
+  $repoList = $repoList | Sort-Object
+  $yamlData.repositories = $repoList
+  $yamlData | ConvertTo-Yaml -Options WithIndentedSequences | Set-Content -Path $yamlPath -Force
+
+  git add $yamlPath
+  git commit -m "chore: add $moduleName metadata"
+  git push --set-upstream origin "chore/app-install-avm/$moduleName"
+
+  $prUrl = gh pr create --title "chore: app install avm $moduleName" --body "This PR requests an app install for the $moduleName module."
+
+  Set-Location $tempPath
+  Remove-Item -Path $tempRepoFolderName -Force -Recurse | Out-Null
+
+  Set-Location $currentPath
+  Write-Host "Created app installation request PR: $prUrl" -ForegroundColor Cyan
 }
 
 $completionMessage = @"
