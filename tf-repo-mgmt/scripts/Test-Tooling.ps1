@@ -196,7 +196,7 @@ $checkResults | ForEach-Object {[PSCustomObject]$_} | Format-Table -Property @{
 }, @{ Label = "Check Details"; Expression = {$_.message} }  -AutoSize -Wrap
 
 if($hasFailure) {
-    Write-InformationColored "Accelerator software requirements have no been met, please review and install the missing software." -ForegroundColor Red -InformationAction Continue
-    Write-InformationColored "Cannot continue with Deployment..." -ForegroundColor Red -InformationAction Continue
-    throw "Accelerator software requirements have no been met, please review and install the missing software."
+    Write-InformationColored "Software requirements have no been met, please review and install the missing software." -ForegroundColor Red -InformationAction Continue
+    Write-InformationColored "Cannot continue with Repository creation..." -ForegroundColor Red -InformationAction Continue
+    throw "Software requirements have no been met, please review and install the missing software."
 }
