@@ -22,6 +22,7 @@ avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Fr
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,
 avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,
 avm-ptn-confidential-compute,,,Confidential Compute,,bjornhofer,Björn Höfer,,
+avm-ptn-dev-center-dev-box,,,Microsoft Dev Center Dev Box,,autocloudarc,Preston Parsard,,
 avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,
 avm-ptn-finopstoolkit-finopshub,,,FinOps Toolkit FinOps Hub,,didayal,Divyadeep Dayal,,
 avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoint-secured Storage,,donovm4,Donovan McCoy,,
