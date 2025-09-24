@@ -87,12 +87,4 @@ RUN mkdir /src && \
   git clone https://github.com/lonegunmanb/terrafmt.git && \
   cd terrafmt && \
   go build ${GOBUILDARGS} -o /go/bin/terrafmt . && \
-  cd /src && \
-  echo "Fetch tfenv" && \
-  git clone https://github.com/tfutils/tfenv.git && \
-  cd /src/tfenv && \
-  git checkout $TFENV && \
-  rm -rf .git && \
-  cd /src && \
-  rm -rf .git && \
   chmod a+x /go/bin/*
