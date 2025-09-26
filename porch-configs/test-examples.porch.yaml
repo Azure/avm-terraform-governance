@@ -39,7 +39,7 @@ commands:
           fi
 
           if [ -z "$AVM_RUNNING_IN_GITHUB_ACTIONS" ]; then
-            echo "AVM_RUNNING_IN_GITHUB_ACTIONS is not set. Continue."
+            echo "AVM_RUNNING_IN_GITHUB_ACTIONS is not set. Continue." 1>&2
             exit 0
           fi
 
@@ -66,6 +66,21 @@ commands:
         command_line: |
           if [ -e .e2eignore ]; then
             echo "Found the .e2eignore file, so skipping the example $ITEM" 1>&2
+            exit 99
+          fi
+        skip_exit_codes: [99]
+
+      - type: shell
+        name: Check AVM_EXAMPLE
+        command_line: |
+          if [ -z "$AVM_EXAMPLE" ]; then
+            echo "AVM_EXAMPLE is not set. Continue."
+            exit 0
+          fi
+
+          if [ "$AVM_EXAMPLE" != "$ITEM" ]; then
+            echo "AVM_EXAMPLE is set to '$AVM_EXAMPLE', but the current example is '$ITEM'." 1>&2
+            echo "Therefore skipping this example." 1>&2
             exit 99
           fi
         skip_exit_codes: [99]
