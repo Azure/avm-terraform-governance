@@ -32,7 +32,7 @@ commands:
     working_directory_strategy: "item_relative"
     commands:
       - type: shell
-        name: Check for Ignore File
+        name: Check for and remove non-matching examples
         command_line: |
           if [ -z "$AVM_EXAMPLE" ]; then
             echo "AVM_EXAMPLE is not set. Continue."
