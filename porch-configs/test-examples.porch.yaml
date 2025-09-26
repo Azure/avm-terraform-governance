@@ -39,7 +39,7 @@ commands:
           fi
 
           if [ -z "$AVM_RUNNING_IN_GITHUB_ACTIONS" ]; then
-            echo "AVM_RUNNING_IN_GITHUB_ACTIONS is not set. Continue." 1>&2
+            echo "AVM_RUNNING_IN_GITHUB_ACTIONS is not set. Continue."
             exit 0
           fi
 
