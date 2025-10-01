@@ -175,6 +175,7 @@ avm-res-sql-server,Microsoft.Sql,servers,Azure SQL Server,,mbilalamjad,Bilal Amj
 avm-res-sqlvirtualmachine-sqlvirtualmachine,Microsoft.SqlVirtualMachine,sqlVirtualMachines,Sql Virtual Machine,SQL VM,timchapman,Tim Chapman,,
 avm-res-storage-storageaccount,Microsoft.Storage,storageAccounts,Storage Account,,chinthakaru,Chinthaka Rupasinghe,,
 avm-res-synapse-workspace,Microsoft.Synapse,workspaces,Synapse Workspace,,Karni-G,Karni Gupta,,
+avm-res-virtualmachineimages-imagetemplate,Microsoft.Compute,virtualMachineImages/imageTemplates,Virtual Machine Image Template,"ImageTemplate, VMImageBuilder, AVDImageBuilder, AzureImageBuilder",travishankins,Travis Hankins,,
 avm-res-web-connection,Microsoft.Web,connection,API Connection,,donovm4,Donovan McCoy,,
 avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Environment,ASE,ibersanoMS,Isabelle Bersano,,
 avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
