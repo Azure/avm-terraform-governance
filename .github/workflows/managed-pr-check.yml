@@ -115,6 +115,7 @@ jobs:
         shell: bash
         env:
           AVM_EXAMPLE: ${{ matrix.example }}
+          AVM_RUNNING_IN_GITHUB_ACTIONS: true
         run: |
           set -e
 

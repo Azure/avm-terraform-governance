@@ -18,7 +18,13 @@ RUN export CGO_ENABLED=1 && \
   cd /src && \
   git clone https://github.com/mvdan/gofumpt.git && \
   cd gofumpt && \
-  go build ${GOBUILDARGS} -o /go/bin/gofumpt .
+  go build ${GOBUILDARGS} -o /go/bin/gofumpt . && \
+  cd /src && \
+  echo "Fetch tfenv" && \
+  git clone https://github.com/tfutils/tfenv.git && \
+  cd /src/tfenv && \
+  git checkout $TFENV && \
+  rm -rf .git
 
 #FROM mcr.microsoft.com/azurelinux/base/python:3.12 as runner
 FROM mcr.microsoft.com/azure-cli:cbl-mariner2.0 AS runner
@@ -63,8 +69,8 @@ RUN mkdir ${HOME_DIR}
 COPY .terraformrc ${HOME_DIR}/.terraformrc
 COPY --from=builder /go/bin /usr/local/go/bin
 COPY --from=azterraform_builder /go/bin /usr/local/bin
-COPY --from=builder /src/tfenv ${HOME_DIR}/tfenv
 COPY --from=azterraform_builder /src/pkenv ${HOME_DIR}/pkenv
+COPY --from=azterraform_builder /src/tfenv ${HOME_DIR}/tfenv
 RUN cp /root/.gitconfig ${HOME_DIR}/.gitconfig && \
   mkdir ${HOME_DIR}/tflintenv && \
   chmod -Rv a+rwX ${HOME_DIR} && \
