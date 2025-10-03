@@ -13,6 +13,43 @@ commands:
     command_line: terraform -version
     cwd: "."
 
+  - type: shell
+    name: Clean Terraform
+    command_line: |
+      find . -type d -name .terraform | xargs -n1 rm -rf && \
+      find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+      find . -type f -name *.tfstate* | xargs -n1 rm -f
+
+  - type: foreachdirectory
+    name: for each example clean up if not matching AVM_EXAMPLE
+    depth: 1
+    include_hidden: false
+    skip_on_not_exist: true
+    working_directory: "./examples"
+    env:
+      TF_IN_AUTOMATION: "1"
+    mode: parallel
+    commands:
+      - type: shell
+        name: Check for and remove non-matching examples
+        command_line: |
+          if [ -z "$AVM_EXAMPLE" ]; then
+            echo "AVM_EXAMPLE is not set. Continue."
+            exit 0
+          fi
+
+          if [ -z "$AVM_RUNNING_IN_GITHUB_ACTIONS" ]; then
+            echo "AVM_RUNNING_IN_GITHUB_ACTIONS is not set. Continue."
+            exit 0
+          fi
+
+          if [ "$AVM_EXAMPLE" != "$ITEM" ]; then
+            echo "AVM_EXAMPLE is set to '$AVM_EXAMPLE', but the current example is '$ITEM'." 1>&2
+            echo "We are running in GitHub Actions, so we can safely remove this example." 1>&2
+            rm -r -f $ITEM
+            exit 0
+          fi
+
   - type: foreachdirectory
     name: for each example
     depth: 1
@@ -32,13 +69,6 @@ commands:
             exit 99
           fi
         skip_exit_codes: [99]
-
-      - type: shell
-        name: Clean Terraform
-        command_line: |
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: shell
         name: Check AVM_EXAMPLE
@@ -94,6 +124,7 @@ commands:
           if [ ! -d ".terraform" ]; then
             exit 0
           fi
+          ls -al 1>&2
           terraform destroy -auto-approve
         runs_on_condition: always
 

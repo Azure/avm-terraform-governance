@@ -1,12 +1,33 @@
-# Until we update the template repository, we need a way to keep core files updated.
 locals {
   managed_files = toset([
-    "avm",
+    "_footer.md",
+    ".devcontainer/devcontainer.json",
+    ".editorconfig",
+    ".github/CODEOWNERS",
+    ".github/copilot-instructions.md",
+    ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
+    ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
+    ".github/ISSUE_TEMPLATE/config.yml",
+    ".github/policies/eventResponder.yml",
+    ".github/policies/scheduledSearches.yml",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    # ".github/workflows/copilot-setup-steps.yml", disabled for now until we test more thoroughly
+    ".github/workflows/pr-check.yml",
+    ".terraform-docs.yml",
+    ".vscode/mcp.json",
+    ".vscode/settings.json",
+    "AGENTS.md",
     "avm.bat",
     "avm.ps1",
+    "avm",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "examples/.terraform-docs.yml",
+    "LICENSE",
     "Makefile",
-    ".devcontainer/devcontainer.json",
-    ".github/workflows/pr-check.yml",
+    "modules/.terraform-docs.yml",
+    "SECURITY.md",
+    "SUPPORT.md",
   ])
 
   managed_files_ref        = coalesce(env("AVM_MANAGED_FILES_REF"), "main")

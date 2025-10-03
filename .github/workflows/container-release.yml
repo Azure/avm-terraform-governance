@@ -7,6 +7,11 @@ on:
     tags:
       - 'v*.*.*' # Matches semantic version tags like v1.0.0, v2.3.4, etc.
   # Configures this workflow to run when the workflow is manually triggered from the GitHub UI.
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'container/**'
   workflow_dispatch:
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
@@ -21,6 +26,7 @@ jobs:
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     environment: acr
     strategy:
+      fail-fast: false
       matrix:
         image:
           - name: azterraform
@@ -98,7 +104,7 @@ jobs:
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ./container
-          push: true
+          push: ${{ startsWith(github.ref, 'refs/tags/') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -109,6 +115,7 @@ jobs:
 
       # This step generates an artifact attestation for the image, which is an unforgeable statement about where and how it was built. It increases supply chain security for people who consume the image. For more information, see [Using artifact attestations to establish provenance for builds](/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds).
       - name: Generate artifact attestation
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-name: ${{ secrets.ACR_SERVER_URL }}/${{ matrix.image.repo }}

@@ -1,0 +1,77 @@
+---
+name: admin-merge-pre-commit-prs
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
+        default: 'All'
+        type: string
+      gh_token:
+        description: 'User token to merge PRs, must have write access to target repositories.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    environment: avm
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Generate Matrix
+        uses: ./.github/actions/avm-repos
+        id: matrix
+        with:
+          repositories: ${{ inputs.repositories }}
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+  merge-precommit-prs:
+    name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
+    runs-on: ubuntu-latest
+    environment: avm
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrixParallel) }}
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Mask token
+        run: echo "::add-mask::${{ inputs.gh_token }}"
+
+      - name: Approve and merge pre-commit PRs
+        run: |
+          NOS=()
+          while IFS= read -r line; do
+            NOS+=("$line")
+          done < <(
+            gh pr list \
+              --repo ${{ matrix.repoFullName }} \
+              --state open \
+              --search "chore: pre-commit" \
+              --app azure-verified-modules \
+              --json number \
+            | jq -r '.[].number'
+          )
+          for N in "${NOS[@]}"; do
+            echo "Processing PR #$N"
+            gh pr review "$N" --repo ${{ matrix.repoFullName }} --approve --body "Approved by admin-merge-pre-commit-prs workflow"
+            gh pr merge "$N" --repo ${{ matrix.repoFullName }} --squash --delete-branch
+          done
+        env:
+          GH_TOKEN: ${{ inputs.gh_token }}

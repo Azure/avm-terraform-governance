@@ -14,9 +14,13 @@ ARG GOBUILDARGS='-trimpath'
 ARG TARGETARCH
 # Cross compile go binaries
 ENV GOARCH=${TARGETARCH}
+ENV CC=gcc
+RUN if [ "${TARGETARCH}" = "arm64" ]; then apt-get update && \
+  apt-get install -y gcc-aarch64-linux-gnu; fi
 RUN mkdir /src && \
   cd /src && \
   export CGO_ENABLED=1 && \
+  if [ "${TARGETARCH}" = "arm64" ]; then export CC=aarch64-linux-gnu-gcc; fi && \
   echo "Build conftest" && \
   git clone https://github.com/open-policy-agent/conftest.git && \
   cd conftest && \
@@ -83,12 +87,4 @@ RUN mkdir /src && \
   git clone https://github.com/lonegunmanb/terrafmt.git && \
   cd terrafmt && \
   go build ${GOBUILDARGS} -o /go/bin/terrafmt . && \
-  cd /src && \
-  echo "Fetch tfenv" && \
-  git clone https://github.com/tfutils/tfenv.git && \
-  cd /src/tfenv && \
-  git checkout $TFENV && \
-  rm -rf .git && \
-  cd /src && \
-  rm -rf .git && \
   chmod a+x /go/bin/*

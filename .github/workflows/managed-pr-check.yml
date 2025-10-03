@@ -26,8 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
     steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 #v4.3.0
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
-
       - name: pr-check
         run: |
           set -e
@@ -36,6 +37,9 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
 
           ./avm pr-check
 
@@ -103,12 +107,15 @@ jobs:
         example: ${{ fromJson(needs.getexamples.outputs.examples) }}
       fail-fast: false
     steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 #v4.3.0
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
       - name: Test example
         shell: bash
         env:
           AVM_EXAMPLE: ${{ matrix.example }}
+          AVM_RUNNING_IN_GITHUB_ACTIONS: true
         run: |
           set -e
 
@@ -116,6 +123,9 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
 
           ./avm test-examples
 
