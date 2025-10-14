@@ -9,6 +9,7 @@ ARG MAPOTF_VERSION=1a50a9033189df84e72f32c94fe88ab4ff70a0a9
 ARG PORCH_VERSION=0.0.10
 ARG TERRAFORM_DOCS_VERSION=v0.20.0
 ARG TFENV=v3.0.0
+ARG GO_GETTER_VERSION=v2.2.3
 ARG GOBUILDARGS='-trimpath'
 # The below is set by Buildx for cross-platform builds
 ARG TARGETARCH
@@ -87,4 +88,10 @@ RUN mkdir /src && \
   git clone https://github.com/lonegunmanb/terrafmt.git && \
   cd terrafmt && \
   go build ${GOBUILDARGS} -o /go/bin/terrafmt . && \
+  cd /src && \
+  echo "Build go-getter" && \
+  git clone https://github.com/hashicorp/go-getter.git && \
+  cd go-getter && \
+  git checkout ${GO_GETTER_VERSION} && \
+  go build ${GOBUILDARGS} -o /go/bin/go-getter . && \
   chmod a+x /go/bin/*
