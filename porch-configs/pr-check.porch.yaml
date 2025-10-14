@@ -345,7 +345,7 @@ commands:
 
               # Use go-getter to download the policy with symlink support
               # The -symlink flag enables symlink copying
-              go-getter -symlink \
+              go-getter \
                 $AVM_CONFTEST_APRL_URL \
                 "$TEMP_POLICY_DIR/policy/aprl"
 
@@ -374,7 +374,7 @@ commands:
 
               # Use go-getter to download the policy with symlink support
               # The -symlink flag enables symlink copying
-              go-getter -symlink \
+              go-getter \
                 $AVM_CONFTEST_AVMSEC_URL \
                 "$TEMP_POLICY_DIR/policy/avmsec"
 
