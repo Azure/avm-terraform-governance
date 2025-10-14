@@ -91,7 +91,7 @@ RUN mkdir /src && \
   cd /src && \
   echo "Build go-getter" && \
   git clone https://github.com/hashicorp/go-getter.git && \
-  cd go-getter && \
+  cd go-getter/cmd/go-getter && \
   git checkout ${GO_GETTER_VERSION} && \
   go build ${GOBUILDARGS} -o /go/bin/go-getter . && \
   chmod a+x /go/bin/*
