@@ -11,15 +11,28 @@ runs:
     - name: get examples
       id: getexamples
       run: |
-        DIRS=$(for dir in */; do
-          if [ -f "$dir/.e2eignore" ]; then
-            continue
-          fi
-          echo "$dir"
-        done | \
-        cut -d/ -f1 | \
-        jq --raw-input --slurp --compact-output 'split("\n")[:-1]')
+        $examples = Get-ChildItem -Directory
+        $processedExamples = @()
 
-        echo examples="$DIRS" >> "$GITHUB_OUTPUT"
+        $subscriptions = "${{ secrets.TEST_SUBSCRIPTION_IDS }}" | ConvertFrom-Json
+
+        for ($i = 0; $i -lt $examples.Count; $i++) {
+          $files = Get-ChildItem -Path $examples[$i].FullName -Force
+          if ($files.Name -contains ".e2eignore") {
+            Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
+            continue
+          }
+          $subscriptionIndex = ($i % 10)
+          $processedExamples += @{
+            name = $examples[$i].Name
+            subscriptionIndex = $subscriptionIndex
+            subscriptionId = $subscriptions[$subscriptionIndex].id
+            subscriptionName = $subscriptions[$subscriptionIndex].name
+          }
+        }
+
+        $json = ConvertTo-Json $processedExamples -Compress
+        Write-Host "examples=$json" >> $env:GITHUB_OUTPUT
+
       working-directory: examples
-      shell: bash
+      shell: pwsh

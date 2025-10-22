@@ -4,14 +4,17 @@ variable "repository_creation_mode_enabled" {
   default     = false
 }
 
-variable "target_subscription_id" {
-  type        = string
-  description = "Id of the subscription to run tests in."
-}
-
 variable "management_group_id" {
   type        = string
   description = "Id of the management group to create the role assignment in."
+}
+
+variable "test_subscription_ids" {
+  type        = list(object({
+    name = string
+    id   = string
+  }))
+  description = "List of subscription IDs to use for testing."
 }
 
 variable "identity_resource_group_name" {

@@ -106,10 +106,10 @@ jobs:
           Write-Host "Running repo sync"
           ./scripts/Invoke-RepositorySync.ps1 `
             -planOnly $planOnly `
+            -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
             -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
             -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
             -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
-            -targetSubscriptionId "${{ secrets.TARGET_SUBSCRIPTION_ID }}" `
             -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `

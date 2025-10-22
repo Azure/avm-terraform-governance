@@ -3,11 +3,6 @@ variable "repository_creation_mode_enabled" {
   description = "Whether we are running in repository creation mode."
 }
 
-variable "arm_subscription_id" {
-  type        = string
-  description = "Id of the subscription to run tests in."
-}
-
 variable "arm_client_id" {
   type        = string
   description = "Client ID of the service principal to use for ARM operations."
@@ -16,6 +11,14 @@ variable "arm_client_id" {
 variable "arm_tenant_id" {
   type        = string
   description = "Tenant of the service principal to use for ARM operations."
+}
+
+variable "test_subscription_ids" {
+  type        = list(object({
+    name = string
+    id   = string
+  }))
+  description = "List of subscription IDs to use for testing."
 }
 
 variable "github_repository_owner" {

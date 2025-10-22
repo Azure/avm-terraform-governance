@@ -21,20 +21,28 @@ resource "github_actions_environment_secret" "tenant_id" {
   plaintext_value = var.arm_tenant_id
 }
 
-resource "github_actions_environment_secret" "subscription_id" {
-  count           = var.repository_creation_mode_enabled ? 0 : 1
-  repository      = github_repository.this.name
-  environment     = github_repository_environment.this[0].environment
-  secret_name     = "ARM_SUBSCRIPTION_ID"
-  plaintext_value = var.arm_subscription_id
-}
-
 resource "github_actions_environment_secret" "client_id" {
   count           = var.repository_creation_mode_enabled ? 0 : 1
   repository      = github_repository.this.name
   environment     = github_repository_environment.this[0].environment
   secret_name     = "ARM_CLIENT_ID"
   plaintext_value = var.arm_client_id
+}
+
+resource "github_actions_environment_secret" "subscription_id" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
+  repository      = github_repository.this.name
+  environment     = github_repository_environment.this[0].environment
+  secret_name     = "ARM_SUBSCRIPTION_ID"
+  plaintext_value = var.test_subscription_ids[0].id
+}
+
+resource "github_actions_environment_secret" "test_subscription_ids" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
+  repository      = github_repository.this.name
+  environment     = github_repository_environment.this[0].environment
+  secret_name     = "TEST_SUBSCRIPTION_IDS"
+  plaintext_value = jsonencode(var.test_subscription_ids)
 }
 
 # This environment is used for jobs that do not require authentication.

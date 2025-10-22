@@ -2,7 +2,6 @@ module "azure" {
   source = "./modules/azure"
   count  = var.repository_creation_mode_enabled ? 0 : 1
 
-  target_subscription_id             = var.target_subscription_id
   management_group_id                = var.management_group_id
   github_repository_owner            = var.github_repository_owner
   github_repository_name             = var.github_repository_name
@@ -28,8 +27,8 @@ module "github" {
   github_avm_app_id                              = var.github_avm_app_id
   labels                                         = local.labels
   arm_client_id                                  = var.repository_creation_mode_enabled ? "" : module.azure[0].client_id
-  arm_subscription_id                            = var.repository_creation_mode_enabled ? "" : var.target_subscription_id
   arm_tenant_id                                  = var.repository_creation_mode_enabled ? "" : module.azure[0].tenant_id
+  test_subscription_ids                          = var.repository_creation_mode_enabled ? [] : var.test_subscription_ids
   module_id                                      = var.module_id
   module_name                                    = var.module_name
   custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
