@@ -10,7 +10,7 @@ variable "management_group_id" {
 }
 
 variable "test_subscription_ids" {
-  type        = list(object({
+  type = list(object({
     name = string
     id   = string
   }))
