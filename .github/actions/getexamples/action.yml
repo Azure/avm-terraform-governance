@@ -21,6 +21,7 @@ runs:
         $examples = Get-ChildItem -Directory
         $processedExamples = @()
 
+        $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
         $hasSubscriptions = $subscriptions.Length -gt 0
 
         for ($i = 0; $i -lt $examples.Count; $i++) {
