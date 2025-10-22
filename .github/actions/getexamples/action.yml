@@ -22,7 +22,7 @@ runs:
             Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
             continue
           }
-          $subscriptionIndex = ($i % 10)
+          $subscriptionIndex = ($i % $subscriptions.Length)
           $processedExamples += @{
             name = $examples[$i].Name
             subscriptionIndex = $subscriptionIndex
