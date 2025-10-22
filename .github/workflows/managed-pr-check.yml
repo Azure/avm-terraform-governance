@@ -74,7 +74,7 @@ jobs:
           }
 
           $json = ConvertTo-Json $processedExamples -Compress
-          Write-Output "examples=$json" >> $env:GITHUB_OUTPUT
+          Write-Host "examples=$json" >> $env:GITHUB_OUTPUT
 
         working-directory: examples
         shell: pwsh
