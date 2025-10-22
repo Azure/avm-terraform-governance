@@ -58,6 +58,7 @@ jobs:
           $processedExamples = @()
 
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          Write-Host $env:TEST_SUBSCRIPTION_IDS
           $hasSubscriptions = $subscriptions.Length -gt 0
 
           for ($i = 0; $i -lt $examples.Count; $i++) {
