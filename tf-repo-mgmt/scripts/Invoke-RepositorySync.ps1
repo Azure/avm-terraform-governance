@@ -483,7 +483,7 @@ if(!$repositoryCreationModeEnabled) {
 }
 
 # Shuffle the test subscription IDs to distribute load
-$testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle
+$testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle -SetSeed $repoName.GetHashCode()
 
 $terraformVariables = @{
     repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent

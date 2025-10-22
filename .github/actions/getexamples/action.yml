@@ -17,8 +17,7 @@ runs:
         $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
 
         for ($i = 0; $i -lt $examples.Count; $i++) {
-          $files = Get-ChildItem -Path $examples[$i].FullName -Force
-          if ($files.Name -contains ".e2eignore") {
+          if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
             Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
             continue
           }
