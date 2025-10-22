@@ -484,7 +484,7 @@ if(!$repositoryCreationModeEnabled) {
 
 # Shuffle the test subscription IDs to distribute load
 $seed = 0
-for($char in $repoName.ToCharArray()) {
+foreach($char in $repoName.ToCharArray()) {
     $seed += [int][char]$char
 }
 $testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle -SetSeed $seed
