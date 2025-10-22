@@ -14,7 +14,7 @@ runs:
         $examples = Get-ChildItem -Directory
         $processedExamples = @()
 
-        $subscriptions = '${{ secrets.TEST_SUBSCRIPTION_IDS }}' | ConvertFrom-Json
+        $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
 
         for ($i = 0; $i -lt $examples.Count; $i++) {
           $files = Get-ChildItem -Path $examples[$i].FullName -Force
@@ -36,3 +36,5 @@ runs:
 
       working-directory: examples
       shell: pwsh
+      env:
+        TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
