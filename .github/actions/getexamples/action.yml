@@ -23,6 +23,11 @@ runs:
 
         $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
 
+        if($subscriptions.Length -eq 0) {
+          Write-Error "No test subscriptions provided. Please provide at least one subscription ID."
+          exit 1
+        }
+
         for ($i = 0; $i -lt $examples.Count; $i++) {
           if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
             Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
