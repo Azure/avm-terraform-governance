@@ -127,7 +127,8 @@ jobs:
       TF_IN_AUTOMATION: 1
       TF_VAR_enable_telemetry: false
     strategy:
-      matrix: ${{ fromJson(needs.getexamples.outputs.examples) }}
+      matrix:
+        include: ${{ needs.getexamples.outputs.examples }}
       fail-fast: false
     steps:
       - name: Set up Docker
