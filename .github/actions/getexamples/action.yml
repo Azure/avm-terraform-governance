@@ -24,10 +24,10 @@ runs:
           }
           $subscriptionIndex = ($i % $subscriptions.Length)
           $processedExamples += @{
-            name = $examples[$i].Name
+            name              = $examples[$i].Name
             subscriptionIndex = $subscriptionIndex
-            subscriptionId = $subscriptions[$subscriptionIndex].id
-            subscriptionName = $subscriptions[$subscriptionIndex].name
+            subscriptionId    = $subscriptions[$subscriptionIndex].id
+            subscriptionName  = $subscriptions[$subscriptionIndex].name
           }
         }
 
