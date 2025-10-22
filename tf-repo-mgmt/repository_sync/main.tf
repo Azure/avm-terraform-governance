@@ -3,6 +3,7 @@ module "azure" {
   count  = var.repository_creation_mode_enabled ? 0 : 1
 
   target_subscription_id             = var.target_subscription_id
+  management_group_id                = var.management_group_id
   github_repository_owner            = var.github_repository_owner
   github_repository_name             = var.github_repository_name
   github_repository_environment_name = var.github_repository_environment_name

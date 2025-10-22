@@ -9,6 +9,11 @@ variable "target_subscription_id" {
   description = "Id of the subscription to run tests in."
 }
 
+variable "management_group_id" {
+  type        = string
+  description = "Id of the management group to create the role assignment in."
+}
+
 variable "identity_resource_group_name" {
   type        = string
   description = "Name of the resource group to create the identities in."

@@ -30,7 +30,8 @@ param(
         "security",
         "azurecla-write"
     ),
-    [switch]$forceUserRemoval
+    [switch]$forceUserRemoval,
+    [string]$managementGroupId = "avm-tf-testing"
 )
 
 Write-Host "Running repo sync script"
@@ -488,6 +489,7 @@ $terraformVariables = @{
     module_id = $repoId
     module_name = $moduleName
     target_subscription_id = $targetSubscriptionId
+    management_group_id = $managementGroupId
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $isProtected
     github_teams = $githubTeams

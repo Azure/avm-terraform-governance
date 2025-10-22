@@ -28,14 +28,14 @@ resource "azapi_resource" "identity_federated_credentials" {
 }
 
 # Add owner role assignment.
-# The condition prevents the assignee from creating new role assignments for owner, user access administratior, or role based access control administrator.
+# The condition prevents the assignee from creating new role assignments for owner, user access administrator, or role based access control administrator.
 resource "azapi_resource" "identity_role_assignment" {
   type      = "Microsoft.Authorization/roleAssignments@2022-04-01"
   name      = uuidv5("url", "${var.github_repository_owner}${var.github_repository_name}${var.target_subscription_id}${data.azapi_client_config.current.tenant_id}")
-  parent_id = "/subscriptions/${var.target_subscription_id}"
+  parent_id = "/providers/Microsoft.Management/managementGroups/${var.management_group_id}"
   body = {
     properties = {
-      roleDefinitionId = "/subscriptions/${var.target_subscription_id}/providers/Microsoft.Authorization/roleDefinitions/${local.role_definition_name_owner}"
+      roleDefinitionId = "/providers/Microsoft.Management/managementGroups/${var.management_group_id}/providers/Microsoft.Authorization/roleDefinitions/${local.role_definition_name_owner}"
       principalType    = "ServicePrincipal"
       principalId      = azapi_resource.identity.output.properties.principalId
       description      = "Role assignment for AVM testing. Repo: ${var.github_repository_owner}/${var.github_repository_name}"
