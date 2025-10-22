@@ -37,6 +37,14 @@ resource "github_actions_environment_secret" "test_subscription_ids" {
   plaintext_value = jsonencode(var.test_subscription_ids)
 }
 
+resource "github_actions_environment_variable" "test_subscription_ids" {
+  count           = var.repository_creation_mode_enabled ? 0 : 1
+  repository      = github_repository.this.name
+  environment     = github_repository_environment.this[0].environment
+  variable_name   = "TEST_SUBSCRIPTION_IDS"
+  value = jsonencode(var.test_subscription_ids)
+}
+
 resource "github_actions_environment_secret" "client_id" {
   count           = var.repository_creation_mode_enabled ? 0 : 1
   repository      = github_repository.this.name
