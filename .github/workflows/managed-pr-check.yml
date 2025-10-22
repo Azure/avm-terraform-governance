@@ -55,6 +55,8 @@ jobs:
 
       - uses: Azure/avm-terraform-governance/.github/actions/getexamples@chore-add-more-test-subs
         id: getexamples
+        with:
+          testSubscriptionIds: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
 
   checksetup:
     runs-on: ubuntu-latest

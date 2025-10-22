@@ -1,10 +1,15 @@
 author: AVM
 name: getexamples
 description: Gets example directories from `examples/` and outputs them as a JSON array.
+inputs:
+  testSubscriptionIds:
+    description: A JSON array of subscription IDs to use for testing.
+    required: true
 outputs:
   examples:
     description: The examples to test
     value: ${{ steps.getexamples.outputs.examples }}
+    default: '[]'
 runs:
   using: composite
   steps:
@@ -36,4 +41,4 @@ runs:
       working-directory: examples
       shell: pwsh
       env:
-        TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
+        TEST_SUBSCRIPTION_IDS: ${{ inputs.testSubscriptionIds }}
