@@ -5,11 +5,13 @@ inputs:
   testSubscriptionIds:
     description: A JSON array of subscription IDs to use for testing.
     required: true
+    default: '[]'
+
 outputs:
   examples:
     description: The examples to test
     value: ${{ steps.getexamples.outputs.examples }}
-    default: '[]'
+
 runs:
   using: composite
   steps:
