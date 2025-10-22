@@ -119,7 +119,7 @@ jobs:
 
   testexamples:
     if: always() && !failure() && !cancelled() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
-    name: ${{ matrix.example.name }}
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: [getexamples, checksetup, globalsetup]
     environment: test
@@ -137,13 +137,13 @@ jobs:
       - name: Test example
         shell: bash
         env:
-          AVM_EXAMPLE: ${{ matrix.example.name }}
+          AVM_EXAMPLE: ${{ matrix.name }}
           AVM_RUNNING_IN_GITHUB_ACTIONS: true
         run: |
           set -e
 
-          export ARM_SUBSCRIPTION_ID=${{ matrix.example.subscriptionId }}
-          echo "Using subscription ${{ matrix.example.subscriptionName }} $ARM_SUBSCRIPTION_ID (index: ${{ matrix.example.subscriptionIndex }}) for example $AVM_EXAMPLE"
+          export ARM_SUBSCRIPTION_ID=${{ matrix.subscriptionId }}
+          echo "Using subscription ${{ matrix.subscriptionName }} $ARM_SUBSCRIPTION_ID (index: ${{ matrix.subscriptionIndex }}) for example $AVM_EXAMPLE"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
