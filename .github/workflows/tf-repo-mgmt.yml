@@ -107,6 +107,7 @@ jobs:
           ./scripts/Invoke-RepositorySync.ps1 `
             -planOnly $planOnly `
             -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
+            -testSubscriptionIds '${{ secrets.TEST_SUBSCRIPTION_IDS }}'' `
             -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
             -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
             -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
