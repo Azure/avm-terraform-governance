@@ -74,7 +74,7 @@ jobs:
           }
 
           $json = ConvertTo-Json $processedExamples -Compress
-          Write-Host "examples=$json" >> $env:GITHUB_OUTPUT
+          Write-Output "examples=$json" >> $env:GITHUB_OUTPUT
 
         working-directory: examples
         shell: pwsh
@@ -128,7 +128,7 @@ jobs:
       TF_VAR_enable_telemetry: false
     strategy:
       matrix:
-        include: ${{ needs.getexamples.outputs.examples }}
+        include: ${{ fromJson(needs.getexamples.outputs.examples) }}
       fail-fast: false
     steps:
       - name: Set up Docker
