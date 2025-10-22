@@ -21,24 +21,19 @@ runs:
         $examples = Get-ChildItem -Directory
         $processedExamples = @()
 
-        $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-
-        if($subscriptions.Length -eq 0) {
-          Write-Error "No test subscriptions provided. Please provide at least one subscription ID."
-          exit 1
-        }
+        $hasSubscriptions = $subscriptions.Length -gt 0
 
         for ($i = 0; $i -lt $examples.Count; $i++) {
           if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
             Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
             continue
           }
-          $subscriptionIndex = ($i % $subscriptions.Length)
+          $subscriptionIndex = $hasSubscriptions ? ($i % $subscriptions.Length) : 0
           $processedExamples += @{
             name              = $examples[$i].Name
             subscriptionIndex = $subscriptionIndex
-            subscriptionId    = $subscriptions[$subscriptionIndex].id
-            subscriptionName  = $subscriptions[$subscriptionIndex].name
+            subscriptionId    = $hasSubscriptions ? $subscriptions[$subscriptionIndex].id : ""
+            subscriptionName  = $hasSubscriptions ? $subscriptions[$subscriptionIndex].name : ""
           }
         }
 
