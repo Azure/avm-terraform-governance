@@ -35,7 +35,7 @@ resource "azapi_resource" "identity_role_assignment" {
   parent_id = "/providers/Microsoft.Management/managementGroups/${var.management_group_id}"
   body = {
     properties = {
-      roleDefinitionId = "/providers/Microsoft.Management/managementGroups/${var.management_group_id}/providers/Microsoft.Authorization/roleDefinitions/${local.role_definition_name_owner}"
+      roleDefinitionId = "/providers/Microsoft.Authorization/roleDefinitions/${local.role_definition_name_owner}"
       principalType    = "ServicePrincipal"
       principalId      = azapi_resource.identity.output.properties.principalId
       description      = "Role assignment for AVM testing. Repo: ${var.github_repository_owner}/${var.github_repository_name}"
