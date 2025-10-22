@@ -101,13 +101,15 @@ jobs:
           Write-Output "Plan Only: $planOnly"
           Write-Output "Force User Removal: $forceUserRemoval"
 
+          $testSubscriptionIds = '${{ secrets.TEST_SUBSCRIPTION_IDS }}' | ConvertFrom-Json
+
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
           Write-Host "Running repo sync"
           ./scripts/Invoke-RepositorySync.ps1 `
             -planOnly $planOnly `
             -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
-            -testSubscriptionIds '${{ secrets.TEST_SUBSCRIPTION_IDS }}'' `
+            -testSubscriptionIds $testSubscriptionIds `
             -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
             -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
             -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
