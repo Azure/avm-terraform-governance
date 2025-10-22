@@ -120,6 +120,7 @@ jobs:
           set -e
 
           export ARM_SUBSCRIPTION_ID=${{ matrix.example.subscriptionId }}
+          echo "Using subscription ${{ matrix.example.subscriptionName }} $ARM_SUBSCRIPTION_ID (index: ${{ matrix.example.subscriptionIndex }}) for example $AVM_EXAMPLE"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
