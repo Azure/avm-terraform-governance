@@ -33,14 +33,17 @@ jobs:
         id: get-subscription-id
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          Write-Output "subscriptionId=$($subscriptions[0].id)" >> $env:GITHUB_OUTPUT
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.id.name)" >> $env:GITHUB_OUTPUT
         shell: pwsh
       - name: pr-check
         run: |
           set -e
 
           export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription-id.outputs.subscriptionId }}
-          echo "Using subscription $ARM_SUBSCRIPTION_ID for PR check"
+          echo "Using subscription ${{ steps.get-subscription-id.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for PR check"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -116,14 +119,17 @@ jobs:
         id: get-subscription-id
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          Write-Output "subscriptionId=$($subscriptions[0].id)" >> $env:GITHUB_OUTPUT
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.id.name)" >> $env:GITHUB_OUTPUT
         shell: pwsh
       - name: Run global setup script
         run: |
           set -e
 
           export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription-id.outputs.subscriptionId }}
-          echo "Using subscription $ARM_SUBSCRIPTION_ID for global setup"
+          echo "Using subscription ${{ steps.get-subscription-id.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global setup"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -159,6 +165,7 @@ jobs:
         run: |
           set -e
 
+          echo "::add-mask::${{ matrix.subscriptionId }}"
           export ARM_SUBSCRIPTION_ID=${{ matrix.subscriptionId }}
           echo "Using subscription ${{ matrix.subscriptionName }} $ARM_SUBSCRIPTION_ID (index: ${{ matrix.subscriptionIndex }}) for example $AVM_EXAMPLE"
 
@@ -202,14 +209,17 @@ jobs:
         id: get-subscription-id
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          Write-Output "subscriptionId=$($subscriptions[0].id)" >> $env:GITHUB_OUTPUT
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.id.name)" >> $env:GITHUB_OUTPUT
         shell: pwsh
       - name: Run teardown script
         run: |
           set -e
 
           export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription-id.outputs.subscriptionId }}
-          echo "Using subscription $ARM_SUBSCRIPTION_ID for global teardown"
+          echo "Using subscription ${{ steps.get-subscription-id.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global teardown"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
