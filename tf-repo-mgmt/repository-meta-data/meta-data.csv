@@ -130,6 +130,7 @@ avm-res-managedservices-registrationdefinition,Microsoft.ManagedServices,registr
 avm-res-management-managementgroup,Microsoft.Management,managementGroups,Management Groups,,herms14,Hermes Miraflor II,,
 avm-res-management-servicegroup,Microsoft.Management,serviceGroups,Service Group,,haflidif,Haflidi Fridthjofsson,,
 avm-res-management-servicegroup,Microsoft.Management,serviceGroups,Management Service Groups,,jaredfholgate,Jared Holgate,,
+avm-res-migrate,azurerem,azurerem,Provide Azure Migrate and Azure Local Migrate services and commands through Terraform modules,"avm-azure-migrate,avm-azre-stack-migrae,avm-azure-local-migrate",saifaldin14,Saif Al-Din Ali,,
 avm-res-netapp-netappaccount,Microsoft.NetApp,netAppAccounts,Azure NetApp File,,jtracey93,Jack Tracey,,
 avm-res-network-applicationgateway,Microsoft.Network,applicationGateways,Application Gateway,App GW,mofaizal,Mohamed Faizal,,
 avm-res-network-applicationgatewaywebapplicationfirewallpolicy,Microsoft.Network,ApplicationGatewayWebApplicationFirewallPolicies,Application Gateway Web Application Firewall (WAF) Policy,,mofaizal,Mohamed Faizal,,
