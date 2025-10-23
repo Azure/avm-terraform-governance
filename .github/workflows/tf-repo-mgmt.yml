@@ -101,15 +101,18 @@ jobs:
           Write-Output "Plan Only: $planOnly"
           Write-Output "Force User Removal: $forceUserRemoval"
 
+          $testSubscriptionIds = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
           Write-Host "Running repo sync"
           ./scripts/Invoke-RepositorySync.ps1 `
             -planOnly $planOnly `
+            -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
+            -testSubscriptionIds $testSubscriptionIds `
             -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
             -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
             -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
-            -targetSubscriptionId "${{ secrets.TARGET_SUBSCRIPTION_ID }}" `
             -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `
@@ -124,6 +127,7 @@ jobs:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_USE_AZUREAD: true
           ARM_USE_OIDC: true
+          TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
 
       - name: Upload Issue Logs Json
         if: always() && hashFiles('issue.log.json') != ''
