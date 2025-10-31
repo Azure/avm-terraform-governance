@@ -53,7 +53,7 @@ commands:
               for file in avm.tflint avm.tflint_example avm.tflint_module; do
                 if [ -f "./${file}.override.hcl" ]; then
                   echo "Overriding ${file}"
-                  hclmerge -1 "./$file.override.hcl" -2 "./${file}.hcl" -d "./${file}.merged.hcl"
+                  hclmerge -1 "./${file}.override.hcl" -2 "./${file}.hcl" -d "./${file}.merged.hcl"
                   mv "./${file}.merged.hcl" "./${file}.hcl"
                 fi
               done
