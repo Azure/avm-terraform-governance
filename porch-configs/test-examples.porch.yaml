@@ -96,11 +96,11 @@ commands:
 
       - type: shell
         name: Terraform Init
-        command_line: terraform init
+        command_line: terraform init -input=false
 
       - type: shell
         name: Terraform Plan
-        command_line: terraform plan -out tfplan
+        command_line: terraform plan -out tfplan -input=false
 
       - type: shell
         name: Terraform Apply
@@ -108,7 +108,7 @@ commands:
 
       - type: shell
         name: Terraform Plan Idempotency Check
-        command_line: terraform plan -detailed-exitcode -out tfplan
+        command_line: terraform plan -input=false -detailed-exitcode -out tfplan
 
         # This command will run if the previous plan was not idempotent
         # and will output the plan to stderr.

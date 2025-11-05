@@ -340,7 +340,7 @@ commands:
 
               # Create a temporary directory for the policy
               TEMP_POLICY_DIR=$(mktemp -d)
-    
+
               # Set up cleanup trap
               trap "rm -rf $TEMP_POLICY_DIR" EXIT
 
@@ -369,7 +369,7 @@ commands:
 
               # Create a temporary directory for the policy
               TEMP_POLICY_DIR=$(mktemp -d)
-    
+
               # Set up cleanup trap
               trap "rm -rf $TEMP_POLICY_DIR" EXIT
 
