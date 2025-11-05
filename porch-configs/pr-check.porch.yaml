@@ -54,7 +54,7 @@ commands:
               for file in avm.tflint avm.tflint_example avm.tflint_module; do
                 if [ -f "./${file}.override.hcl" ]; then
                   echo "Overriding ${file}"
-                  hclmerge -1 "./$file.override.hcl" -2 "./${file}.hcl" -d "./${file}.merged.hcl"
+                  hclmerge -1 "./${file}.override.hcl" -2 "./${file}.hcl" -d "./${file}.merged.hcl"
                   mv "./${file}.merged.hcl" "./${file}.hcl"
                 fi
               done
@@ -333,10 +333,28 @@ commands:
               if [ -d "exceptions" ]; then
                 export LOCALEXCEPTION="-p exceptions"
               fi
+
               if [ -z "$AVM_CONFTEST_APRL_URL" ]; then
                 AVM_CONFTEST_APRL_URL="git::https://github.com/Azure/policy-library-avm.git//policy/Azure-Proactive-Resiliency-Library-v2"
               fi
-              conftest test --all-namespaces --quiet --update "$AVM_CONFTEST_APRL_URL" -p policy/aprl -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
+
+              # Create a temporary directory for the policy
+              TEMP_POLICY_DIR=$(mktemp -d)
+    
+              # Set up cleanup trap
+              trap "rm -rf $TEMP_POLICY_DIR" EXIT
+
+              # Use go-getter to download the policy with symlink support
+              # The -symlink flag enables symlink copying
+              go-getter \
+                $AVM_CONFTEST_APRL_URL \
+                "$TEMP_POLICY_DIR/policy/aprl"
+
+              conftest test --all-namespaces --quiet \
+                -p "$TEMP_POLICY_DIR/policy/aprl" \
+                -p policy/default_exceptions \
+                $LOCALEXCEPTION \
+                tfplan.json 1>&2
 
           # conftest
           - type: shell
@@ -348,7 +366,25 @@ commands:
               if [ -z "$AVM_CONFTEST_AVMSEC_URL" ]; then
                 AVM_CONFTEST_AVMSEC_URL="git::https://github.com/Azure/policy-library-avm.git//policy/avmsec"
               fi
-              conftest test --all-namespaces --quiet --update "$AVM_CONFTEST_AVMSEC_URL" -p policy/avmsec -p policy/default_exceptions $LOCALEXCEPTION tfplan.json 1>&2
+
+              # Create a temporary directory for the policy
+              TEMP_POLICY_DIR=$(mktemp -d)
+    
+              # Set up cleanup trap
+              trap "rm -rf $TEMP_POLICY_DIR" EXIT
+
+              # Use go-getter to download the policy with symlink support
+              # The -symlink flag enables symlink copying
+              go-getter \
+                $AVM_CONFTEST_AVMSEC_URL \
+                "$TEMP_POLICY_DIR/policy/avmsec"
+
+
+              conftest test --all-namespaces --quiet \
+                -p "$TEMP_POLICY_DIR/policy/avmsec" \
+                -p policy/default_exceptions \
+                $LOCALEXCEPTION \
+                tfplan.json 1>&2
 
           - type: shell
             name: run post.sh if exists
