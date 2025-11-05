@@ -17,7 +17,7 @@ resource "github_actions_environment_secret" "copilot_subscription_id" {
   repository      = github_repository.this.name
   environment     = github_repository_environment.copilot[0].environment
   secret_name     = "ARM_SUBSCRIPTION_ID"
-  plaintext_value = var.arm_subscription_id
+  plaintext_value = var.test_subscription_ids[0].id
 }
 
 resource "github_actions_environment_secret" "copilot_client_id" {

@@ -12,7 +12,6 @@ param(
     [string]$stateStorageAccountName = "",
     [string]$stateResourceGroupName = "",
     [string]$stateContainerName = "",
-    [string]$targetSubscriptionId = "",
     [string]$identityResourceGroupName = "",
     [bool]$planOnly = $false,
     [string]$repoId = "avm-ptn-example-repo",
@@ -30,7 +29,9 @@ param(
         "security",
         "azurecla-write"
     ),
-    [switch]$forceUserRemoval
+    [switch]$forceUserRemoval,
+    [string]$managementGroupId = "",
+    [array]$testSubscriptionIds = @()
 )
 
 Write-Host "Running repo sync script"
@@ -481,13 +482,23 @@ if(!$repositoryCreationModeEnabled) {
     }
 }
 
+# Shuffle the test subscription IDs to distribute load
+$seed = 0
+foreach($char in $repoName.ToCharArray()) {
+    $seed += [int][char]$char
+}
+$testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle -SetSeed $seed
+Write-Host "Using test subscription IDs:"
+Write-Host $($testSubscriptionIds | ConvertTo-Json)
+
 $terraformVariables = @{
     repository_creation_mode_enabled = $repositoryCreationModeEnabled.IsPresent
     github_repository_owner = $orgName
     github_repository_name = $repoName
     module_id = $repoId
     module_name = $moduleName
-    target_subscription_id = $targetSubscriptionId
+    management_group_id = $managementGroupId
+    test_subscription_ids = $testSubscriptionIds
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $isProtected
     github_teams = $githubTeams

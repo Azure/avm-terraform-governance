@@ -27,7 +27,7 @@ RUN export CGO_ENABLED=1 && \
   rm -rf .git
 
 #FROM mcr.microsoft.com/azurelinux/base/python:3.12 as runner
-FROM mcr.microsoft.com/azure-cli:cbl-mariner2.0 AS runner
+FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS runner
 ARG GOLANG_IMAGE_TAG=1.19
 ARG CONFTEST_VERSION=0.60.0
 ARG TERRAFORM_VERSION=1.3.3
