@@ -36,7 +36,8 @@ commands:
 
   - type: shell
     name: install terraform
-    command_line: terraform -version
+    command_line: |
+      tenv tf use min-required --force-remote --install
     cwd: "."
 
   - type: shell

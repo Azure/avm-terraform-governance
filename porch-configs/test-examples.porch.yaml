@@ -9,8 +9,9 @@ commands:
 
     # This kicks off the tfenv installer
   - type: shell
-    name: Terraform
-    command_line: terraform -version
+    name: install Terraform
+    command_line: |
+      tenv tf use min-required --force-remote --install
     cwd: "."
 
   - type: shell

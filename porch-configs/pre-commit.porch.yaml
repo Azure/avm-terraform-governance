@@ -26,11 +26,11 @@ commands:
       fi
       mapotf transform --mptf-dir "$AVM_MPTF_URL" --tf-dir .
 
-    # installs Terraform using tfenv
+    # installs Terraform using tenv
   - type: shell
     name: install Terraform
     command_line: |
-      terraform version
+      tenv tf use min-required --force-remote --install
 
   - type: shell
     name: mapotf clean
