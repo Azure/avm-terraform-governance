@@ -23,6 +23,13 @@ command_groups:
           fi
         skip_exit_codes: [99]
       - type: shell
+        name: Check and Run setup.sh
+        command_line: |
+          if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+            ./tests/$AVM_TEST_TYPE/setup.sh
+          fi
+        working_directory: examples
+      - type: shell
         name: "Terraform Init"
         command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
       - type: shell
