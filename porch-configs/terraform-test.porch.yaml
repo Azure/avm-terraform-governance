@@ -30,8 +30,8 @@ command_groups:
               echo "Making setup.sh executable"
               chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
             fi
-              echo "Running setup.sh"
-             ./tests/$AVM_TEST_TYPE/setup.sh
+            echo "Running setup.sh"
+            ./tests/$AVM_TEST_TYPE/setup.sh
           fi
       - type: shell
         name: "Terraform Init"
