@@ -70,6 +70,7 @@ commands:
         mode: parallel
         skip_on_not_exist: true
         command_group: terraform_unit_tests
+        working_directory_strategy: "item_relative"
 
       - type: serial
         name: root module
