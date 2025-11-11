@@ -26,7 +26,7 @@ command_groups:
         name: Check and Run setup.sh
         command_line: |
           if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-            if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+            if [ ! test -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
               echo "Making setup.sh executable"
               chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
             fi
