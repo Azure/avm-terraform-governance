@@ -26,9 +26,13 @@ command_groups:
         name: Check and Run setup.sh
         command_line: |
           if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-            chmod +x ./tests/$AVM_TEST_TYPE/setup.sh && ./tests/$AVM_TEST_TYPE/setup.sh
+            if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+              echo "Making setup.sh executable"
+              chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
+            fi
+              echo "Running setup.sh"
+             ./tests/$AVM_TEST_TYPE/setup.sh
           fi
-        working_directory: examples
       - type: shell
         name: "Terraform Init"
         command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
