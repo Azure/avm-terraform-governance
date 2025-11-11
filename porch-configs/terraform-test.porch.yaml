@@ -56,6 +56,12 @@ command_groups:
         name: "Terraform Test"
         command_line: "terraform test -test-directory ./tests/$AVM_TEST_TYPE"
 
+      - type: shell
+        name: Clean up
+        command_line: |
+          rm -fr $(pwd)
+        runs_on_condition: always
+
 commands:
   - type: shell
     name: install terraform
@@ -79,9 +85,3 @@ commands:
       - type: serial
         name: root module
         command_group: terraform_tests
-
-  - type: shell
-    name: Clean up
-    command_line: |
-      rm -fr $(pwd)
-    runs_on_condition: always
