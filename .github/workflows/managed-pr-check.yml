@@ -9,7 +9,7 @@ env:
   ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
   ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
   ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   ARM_USE_OIDC: "true"
@@ -27,11 +27,23 @@ jobs:
     environment: test
     steps:
       - name: Set up Docker
-        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 #v4.3.0
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Get Default Subscription ID
+        id: get-subscription
+        run: |
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
       - name: pr-check
         run: |
           set -e
+
+          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
+          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for PR check"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -45,20 +57,42 @@ jobs:
 
   getexamples:
     if: github.event.pull_request.head.repo.fork == false
-    needs: pr-check
     runs-on: ubuntu-latest
-    environment: empty-no-approval
+    environment: test
     outputs:
       examples: ${{ steps.getexamples.outputs.examples }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
-
-      - uses: Azure/avm-terraform-governance/.github/actions/getexamples@main
+      - name: get examples
         id: getexamples
+        run: |
+          $examples = Get-ChildItem -Directory
+          $processedExamples = @()
+
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+
+          for ($i = 0; $i -lt $examples.Count; $i++) {
+            if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
+              Write-Host "Skipping example $($examples[$i].Name) because it contains a .e2eignore file."
+              continue
+            }
+            $subscriptionIndex = $i % $subscriptions.Length
+            $processedExamples += @{
+              name              = $examples[$i].Name
+              subscriptionIndex = $subscriptionIndex
+              subscriptionId    = $subscriptions[$subscriptionIndex].id
+              subscriptionName  = $subscriptions[$subscriptionIndex].name
+            }
+          }
+
+          $json = ConvertTo-Json $processedExamples -Compress
+          Write-Output "examples=$json" >> $env:GITHUB_OUTPUT
+
+        working-directory: examples
+        shell: pwsh
 
   checksetup:
     runs-on: ubuntu-latest
-    needs: getexamples
     environment: empty-no-approval
     outputs:
       setup_exists: ${{ steps.check-setup.outputs.setup_exists }}
@@ -81,9 +115,21 @@ jobs:
     needs: checksetup
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Get Default Subscription ID
+        id: get-subscription
+        run: |
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
       - name: Run global setup script
         run: |
           set -e
+
+          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
+          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global setup"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -95,7 +141,7 @@ jobs:
 
   testexamples:
     if: always() && !failure() && !cancelled() && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
-    name: ${{ matrix.example }}
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     needs: [getexamples, checksetup, globalsetup]
     environment: test
@@ -104,20 +150,24 @@ jobs:
       TF_VAR_enable_telemetry: false
     strategy:
       matrix:
-        example: ${{ fromJson(needs.getexamples.outputs.examples) }}
+        include: ${{ fromJson(needs.getexamples.outputs.examples) }}
       fail-fast: false
     steps:
       - name: Set up Docker
-        uses: docker/setup-docker-action@b60f85385d03ac8acfca6d9996982511d8620a19 #v4.3.0
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
       - name: Test example
         shell: bash
         env:
-          AVM_EXAMPLE: ${{ matrix.example }}
+          AVM_EXAMPLE: ${{ matrix.name }}
           AVM_RUNNING_IN_GITHUB_ACTIONS: true
         run: |
           set -e
+
+          echo "::add-mask::${{ matrix.subscriptionId }}"
+          export ARM_SUBSCRIPTION_ID=${{ matrix.subscriptionId }}
+          echo "Using subscription ${{ matrix.subscriptionName }} $ARM_SUBSCRIPTION_ID (index: ${{ matrix.subscriptionIndex }}) for example $AVM_EXAMPLE"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -155,9 +205,21 @@ jobs:
     needs: checkteardown
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Get Default Subscription ID
+        id: get-subscription
+        run: |
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
       - name: Run teardown script
         run: |
           set -e
+
+          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
+          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global teardown"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
