@@ -12,7 +12,10 @@ command_groups:
 commands:
   - type: shell
     name: Disable git autocrlf
-    command_line: git config core.autocrlf false
+    command_line: |
+      if [ -d ".git" ]; then
+        git config --local core.autocrlf false
+      fi
 
   - type: shell
     name: Grept apply
