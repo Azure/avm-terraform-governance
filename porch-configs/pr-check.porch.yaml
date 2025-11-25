@@ -11,15 +11,6 @@ command_groups:
 
 commands:
   - type: shell
-    name: Check for uncommitted changes
-    command_line: |
-      if [ -n "$(git status --porcelain)" ]; then
-        echo "Uncommitted changes found. Please commit or stash them before running the checks." 1>&2
-        git status --porcelain 1>&2
-        exit 1
-      fi
-
-  - type: shell
     name: install terraform
     command_line: terraform -version
     cwd: "."
@@ -135,6 +126,19 @@ commands:
             name: Copy to temp
 
           - type: shell
+            name: Commit any outstanding changes in the temp copy
+            command_line: |
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+            
+              if [ -n "$(git status --porcelain)" ]; then
+                git add .
+                git commit -m "temp"
+              fi
+
+          - type: shell
             name: Grept apply
             command_line: |
               if ! [ -z "$AVM_GREPT_SKIP" ]; then
@@ -168,6 +172,14 @@ commands:
         commands:
           - type: copycwdtotemp
             name: Copy to temp
+
+          - type: shell
+            name: Commit any outstanding changes in the temp copy
+            command_line: |            
+              if [ -n "$(git status --porcelain)" ]; then
+                git add .
+                git commit -m "temp"
+              fi
 
           - type: shell
             name: mapotf transform
@@ -224,6 +236,14 @@ commands:
         commands:
           - type: copycwdtotemp
             name: Copy to temp
+
+          - type: shell
+            name: Commit any outstanding changes in the temp copy
+            command_line: |            
+              if [ -n "$(git status --porcelain)" ]; then
+                git add .
+                git commit -m "temp"
+              fi
 
           - type: parallel
             name: Generate
