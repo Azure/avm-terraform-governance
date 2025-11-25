@@ -137,6 +137,11 @@ commands:
           - type: shell
             name: Grept apply
             command_line: |
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+            
               if [ -z "$AVM_GREPT_URL" ]; then
                 AVM_GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
               fi
@@ -145,6 +150,11 @@ commands:
           - type: shell
             name: Check for grept changes
             command_line: |
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+            
               if [ -n "$(git status --porcelain)" ]; then
                 echo "Grept changes found, run pre-commit" 1>&2
                 git status --porcelain 1>&2
