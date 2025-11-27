@@ -55,6 +55,58 @@ jobs:
 
           ./avm pr-check
 
+  unit-test:
+    name: Unit Test Run
+    runs-on: ubuntu-latest
+    environment: empty-no-approval
+    steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Unit Test Run
+        run: |
+          set -e
+
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
+
+          ./avm tf-test-unit
+
+  integration-test:
+    if: github.event.pull_request.head.repo.fork == false
+    name: Integration Test Run
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - name: Set up Docker
+        uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+      - name: Get Default Subscription ID
+        id: get-subscription
+        run: |
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+      - name: Integration Test Run
+        run: |
+          set -e
+
+          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
+          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for Integration Tests"
+
+          export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
+          # This needs to be in the parent directory to avoid git seeing the file as a change
+          curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
+          source ../prepare-credential.sh
+
+          # Fix Docker socket permissions for CI
+          sudo chmod 666 /var/run/docker.sock
+
+          ./avm tf-test-integration
+
   getexamples:
     if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
