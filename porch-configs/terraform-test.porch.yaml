@@ -24,7 +24,7 @@ command_groups:
           fi
         skip_exit_codes: [99]
 
-      -type: serial
+      - type: serial
         name: Terraform test steps
         commands:
         - type: copycwdtotemp
