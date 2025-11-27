@@ -24,43 +24,46 @@ command_groups:
           fi
         skip_exit_codes: [99]
 
-      - type: copycwdtotemp
-        name: Copy current working directory to temp
-        cwd: "."
+      -type: serial
+        name: Terraform test steps
+        commands:
+        - type: copycwdtotemp
+          name: Copy current working directory to temp
+          cwd: "."
 
-      - type: shell
-        name: Clean Terraform
-        command_line: |
-          echo $(pwd) && \
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
+        - type: shell
+          name: Clean Terraform
+          command_line: |
+            echo $(pwd) && \
+            find . -type d -name .terraform | xargs -n1 rm -rf && \
+            find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+            find . -type f -name *.tfstate* | xargs -n1 rm -f
 
-      - type: shell
-        name: Check and Run setup.sh
-        command_line: |
-          if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-            if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-              echo "Making setup.sh executable"
-              chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
+        - type: shell
+          name: Check and Run setup.sh
+          command_line: |
+            if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+              if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+                echo "Making setup.sh executable"
+                chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
+              fi
+              echo "Running setup.sh"
+              ./tests/$AVM_TEST_TYPE/setup.sh
             fi
-            echo "Running setup.sh"
-            ./tests/$AVM_TEST_TYPE/setup.sh
-          fi
 
-      - type: shell
-        name: "Terraform Init"
-        command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
+        - type: shell
+          name: "Terraform Init"
+          command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
 
-      - type: shell
-        name: "Terraform Test"
-        command_line: "terraform test -test-directory ./tests/$AVM_TEST_TYPE"
+        - type: shell
+          name: "Terraform Test"
+          command_line: "terraform test -test-directory ./tests/$AVM_TEST_TYPE"
 
-      - type: shell
-        name: Clean up
-        command_line: |
-          rm -fr $(pwd)
-        runs_on_condition: always
+        - type: shell
+          name: Clean up
+          command_line: |
+            rm -fr $(pwd)
+          runs_on_condition: always
 
 commands:
   - type: shell
