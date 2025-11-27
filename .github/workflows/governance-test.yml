@@ -273,3 +273,9 @@ jobs:
           ./avm tf-test-unit
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: terraform test (integration)
+        run: |
+          ./avm tf-test-integration
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
