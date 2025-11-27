@@ -6,18 +6,6 @@ command_groups:
   - name: terraform_tests
     description: Run Terraform tests for root module and submodules
     commands:
-      - type: copycwdtotemp
-        name: Copy current working directory to temp
-        cwd: "."
-
-      - type: shell
-        name: Clean Terraform
-        command_line: |
-          echo $(pwd) && \
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
-
       - type: shell
         name: Check for AVM_TEST_TYPE env
         command_line: |
@@ -35,6 +23,18 @@ command_groups:
             exit 99
           fi
         skip_exit_codes: [99]
+
+      - type: copycwdtotemp
+        name: Copy current working directory to temp
+        cwd: "."
+
+      - type: shell
+        name: Clean Terraform
+        command_line: |
+          echo $(pwd) && \
+          find . -type d -name .terraform | xargs -n1 rm -rf && \
+          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
+          find . -type f -name *.tfstate* | xargs -n1 rm -f
 
       - type: shell
         name: Check and Run setup.sh
