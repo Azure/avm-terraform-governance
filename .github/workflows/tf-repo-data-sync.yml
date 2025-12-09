@@ -3,6 +3,12 @@ name: Repository Data Sync
 
 on:
   workflow_dispatch:
+    inputs:
+      include_version_details:
+        description: 'Whether to include detailed version information'
+        default: true
+        type: boolean
+        
   schedule:
     - cron: '10 * * * *'
 
@@ -37,10 +43,15 @@ jobs:
           $repositories = @(../.github/actions/avm-repos/scripts/Get-RepositoriesWhereAppInstalled.ps1 -outputDirectory "${{ github.workspace }}")
           Write-Host (ConvertTo-Json $repositories -Depth 10)
 
-          # remove the terraform-azurerm-avm-template repo from the list
-          $repositories = $repositories.Where({ $_.repoName -ne 'terraform-azurerm-avm-template' })
+          $triggerType = "${{ github.event_name }}"
 
-          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputDirectory "${{ github.workspace }}"
+          $includeDetailedVersionData = $false
+
+          if($triggerType -eq "workflow_dispatch") {
+            $includeDetailedVersionData = "${{ inputs.include_version_details }}".ToLower() -eq "true"
+          }
+
+          ./scripts/Invoke-RepositoryDataSync.ps1 -repositories $repositories -outputDirectory "${{ github.workspace }}" -includeDetailedVersionData:$includeDetailedVersionData
 
         shell: pwsh
         env:
@@ -77,3 +88,4 @@ jobs:
             echo "::error title=$($_.repoId) has issues::$($_.message)"
           }
         shell: pwsh
+
