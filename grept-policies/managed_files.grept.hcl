@@ -30,10 +30,12 @@ locals {
       "avm.ps1",
       "examples/.terraform-docs.yml",
       "modules/.terraform-docs.yml",
+      ".env",
       # ".github/workflows/copilot-setup-steps.yml", disabled for now until we test more thoroughly
     ])
     alz = toset([
       ".github/ISSUE_TEMPLATE/config.yml",
+      ".env",
     ])
   }
 
