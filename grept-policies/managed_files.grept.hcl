@@ -41,10 +41,10 @@ locals {
 
   managed_files_ref            = coalesce(env("AVM_MANAGED_FILES_REF"), "main")
   managed_files_url_prefix     = "https://raw.githubusercontent.com/Azure/avm-terraform-governance/${local.managed_files_ref}/managed-files/%s/"
-  managed_files_default_set    = coalesce(env("AVM_MANAGED_FILES_DEFAULT"), "root")
-  managed_files_additional_set = coalesce(env("AVM_MANAGED_FILES_ADDITIONAL"), "")
+  managed_files_default_set    = "root"
+  managed_files_additional_set = env("AVM_MANAGED_FILES_ADDITIONAL")
   managed_files_root           = { for file in local.managed_files["root"] : file => "root" }
-  managed_files_additional     = local.managed_files_additional_set == "" ? {} : { for file in local.managed_files[local.managed_files_additional_set] : file => local.managed_files_additional_set }
+  managed_files_additional     = local.managed_files_additional_set == null || local.managed_files_additional_set == "" ? {} : { for file in local.managed_files[local.managed_files_additional_set] : file => local.managed_files_additional_set }
   managed_files_final          = merge(local.managed_files_root, local.managed_files_additional)
 }
 
