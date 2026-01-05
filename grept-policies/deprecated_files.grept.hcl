@@ -16,7 +16,7 @@ locals {
   }
 
   deprecated_files_additional_set = coalesce(env("AVM_MANAGED_FILES_ADDITIONAL"), "")
-  deprecated_files_final          = setunion(local.deprecated_files["root"], local.deprecated_files_additional_set == "" : toset([]) : local.deprecated_files[local.deprecated_files_additional_set])
+  deprecated_files_final          = setunion(local.deprecated_files["root"], local.deprecated_files_additional_set == "" ? toset([]) : local.deprecated_files[local.deprecated_files_additional_set])
 }
 
 rule "must_be_true" "deprecated_file" {
