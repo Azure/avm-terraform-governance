@@ -37,4 +37,5 @@ RUN tdnf install -y ca-certificates azure-cli docker-cli gawk git jq less make p
 COPY .terraformrc ${HOME_DIR}/.terraformrc
 ENV HOME=${HOME_DIR}
 ENV SHELL=/bin/bash
+VOLUME ["/tmp"]
 WORKDIR /src
