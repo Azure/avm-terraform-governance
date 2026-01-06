@@ -1,11 +1,11 @@
 name: Precommit
 description: |
   This configuration file is used to run pre-commit checks for Azure Verified Modules.
+env:
+  AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
 
 command_groups:
   - name: avmfix
-    env:
-      AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
     commands:
       - type: shell
         name: avmfix

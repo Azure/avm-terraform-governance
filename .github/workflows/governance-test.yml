@@ -197,10 +197,8 @@ jobs:
           echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
-          if [ -z "$RUNNER_DEBUG" ]; then
+          if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-          else
-            echo "PORCH_LOG_LEVEL=INFO" >> $GITHUB_ENV
           fi
 
       - name: Set conftest URLs (if workflow_dispatch)
