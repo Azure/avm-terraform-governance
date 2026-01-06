@@ -22,6 +22,7 @@ locals {
 rule "must_be_true" "deprecated_file" {
   for_each  = local.deprecated_files_final
   condition = !fileexists(each.value)
+  depends_on = [ local_file.managed_files ]
 }
 
 fix "rm_local_file" "deprecated_file" {
