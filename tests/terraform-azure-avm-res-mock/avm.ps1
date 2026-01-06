@@ -164,8 +164,6 @@ if (-not $env:AVM_IN_CONTAINER) {
     }
   }
 
-  $dockerArgs += @("--env-file", ".env")
-
   $dockerArgs += $CONTAINER_IMAGE
   $dockerArgs += "make"
 

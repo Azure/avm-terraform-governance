@@ -104,7 +104,7 @@ if [ -f "avm.config.json" ]; then
 
   for key in "${!variables[@]}"; do
     export "$key"="${variables[$key]}"
-    $LOCAL_ENVIRONMENT_VARIABLES="${LOCAL_ENVIRONMENT_VARIABLES}-e $key "
+    LOCAL_ENVIRONMENT_VARIABLES="${LOCAL_ENVIRONMENT_VARIABLES}-e $key "
     echo "Set environment variable: $key"="${variables[$key]}"
   done
 fi
