@@ -48,6 +48,23 @@ commands:
       grept apply -a "${AVM_GOVERNANCE_REPO_DIR}/grept-policies"
 
   - type: shell
+    name: Clean Governance repo
+    env:
+      AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
+    command_line: |
+
+      if ! [ -z "$AVM_GREPT_SKIP" ]; then
+        echo "AVM_GREPT_SKIP is set. Continue."
+        exit 0
+      fi
+
+      if [ -d "$AVM_GOVERNANCE_REPO_DIR" ]; then
+        rm -rf "$AVM_GOVERNANCE_REPO_DIR"
+      fi
+
+    runs_on_condition: always
+
+  - type: shell
     name: mapotf transform
     command_line: |
       if [ -z "$AVM_MPTF_URL" ]; then

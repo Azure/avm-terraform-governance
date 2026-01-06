@@ -175,6 +175,23 @@ commands:
                 exit 1
               fi
 
+          - type: shell
+            name: Clean Governance repo
+            env:
+              AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
+            command_line: |
+
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+
+              if [ -d "$AVM_GOVERNANCE_REPO_DIR" ]; then
+                rm -rf "$AVM_GOVERNANCE_REPO_DIR"
+              fi
+
+            runs_on_condition: always
+
         # Check mapotf transforms have been applied
         # We need to run mapotf and avmfix to ensure the diff is the same as the pre-commit hook
       - type: serial
