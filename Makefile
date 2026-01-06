@@ -22,6 +22,7 @@ migrate:
 .PHONY: pre-commit
 pre-commit:
 	@echo "Running pre-commit..."
+	@echo "AVM_MANAGED_FILES_ADDITIONAL=$(AVM_MANAGED_FILES_ADDITIONAL)"
 	porch run ${TUI} -f "$(AVM_PORCH_BASE_URL)/pre-commit.porch.yaml?ref=$(AVM_PORCH_REF)"
 
 .PHONY: pr-check
