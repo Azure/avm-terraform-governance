@@ -243,7 +243,7 @@ jobs:
           echo "number=$(gh pr view $PR_URL --json number | jq -r '.number')" >> "$GITHUB_OUTPUT"
 
           # Checkout the original branch again to ensure PR check is running against the correct branch
-          git checkout -b ${{ github.head_ref }}
+          git checkout ${{ github.head_ref }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
