@@ -192,7 +192,6 @@ jobs:
       - name: Set env vars
         run: |
           REF=$(git rev-parse HEAD)
-          echo "AVM_GREPT_URL=git::https://github.com/Azure/avm-terraform-governance.git//grept-policies?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_MAKEFILE_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_MANAGED_FILES_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV

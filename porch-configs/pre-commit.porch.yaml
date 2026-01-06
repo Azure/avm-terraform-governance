@@ -18,17 +18,32 @@ commands:
       fi
 
   - type: shell
-    name: Grept apply
+    name: Clone Governance repo
     command_line: |
+
       if ! [ -z "$AVM_GREPT_SKIP" ]; then
         echo "AVM_GREPT_SKIP is set. Continue."
         exit 0
       fi
 
-      if [ -z "$AVM_GREPT_URL" ]; then
-        AVM_GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
+      if ! [ -z "$AVM_MANAGED_FILES_REF" ]; then
+        export AVM_MANAGED_FILES_REF=main
       fi
-      grept apply -a "$AVM_GREPT_URL"
+
+      export AVM_GOVERNANCE_REPO_DIR="/tmp/avm-terraform-governance"
+
+      git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_REF" "$AVM_GOVERNANCE_REPO_DIR"
+
+  - type: shell
+    name: Grept apply
+    command_line: |
+
+      if ! [ -z "$AVM_GREPT_SKIP" ]; then
+        echo "AVM_GREPT_SKIP is set. Continue."
+        exit 0
+      fi
+
+      grept apply -a "${AVM_GOVERNANCE_REPO_DIR}/grept-policies"
 
   - type: shell
     name: mapotf transform

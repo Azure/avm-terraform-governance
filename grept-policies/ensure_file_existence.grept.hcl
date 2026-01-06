@@ -1,6 +1,5 @@
 locals {
   must_exist_files = tomap({
-    "main.tf" : "",
     "terraform.tf" : ""
     "_header.md" : "",
   })

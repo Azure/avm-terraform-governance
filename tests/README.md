@@ -12,7 +12,6 @@ All of the workflows that we use have substitution variables that can be set to 
 | AVM_CONTAINER_IMAGE | The container image to use in the `avm` script in the template repo. | `ghcr.io/azure/avm-terraform-governance:avm-latest` |
 | AVM_CONTAINER_PULL_POLICY | The pull policy for the container image. | `always` |
 | AVM_EXAMPLE | By default all examples are run with `test-examples`, set this to limit to a specific example. | undefined |
-| AVM_GREPT_URL | The URL to the Grept policies. | `git::https://github.com/Azure/avm-terraform-governance.git//grept-policies` |
 | AVM_MAKEFILE_REF | The git ref to use for the remote Makefile. | `main` |
 | AVM_MPTF_URL | The URL to the Map of TF configs. | `git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs` |
 | AVM_PORCH_BASE_URL | The base go-getter URL for the porch configs. | `git::https://github.com/Azure/avm-terraform-governance//porch-configs` |
