@@ -55,7 +55,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
@@ -89,7 +89,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           # Fix Docker socket permissions for CI
@@ -137,7 +137,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           # Fix Docker socket permissions for CI
@@ -228,7 +228,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           ./avm global-teardown
@@ -271,7 +271,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           # Fix Docker socket permissions for CI
@@ -328,7 +328,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
           ./avm global-teardown

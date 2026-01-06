@@ -199,7 +199,7 @@ jobs:
           echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
-            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
       - name: Set conftest URLs (if workflow_dispatch)
