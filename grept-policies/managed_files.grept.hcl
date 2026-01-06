@@ -1,15 +1,11 @@
 locals {
-  managed_files_to_skip = [
-    ".github/workflows/copilot-setup-steps.yml"
-  ]
-
   managed_files_additional_set            = env("AVM_MANAGED_FILES_ADDITIONAL")
   managed_files_directory_path            = "${env("AVM_GOVERNANCE_REPO_DIR")}/managed-files/%s"
   managed_files_directory_path_root       = format(local.managed_files_directory_path, "root")
   managed_files_directory_path_additional = local.managed_files_additional_set == null || local.managed_files_additional_set == "" ? null : format(local.managed_files_directory_path, local.managed_files_additional_set)
 
-  managed_files_root           = { for file in fileset(local.managed_files_directory_path_root, "**") : file => file("${local.managed_files_directory_path_root}/${file}") if !contains(local.managed_files_to_skip, file) }
-  managed_files_additional     = local.managed_files_directory_path_additional == null || local.managed_files_directory_path_additional == "" ? {} : { for file in fileset(local.managed_files_directory_path_additional, "**") : file => file("${local.managed_files_directory_path_additional}/${file}") if !contains(local.managed_files_to_skip, file) }
+  managed_files_root           = { for file in fileset(local.managed_files_directory_path_root, "**") : file => file("${local.managed_files_directory_path_root}/${file}") if !contains(local.deprecated_files_final, file) }
+  managed_files_additional     = local.managed_files_directory_path_additional == null || local.managed_files_directory_path_additional == "" ? {} : { for file in fileset(local.managed_files_directory_path_additional, "**") : file => file("${local.managed_files_directory_path_additional}/${file}") if !contains(local.deprecated_files_final, file) }
   managed_files_final          = merge(local.managed_files_root, local.managed_files_additional)
 }
 
