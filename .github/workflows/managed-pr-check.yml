@@ -26,9 +26,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -fr /opt/hostedtoolcache
+          df -h
+
       - name: Set up Docker
         uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
       - name: Get Default Subscription ID
         id: get-subscription
         run: |
@@ -38,6 +45,7 @@ jobs:
           Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
           Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
         shell: pwsh
+
       - name: pr-check
         run: |
           set -e
@@ -60,9 +68,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: empty-no-approval
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -fr /opt/hostedtoolcache
+          df -h
+
       - name: Set up Docker
         uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
       - name: Unit Test Run
         run: |
           set -e
@@ -78,9 +93,16 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
     steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -fr /opt/hostedtoolcache
+          df -h
+
       - name: Set up Docker
         uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 #v4.5.0
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+
       - name: Get Default Subscription ID
         id: get-subscription
         run: |
@@ -90,6 +112,7 @@ jobs:
           Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
           Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
         shell: pwsh
+
       - name: Integration Test Run
         run: |
           set -e
@@ -281,7 +304,6 @@ jobs:
           ./avm global-teardown
         id: global-teardown
         shell: bash
-
 
   # This job is only run when all the previous jobs are successful.
   # We can use it for PR validation to ensure all examples have completed.
