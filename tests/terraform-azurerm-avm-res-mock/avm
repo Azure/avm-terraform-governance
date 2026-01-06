@@ -122,6 +122,7 @@ if [ -z "${AVM_IN_CONTAINER}" ]; then
     -e TF_IN_AUTOMATION=1 \
     --env-file <(env | grep '^TF_VAR_') \
     --env-file <(env | grep '^AVM_') \
+    --env-file .env \
     "${CONTAINER_IMAGE}" \
     make \
     TUI="${TUI}" \
