@@ -146,10 +146,10 @@ commands:
               fi
 
               if ! [ -z "$AVM_MANAGED_FILES_REF" ]; then
-                export AVM_MANAGED_FILES_REF=main
+                AVM_MANAGED_FILES_REF=main
               fi
 
-              git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_REF" "$AVM_GOVERNANCE_REPO_DIR"
+              git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_REF" "/tmp/avm-terraform-governance"
 
           - type: shell
             name: Grept apply
@@ -159,7 +159,7 @@ commands:
                 exit 0
               fi
 
-              grept apply -a "${AVM_GOVERNANCE_REPO_DIR}/grept-policies"
+              grept apply -a "/tmp/avm-terraform-governance/grept-policies"
 
           - type: shell
             name: Check for grept changes

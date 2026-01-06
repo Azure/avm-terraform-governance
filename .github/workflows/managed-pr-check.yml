@@ -53,6 +53,12 @@ jobs:
           export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
           echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for PR check"
 
+          if [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+          else
+            echo "PORCH_LOG_LEVEL=INFO" >> $GITHUB_ENV
+          fi
+
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
