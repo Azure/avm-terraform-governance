@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
-          rm -fr /opt/hostedtoolcache
+          sudo rm -fr /opt/hostedtoolcache
           df -h
 
       - name: Set up Docker
@@ -70,7 +70,7 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
-          rm -fr /opt/hostedtoolcache
+          sudo rm -fr /opt/hostedtoolcache
           df -h
 
       - name: Set up Docker
@@ -95,7 +95,7 @@ jobs:
     steps:
       - name: Free up disk space
         run: |
-          rm -fr /opt/hostedtoolcache
+          sudo rm -fr /opt/hostedtoolcache
           df -h
 
       - name: Set up Docker
