@@ -145,7 +145,7 @@ commands:
                 exit 0
               fi
 
-              if ! [ -z "$AVM_MANAGED_FILES_REF" ]; then
+              if [ -z "$AVM_MANAGED_FILES_REF" ]; then
                 AVM_MANAGED_FILES_REF=main
               fi
 
