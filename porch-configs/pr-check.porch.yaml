@@ -145,11 +145,11 @@ commands:
                 exit 0
               fi
 
-              if ! [ -z "$AVM_MANAGED_FILES_REF" ]; then
-                REF_ARG="--revision $AVM_MANAGED_FILES_REF"
+              if [ -z "$AVM_MANAGED_FILES_BRANCH" ]; then
+                export AVM_MANAGED_FILES_BRANCH=main
               fi
 
-              git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" ${REF_ARG} "$AVM_GOVERNANCE_REPO_DIR"
+              git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_BRANCH" "$AVM_GOVERNANCE_REPO_DIR"
 
           - type: shell
             name: Grept apply

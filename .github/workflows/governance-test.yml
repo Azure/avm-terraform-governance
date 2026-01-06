@@ -193,7 +193,7 @@ jobs:
         run: |
           REF=$(git rev-parse HEAD)
           echo "AVM_MAKEFILE_REF=${REF}" >> $GITHUB_ENV
-          echo "AVM_MANAGED_FILES_REF=${REF}" >> $GITHUB_ENV
+          echo "AVM_MANAGED_FILES_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
           echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
