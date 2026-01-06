@@ -55,6 +55,7 @@ jobs:
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
           fi
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
@@ -85,6 +86,11 @@ jobs:
       - name: Unit Test Run
         run: |
           set -e
+
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+          fi
 
           # Fix Docker socket permissions for CI
           sudo chmod 666 /var/run/docker.sock
@@ -128,6 +134,11 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+          fi
 
           # Fix Docker socket permissions for CI
           sudo chmod 666 /var/run/docker.sock
@@ -215,6 +226,11 @@ jobs:
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
 
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+          fi
+
           ./avm global-teardown
         shell: bash
 
@@ -252,6 +268,11 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+          fi
 
           # Fix Docker socket permissions for CI
           sudo chmod 666 /var/run/docker.sock
@@ -304,6 +325,11 @@ jobs:
           # This needs to be in the parent directory to avoid git seeing the file as a change
           curl -H 'Cache-Control: no-cache, no-store' -sSL "$REMOTE_SCRIPT/gha-azure-cred-prep.sh" -o ../prepare-credential.sh
           source ../prepare-credential.sh
+
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout" >> $GITHUB_ENV
+          fi
 
           ./avm global-teardown
         id: global-teardown

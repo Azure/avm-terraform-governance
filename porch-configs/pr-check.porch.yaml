@@ -159,8 +159,6 @@ commands:
                 exit 0
               fi
 
-              echo "AVM_MANAGED_FILES_ADDITIONAL=${AVM_MANAGED_FILES_ADDITIONAL}"
-
               grept apply -a "${AVM_GOVERNANCE_REPO_DIR}/grept-policies"
 
           - type: shell
