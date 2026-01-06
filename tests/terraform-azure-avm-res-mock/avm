@@ -139,6 +139,7 @@ if [ -z "${AVM_IN_CONTAINER}" ]; then
     "${CONTAINER_IMAGE}" \
     make \
     TUI="${TUI}" \
+    AVM_PORCH_STDOUT="${AVM_PORCH_STDOUT}" \
     AVM_MAKEFILE_REF="${AVM_MAKEFILE_REF}" \
     "${PORCH_BASE_URL_MAKE_ADD}" \
     AVM_PORCH_REF="${AVM_PORCH_REF}" \
