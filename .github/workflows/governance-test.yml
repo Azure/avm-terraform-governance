@@ -230,11 +230,11 @@ jobs:
           fi
           git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
           git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
-          git checkout -b ${{ matrix.module }}${{ github.run_id }}
+          git checkout -b ${{ matrix.module }}${{ github.run_id }}${{ github.run_attempt}}
           git add .
           git commit -m "avm test run ${{ github.run_id }}"
 
-          git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}
+          git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}${{ github.run_attempt}}
           PR_URL=$(gh pr create \
             --title "test: update mock module \`${{ matrix.module }}\` (${{ github.ref_name }})" \
             --body "This PR was created by the AVM governance test workflow after pre-commit was run. Please review if the changes should be made to the mock modules: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" \
@@ -245,6 +245,7 @@ jobs:
 
           # Checkout the original branch again to ensure PR check is running against the correct branch
           git checkout ${{ github.head_ref }}
+          git clean -f -d
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
