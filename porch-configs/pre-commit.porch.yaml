@@ -4,6 +4,8 @@ description: |
 
 command_groups:
   - name: avmfix
+    env:
+      AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
     commands:
       - type: shell
         name: avmfix
@@ -29,8 +31,6 @@ commands:
       if ! [ -z "$AVM_MANAGED_FILES_REF" ]; then
         export AVM_MANAGED_FILES_REF=main
       fi
-
-      export AVM_GOVERNANCE_REPO_DIR="/tmp/avm-terraform-governance"
 
       git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_REF" "$AVM_GOVERNANCE_REPO_DIR"
 
