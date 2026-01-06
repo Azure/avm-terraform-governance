@@ -154,6 +154,16 @@ if (-not $env:AVM_IN_CONTAINER) {
     $dockerArgs += @("-e", "$($_.Name)=$($_.Value)")
   }
 
+  # Add local environment variables from avm.config.json
+  if (Test-Path "avm.config.json") {
+    $jsonContent = Get-Content "avm.config.json" -Raw | ConvertFrom-Json -AsHashtable
+
+    foreach ($key in $jsonContent.Keys) {
+      [System.Environment]::SetEnvironmentVariable($key, $jsonContent[$key])
+      $dockerArgs += @("-e", "$key")
+    }
+  }
+
   $dockerArgs += @("--env-file", ".env")
 
   $dockerArgs += $CONTAINER_IMAGE
