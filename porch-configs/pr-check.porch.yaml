@@ -130,9 +130,26 @@ commands:
       # grept
       - type: serial
         name: check grept
+        env:
+          AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
         commands:
           - type: copycwdtotemp
             name: Copy to temp
+
+          - type: shell
+            name: Clone Governance repo
+            command_line: |
+
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+
+              if [ -z "$AVM_MANAGED_FILES_BRANCH" ]; then
+                export AVM_MANAGED_FILES_BRANCH=main
+              fi
+
+              git clone --depth 1 "https://github.com/Azure/avm-terraform-governance" --branch "$AVM_MANAGED_FILES_BRANCH" "$AVM_GOVERNANCE_REPO_DIR"
 
           - type: shell
             name: Grept apply
@@ -141,11 +158,8 @@ commands:
                 echo "AVM_GREPT_SKIP is set. Continue."
                 exit 0
               fi
-            
-              if [ -z "$AVM_GREPT_URL" ]; then
-                AVM_GREPT_URL="git::https://github.com/Azure/avm-terraform-governance.git//grept-policies"
-              fi
-              grept apply -a "$AVM_GREPT_URL"
+
+              grept apply -a "${AVM_GOVERNANCE_REPO_DIR}/grept-policies"
 
           - type: shell
             name: Check for grept changes
@@ -154,12 +168,29 @@ commands:
                 echo "AVM_GREPT_SKIP is set. Continue."
                 exit 0
               fi
-            
+
               if [ -n "$(git status --porcelain)" ]; then
                 echo "Grept changes found, run pre-commit" 1>&2
                 git status --porcelain 1>&2
                 exit 1
               fi
+
+          - type: shell
+            name: Clean Governance repo
+            env:
+              AVM_GOVERNANCE_REPO_DIR: "/tmp/avm-terraform-governance"
+            command_line: |
+
+              if ! [ -z "$AVM_GREPT_SKIP" ]; then
+                echo "AVM_GREPT_SKIP is set. Continue."
+                exit 0
+              fi
+
+              if [ -d "$AVM_GOVERNANCE_REPO_DIR" ]; then
+                rm -rf "$AVM_GOVERNANCE_REPO_DIR"
+              fi
+
+            runs_on_condition: always
 
         # Check mapotf transforms have been applied
         # We need to run mapotf and avmfix to ensure the diff is the same as the pre-commit hook
@@ -349,7 +380,7 @@ commands:
 
               # Create a temporary directory for the policy
               TEMP_POLICY_DIR=$(mktemp -d)
-    
+
               # Set up cleanup trap
               trap "rm -rf $TEMP_POLICY_DIR" EXIT
 
@@ -378,7 +409,7 @@ commands:
 
               # Create a temporary directory for the policy
               TEMP_POLICY_DIR=$(mktemp -d)
-    
+
               # Set up cleanup trap
               trap "rm -rf $TEMP_POLICY_DIR" EXIT
 

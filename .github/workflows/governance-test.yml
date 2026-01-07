@@ -192,12 +192,15 @@ jobs:
       - name: Set env vars
         run: |
           REF=$(git rev-parse HEAD)
-          echo "AVM_GREPT_URL=git::https://github.com/Azure/avm-terraform-governance.git//grept-policies?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_MAKEFILE_REF=${REF}" >> $GITHUB_ENV
-          echo "AVM_MANAGED_FILES_REF=${REF}" >> $GITHUB_ENV
+          echo "AVM_MANAGED_FILES_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
           echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
+          if ! [ -z "$RUNNER_DEBUG" ]; then
+            echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
+            echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
+          fi
 
       - name: Set conftest URLs (if workflow_dispatch)
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -227,17 +230,22 @@ jobs:
           fi
           git config --global user.name "${{ vars.AVM_APP_GIT_USER_NAME }}"
           git config --global user.email "${{ vars.AVM_APP_GIT_USER_EMAIL }}"
-          git checkout -b ${{ matrix.module }}${{ github.run_id }}
+          git checkout -b ${{ matrix.module }}${{ github.run_id }}${{ github.run_attempt}}
           git add .
           git commit -m "avm test run ${{ github.run_id }}"
 
-          git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}
+          git push --set-upstream origin ${{ matrix.module }}${{ github.run_id }}${{ github.run_attempt}}
           PR_URL=$(gh pr create \
             --title "test: update mock module \`${{ matrix.module }}\` (${{ github.ref_name }})" \
             --body "This PR was created by the AVM governance test workflow after pre-commit was run. Please review if the changes should be made to the mock modules: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}>" \
             --base ${{ github.head_ref }} \
             --repo ${{ github.repository }})
+
           echo "number=$(gh pr view $PR_URL --json number | jq -r '.number')" >> "$GITHUB_OUTPUT"
+
+          # Checkout the original branch again to ensure PR check is running against the correct branch
+          git checkout ${{ github.head_ref }}
+          git clean -f -d
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
