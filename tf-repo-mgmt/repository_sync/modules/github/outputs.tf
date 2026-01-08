@@ -1,6 +1,6 @@
 output "organization_id" {
   description = "The GitHub organization ID."
-  value       = data.github_organization_id.this.id
+  value       = data.github_organization.this.id
 }
 
 output "repository_id" {
