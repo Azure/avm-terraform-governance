@@ -95,21 +95,10 @@ variable "is_protected_repo" {
   default     = false
 }
 
-variable "github_job_workflow_ref_suffix" {
+variable "github_job_workflow_ref" {
   type        = string
   description = "GitHub job workflow ref to use for the federated identity credentials."
-  default     = ":job_workflow_ref:Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main"
-}
-
-variable "feature_flags" {
-  type        = map(set(string))
-  description = "The feature flags to enable for the job."
-  default = {
-    preview_github_actions_oidc_subject_claim_customization = [
-      "terraform-azure-avm-utl-interfaces",
-      "terraform-azurerm-avm-res-keyvault-vault",
-    ]
-  }
+  default     = "Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main"
 }
 
 variable "github_avm_app_id" {
