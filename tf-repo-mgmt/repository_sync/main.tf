@@ -8,7 +8,9 @@ module "azure" {
   github_repository_environment_name = var.github_repository_environment_name
   identity_resource_group_name       = var.identity_resource_group_name
   location                           = var.location
-  github_job_workflow_ref_suffix     = local.github_job_workflow_ref_suffix
+  github_job_workflow_ref            = var.github_job_workflow_ref
+  github_organization_id             = module.github.organization_id
+  github_repository_id               = module.github.repository_id
   is_protected_repo                  = var.is_protected_repo
 }
 
@@ -31,7 +33,6 @@ module "github" {
   test_subscription_ids                          = var.repository_creation_mode_enabled ? [] : var.test_subscription_ids
   module_id                                      = var.module_id
   module_name                                    = var.module_name
-  custom_subject_claims_enabled                  = local.feature_flags.preview_github_actions_oidc_subject_claim_customization
 }
 
 import {

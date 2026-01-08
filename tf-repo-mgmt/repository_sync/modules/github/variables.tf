@@ -95,8 +95,3 @@ variable "github_avm_app_id" {
   type        = string
   description = "The GitHub App ID for the AVM."
 }
-
-variable "custom_subject_claims_enabled" {
-  type        = bool
-  description = "Whether custom subject claims are enabled for the GitHub Actions OIDC integration."
-}
