@@ -3,6 +3,8 @@
     Synchronizes Azure Verified Modules (AVM) Terraform repositories from GitHub to a target git server.
 
 .DESCRIPTION
+    NOTE: This script is an example intended for advanced users familiar with PowerShell, Git, and Terraform module management. It is provided as-is and not supported for production use.
+
     This script queries the GitHub API to find AVM Terraform module repositories, clones them locally,
     resolves all module dependencies, creates tagged versions (with configurable suffix, default '-local')
     with module sources converted from Terraform registry format to git references, and optionally pushes
