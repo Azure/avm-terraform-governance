@@ -10,7 +10,8 @@ param(
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
     [string]$outputDirectory = ".",
     [string]$applicationName = "azure-verified-modules",
-    [string]$applicationId = "1049636"
+    [string]$applicationId = "1049636",
+    [switch]$includeDetailedVersionData
 )
 
 # Meta Data
@@ -64,24 +65,33 @@ foreach($repository in $repositories) {
             $repositoryDataMap["registry.$($registryEntryProperty.Name)"] = $registryEntryProperty.Value
         }
 
-        $currentVersionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.version)"
-        $currentVersionResponse = Invoke-RestMethod $currentVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
-        if($statusCode -eq 200) {
-            foreach($currentVersionProperty in $currentVersionResponse.PSObject.Properties) {
-                $repositoryDataMap["registry.currentVersion.$($currentVersionProperty.Name)"] = $currentVersionProperty.Value
-            }
-        }
-
-        $firstVersionUrl = "https://registry.terraform.io/v1/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
+        $firstVersionUrl = "https://registry.terraform.io/v2/modules/$orgName/$($repository.repoId)/$providerName/$($registryEntry.versions[0])"
         $firstVersionResponse = Invoke-RestMethod $firstVersionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
         if($statusCode -eq 200) {
-            foreach($firstVersionProperty in $firstVersionResponse.PSObject.Properties) {
-                $repositoryDataMap["registry.firstVersion.$($firstVersionProperty.Name)"] = $firstVersionProperty.Value
-            }
-            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.published_at.ToString("yyyy-MM")
+            $repositoryDataMap["registry.firstVersion.version"] = $firstVersionResponse.data.attributes.version
+            $repositoryDataMap["registry.firstVersion.tag"] = $firstVersionResponse.data.attributes.tag
+            $repositoryDataMap["registry.firstVersion.published_at"] = $firstVersionResponse.data.attributes."published-at"
+            $repositoryDataMap["calculated.firstPublishedMonthAndYear"] = $firstVersionResponse.data.attributes."published-at".ToString("yyyy-MM")
         }
         $repositoryDataMap["calculated.publishedStatus"] = "Published"
         $repositoryDataMap["calculated.moduleStatus"] = $isOrphaned ? "Orphaned" : "Available"
+        $repositoryDataMap["registry.versions"] = $registryEntry.versions
+        if($includeDetailedVersionData) {
+            $detailedVersionData = @()
+            foreach($version in $registryEntry.versions) {
+                $versionUrl = "https://registry.terraform.io/v2/modules/$orgName/$($repository.repoId)/$providerName/$($version)"
+                $versionResponse = Invoke-RestMethod $versionUrl -StatusCodeVariable statusCode -SkipHttpErrorCheck
+                if($statusCode -eq 200) {
+                    $detailedVersionData += @{
+                        version = $versionResponse.data.attributes.version
+                        releaseDate = $versionResponse.data.attributes."published-at"
+                        tag = $versionResponse.data.attributes.version
+                        downloads = $versionResponse.data.attributes.downloads
+                    }
+                }
+            }
+            $repositoryDataMap["registry.versionsDetailed"] = $detailedVersionData
+        }
     } else {
         $repositoryDataMap["calculated.publishedStatus"] = "Not Published"
         $repositoryDataMap["calculated.moduleStatus"] = "Proposed"
@@ -258,3 +268,11 @@ if($isNewBranch) {
 
 Set-Location -Path $currentPath
 Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+
+
+
+
+
+
+
+
