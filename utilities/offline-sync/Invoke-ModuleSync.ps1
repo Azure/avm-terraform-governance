@@ -293,22 +293,25 @@ function Save-SyncState {
 # Helper function to parse Azure DevOps org and project from organization name
 function Get-AdoOrgAndProject {
     param(
+        [string]$Protocol,
         [string]$Domain,
         [string]$OrganizationName
     )
 
-    $result = @{ Org = ""; Project = ""; Valid = $false }
+    $result = @{ Org = ""; Project = ""; OrgUrl = ""; Valid = $false }
 
     if ($Domain -match "dev\.azure\.com") {
         $orgParts = $OrganizationName -split "/"
         if ($orgParts.Count -ge 2) {
             $result.Org = $orgParts[0]
             $result.Project = $orgParts[1]
+            $result.OrgUrl = "${Protocol}${Domain}/$($orgParts[0])"
             $result.Valid = $true
         }
     } elseif ($Domain -match "visualstudio\.com") {
         $result.Org = $Domain -replace "\.visualstudio\.com.*", ""
         $result.Project = $OrganizationName
+        $result.OrgUrl = "${Protocol}${Domain}"
         $result.Valid = $true
     }
 
@@ -319,6 +322,7 @@ function Get-AdoOrgAndProject {
 function Remove-RemoteRepositories {
     param(
         [string[]]$RepoNames,
+        [string]$TargetProtocol,
         [string]$TargetDomain,
         [string]$TargetOrg,
         [string]$TargetPrefix
@@ -345,7 +349,7 @@ function Remove-RemoteRepositories {
 
     $adoInfo = $null
     if ($isAzureDevOps) {
-        $adoInfo = Get-AdoOrgAndProject -Domain $TargetDomain -OrganizationName $TargetOrg
+        $adoInfo = Get-AdoOrgAndProject -Protocol $TargetProtocol -Domain $TargetDomain -OrganizationName $TargetOrg
     }
 
     foreach ($repoName in $RepoNames) {
@@ -453,6 +457,7 @@ if ($cleanLocalAndRemote -or $forceRemoteRepoRefresh) {
             # Delete remote repositories
             Write-Host "`nDeleting remote repositories..."
             Remove-RemoteRepositories -RepoNames $reposToDelete `
+                -TargetProtocol $targetGitRepositoryProtocol `
                 -TargetDomain $targetGitRepositoryDomain `
                 -TargetOrg $targetGitRepositoryOrganizationName `
                 -TargetPrefix $targetGitRepositoryNamePrefix
@@ -773,31 +778,6 @@ function Get-SemverTags {
     # Escape the suffix for regex use
     $escapedSuffix = [regex]::Escape($ExcludeSuffix)
     return $tagArray | Where-Object { $_ -and $_ -notmatch "$escapedSuffix$" -and $_.Trim() -match $SemverPattern }
-}
-
-# Helper function to parse Azure DevOps org and project from organization name
-function Get-AdoOrgAndProject {
-    param(
-        [string]$Domain,
-        [string]$OrganizationName
-    )
-
-    $result = @{ Org = ""; Project = ""; Valid = $false }
-
-    if ($Domain -match "dev\.azure\.com") {
-        $orgParts = $OrganizationName -split "/"
-        if ($orgParts.Count -ge 2) {
-            $result.Org = $orgParts[0]
-            $result.Project = $orgParts[1]
-            $result.Valid = $true
-        }
-    } elseif ($Domain -match "visualstudio\.com") {
-        $result.Org = $Domain -replace "\.visualstudio\.com.*", ""
-        $result.Project = $OrganizationName
-        $result.Valid = $true
-    }
-
-    return $result
 }
 
 # Function to extract module dependencies from .tf files at a given path
@@ -1576,7 +1556,7 @@ $adoOrgForPhase3 = ""
 $adoProjectForPhase3 = ""
 $adoOrgUrlForPhase3 = ""
 if ($isAzureDevOps) {
-    $adoInfoForPhase3 = Get-AdoOrgAndProject -Domain $targetGitRepositoryDomain -OrganizationName $targetGitRepositoryOrganizationName
+    $adoInfoForPhase3 = Get-AdoOrgAndProject -Protocol $targetGitRepositoryProtocol -Domain $targetGitRepositoryDomain -OrganizationName $targetGitRepositoryOrganizationName
     if ($adoInfoForPhase3.Valid) {
         $adoOrgForPhase3 = $adoInfoForPhase3.Org
         $adoProjectForPhase3 = $adoInfoForPhase3.Project
