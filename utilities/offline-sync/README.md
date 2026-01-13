@@ -1,7 +1,7 @@
 # Azure Verified Modules (AVM) Offline Sync Example Script
 
-[!WARNING]
-This script is an example intended for advanced users familiar with PowerShell, Git, and Terraform module management. It is provided as-is and not supported for production use.
+> [!WARNING]
+> This script is an example intended for advanced users familiar with PowerShell, Git, and Terraform module management. It is provided as-is and not supported for production use.
 
 A PowerShell script to synchronize Azure Verified Modules (AVM) Terraform repositories from GitHub to a target git server, converting Terraform registry module references to git-based references for offline or air-gapped environments. This process is also commonly referred to as **inner sourcing**.
 
