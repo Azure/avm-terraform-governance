@@ -467,6 +467,80 @@ Get-Help .\Invoke-ModuleSync.ps1 -Full
 Get-Help .\Invoke-ModuleSync.ps1 -Examples
 ```
 
+## Using PowerShell Get-Help
+
+The script includes comprehensive comment-based help that can be accessed using PowerShell's built-in `Get-Help` cmdlet. This is the best way to get up-to-date information about parameters, examples, and usage directly from the script.
+
+### Basic Help
+
+Display a summary of the script's purpose and syntax:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1
+```
+
+### Detailed Help
+
+Show complete documentation including parameter descriptions and remarks:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -Detailed
+```
+
+### Full Help
+
+Display all available help content including technical details:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -Full
+```
+
+### Examples Only
+
+View just the usage examples:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -Examples
+```
+
+### Parameter-Specific Help
+
+Get help for a specific parameter:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -Parameter moduleFilters
+Get-Help .\Invoke-ModuleSync.ps1 -Parameter targetGitRepositoryOrganizationName
+```
+
+### Online Help (if available)
+
+Open the online documentation in a browser:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -Online
+```
+
+### Show Help in a Separate Window
+
+On Windows, display help in a graphical window:
+
+```powershell
+Get-Help .\Invoke-ModuleSync.ps1 -ShowWindow
+```
+
+### Quick Reference Table
+
+| Command | Description |
+|---------|-------------|
+| `Get-Help .\Invoke-ModuleSync.ps1` | Basic synopsis and syntax |
+| `Get-Help .\Invoke-ModuleSync.ps1 -Detailed` | Full descriptions with examples |
+| `Get-Help .\Invoke-ModuleSync.ps1 -Full` | Complete technical documentation |
+| `Get-Help .\Invoke-ModuleSync.ps1 -Examples` | Usage examples only |
+| `Get-Help .\Invoke-ModuleSync.ps1 -Parameter <name>` | Help for specific parameter |
+| `Get-Help .\Invoke-ModuleSync.ps1 -ShowWindow` | Display in GUI window (Windows) |
+
+> **Tip:** If you've just downloaded the script and `Get-Help` returns minimal information, ensure the script file hasn't been blocked by Windows. Right-click the file, select Properties, and click "Unblock" if present.
+
 ## Use Cases
 
 ### Air-Gapped Environments
