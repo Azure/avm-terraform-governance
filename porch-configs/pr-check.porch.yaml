@@ -97,6 +97,14 @@ commands:
                   terraform init -input=false
 
               - type: shell
+                name: run tflint-pre.sh if exists
+                command_line: |
+                  if [ -f tflint-pre.sh ]; then
+                    chmod +x tflint-pre.sh && \
+                    ./tflint-pre.sh
+                  fi
+
+              - type: shell
                 name: run example
                 command_line: |
                   echo "PWD is: $(pwd)" 1>&2
