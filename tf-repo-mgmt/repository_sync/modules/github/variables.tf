@@ -95,3 +95,19 @@ variable "github_avm_app_id" {
   type        = string
   description = "The GitHub App ID for the AVM."
 }
+
+variable "github_copilot_agent_firewall_allow_list_variable_name" {
+  type        = string
+  description = "The name of the variable in the GitHub repository that contains the Copilot Agent firewall allow list."
+  default     = "COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS"
+}
+
+variable "github_copilot_agent_firewall_allow_list" {
+  type        = list(string)
+  description = "List of domains to allow for GitHub Copilot Agent firewall rules."
+  default = [
+    "hashicorp.com",
+    "registry.opentofu.org",
+    "registry.terraform.io",
+  ]
+}
