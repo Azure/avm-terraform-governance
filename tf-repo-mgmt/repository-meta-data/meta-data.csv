@@ -18,6 +18,7 @@ avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheeri
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
 avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,
+avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,
