@@ -218,15 +218,15 @@ render_json() {
       else
         if $t["$type"] == "StringType" then
           { type: "string" }
-          + (if $t.minLength then { minLength: $t.minLength } else {} end)
-          + (if $t.maxLength then { maxLength: $t.maxLength } else {} end)
-          + (if $t.pattern then { pattern: $t.pattern } else {} end)
+          + (if $t | has("minLength") then { minLength: $t.minLength } else {} end)
+          + (if $t | has("maxLength") then { maxLength: $t.maxLength } else {} end)
+          + (if $t | has("pattern") then { pattern: $t.pattern } else {} end)
         elif $t["$type"] == "StringLiteralType" then
           { type: "string", const: $t.value }
         elif $t["$type"] == "IntegerType" then
           { type: "integer" }
-          + (if $t.minValue then { minimum: $t.minValue } else {} end)
-          + (if $t.maxValue then { maximum: $t.maxValue } else {} end)
+          + (if $t | has("minValue") then { minimum: $t.minValue } else {} end)
+          + (if $t | has("maxValue") then { maximum: $t.maxValue } else {} end)
         elif $t["$type"] == "BooleanType" then
           { type: "boolean" }
         elif $t["$type"] == "AnyType" then
