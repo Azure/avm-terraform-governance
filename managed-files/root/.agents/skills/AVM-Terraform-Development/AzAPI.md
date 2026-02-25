@@ -113,7 +113,7 @@ Use the `azure-schema` CLI tool (bundled at `.agents/skills/AVM-Terraform-Develo
 
 - Passwords, keys, etc should be passed in using the `sensitive_body` attribute. This object is merged with the `body` at runtime.
 - All sensitive values MUST be ephemeral.
-- Use `sensitive_body_version` as a map to track the JSON properties that arte set via `sensitive_body`. This allows Terraform to know when the sensitive value has changed, e.g. `sensitive_body_version = { "properties.key1" = "1" }`."
+- Use `sensitive_body_version` as a map to track the JSON properties that are set via `sensitive_body`. This allows Terraform to know when the sensitive value has changed, e.g. `sensitive_body_version = { "properties.key1" = "1" }`."
 - Reference each sensitive body version as a variable.
 
 ### Workflow
