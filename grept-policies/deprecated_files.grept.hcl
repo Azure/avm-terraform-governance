@@ -2,7 +2,7 @@ locals {
   deprecated_files = {
     root = toset([
       ".github/actions/version-check/action.yml",
-      ".github/copilot-instructions.md".
+      ".github/copilot-instructions.md",
       ".github/policies/avmrequiredfiles.yml",
       ".github/workflows/e2e.yml",
       ".github/workflows/grept_cronjob.yml",
