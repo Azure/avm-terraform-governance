@@ -29,9 +29,9 @@ git checkout -b fix/<issue-number>-<short-description>
 
 ### Step 3: Implement the change
 
-All Azure resources MUST be deployed using the **AzAPI provider** (`Azure/azapi`). For AzAPI resource patterns, schema lookups, and the `azure-schema` CLI tool, read [AzAPI.md](.agents/skills/AVM-Terraform-Development/AzAPI.md).
+All Azure resources MUST be deployed using the **AzAPI provider** (`Azure/azapi`). For AzAPI resource patterns, schema lookups, and the `azure-schema` CLI tool, read [AzAPI.md](AzAPI.md).
 
-To query Terraform provider schemas (resources, data sources, functions, ephemeral resources), use the `tfpluginschema` CLI. See [tfpluginschema.md](.agents/skills/AVM-Terraform-Development/tfpluginschema.md).
+To query Terraform provider schemas (resources, data sources, functions, ephemeral resources), use the `tfpluginschema` CLI. See [tfpluginschema.md](tfpluginschema.md).
 
 Make the necessary code changes to add the feature or fix the issue.
 
