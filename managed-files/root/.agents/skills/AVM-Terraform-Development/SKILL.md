@@ -37,7 +37,7 @@ Make the necessary code changes to add the feature or fix the issue.
 
 ### Step 4: Add unit tests (if justified)
 
-Unit tests use **provider mocking** and live in the `tests/unit` directory. Add or update unit tests when your change introduces new logic, variables, or outputs that can be validated without deploying real infrastructure.
+Unit tests use **provider mocking** and live in the `tests/unit` directory. Add or update unit tests when your change introduces new logic, variables, or outputs that can be validated without deploying real infrastructure. For test writing guidance, syntax, and patterns, read [terraform-test.md](terraform-test.md).
 
 ```bash
 PORCH_NO_TUI=1 ./avm tf-test-unit
@@ -45,7 +45,7 @@ PORCH_NO_TUI=1 ./avm tf-test-unit
 
 ### Step 5: Add integration tests (if justified)
 
-Integration tests do **not** use provider mocking and live in the `tests/integration` directory. Add or update integration tests when your change requires validation against real Azure infrastructure.
+Integration tests do **not** use provider mocking and live in the `tests/integration` directory. Add or update integration tests when your change requires validation against real Azure infrastructure. For test writing guidance, syntax, and patterns, read [terraform-test.md](terraform-test.md).
 
 ```bash
 PORCH_NO_TUI=1 ./avm tf-test-integration
@@ -118,7 +118,8 @@ If any issues arise during testing or PR checks, refer to the official AVM testi
 
 ### Tool Integration
 
-- **AzAPI Provider & Schema Lookup**: See [AzAPI.md](.agents/skills/AVM-Terraform-Development/AzAPI.md) for resource patterns and the `azure-schema` CLI tool
-- **Terraform Provider Schemas**: See [tfpluginschema.md](.agents/skills/AVM-Terraform-Development/tfpluginschema.md) for querying resource, data source, function, and ephemeral schemas from any provider
+- **AzAPI Provider & Schema Lookup**: See [AzAPI.md](AzAPI.md) for resource patterns and the `azure-schema` CLI tool
+- **Terraform Provider Schemas**: See [tfpluginschema.md](tfpluginschema.md) for querying resource, data source, function, and ephemeral schemas from any provider
+- **Terraform Tests**: See [terraform-test.md](terraform-test.md) for writing unit and integration tests
 - **Deployment Guidance**: Use `azure_get_deployment_best_practices` tool
 - **Service Documentation**: Use `microsoft.docs.mcp` tool for Azure service-specific guidance
