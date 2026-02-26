@@ -5,19 +5,19 @@ on:
   workflow_dispatch:
     inputs:
       repositories:
-        description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
-        default: 'All'
+        description: "Override the target repositories, use a comma separated list. Leave as All to run on all repositories."
+        default: "All"
         type: string
       inactive_days:
-        description: 'Number of days with no PR activity'
+        description: "Number of days with no PR activity"
         default: 7
         type: number
       first_run:
-        description: 'Whether to run in first run mode'
+        description: "Whether to run in first run mode"
         default: false
         type: boolean
   schedule:
-    - cron: '34 4 * * 1,4'
+    - cron: "34 4 * * 1,4"
 
 permissions:
   id-token: write
@@ -115,13 +115,6 @@ jobs:
           repository: ${{ matrix.repoFullName }}
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
-
-      - name: run migrate
-        run: |
-          chmod a+x ./avm
-          ./avm migrate
-        shell: bash
-        continue-on-error: true
 
       - name: Run pre-commit
         if: steps.check.outputs.continue
