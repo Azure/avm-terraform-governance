@@ -20,6 +20,7 @@ param(
     "terraform-azurerm-avm-ptn-ai-foundry-enterprise",
     "terraform-azurerm-avm-ptn-enterprise-rag"
   ),
+  [array]$additionalReposToSkip = @(),
   [string]$outputDirectory = "."
 )
 
@@ -54,9 +55,11 @@ $moduleTypes = @{
   "template" = "template"
 }
 
+$finalReposToSkip = $reposToSkip + $additionalReposToSkip
+
 foreach ($installedRepository in $installedRepositories | Sort-Object -Property name)
 {
-  if ($reposToSkip -contains $installedRepository.name)
+  if ($finalReposToSkip -contains $installedRepository.name)
   {
     Write-Host "Skipping $($installedRepository.name) as it is in the skip list..."
     continue

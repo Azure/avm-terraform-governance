@@ -9,6 +9,10 @@ on:
         description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
         default: 'All'
         type: string
+      repositories_to_skip:
+        description: 'Override the repositories to skip, use a comma separated list. Leave as empty to not skip any repositories.'
+        default: 'avm-template'
+        type: string
       plan_only:
         description: 'Whether to only plan the changes'
         default: true
@@ -46,7 +50,7 @@ jobs:
         id: matrix
         with:
           repositories: ${{ inputs.repositories }}
-          first_run: ${{ inputs.first_run }}
+          repositoriesToSkip: ${{ inputs.repositories_to_skip }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
