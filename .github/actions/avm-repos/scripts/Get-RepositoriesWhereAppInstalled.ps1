@@ -103,10 +103,7 @@ if (!$warnings.Count -eq 0)
   Write-Host "Issues found for"
   $warningsJson = ConvertTo-Json $warnings -Depth 100
   $warningsJson | Out-File "$outputDirectory/warning.log.json"
-  exit 0
 }
-
-Write-Host "No issues found"
 
 Write-Host "Filtering repositories"
 if ($repoFilter.Length -gt 0)
