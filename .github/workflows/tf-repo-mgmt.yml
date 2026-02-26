@@ -49,8 +49,8 @@ jobs:
         uses: ./.github/actions/avm-repos
         id: matrix
         with:
-          repositories: ${{ inputs.repositories }}
-          repositoriesToSkip: ${{ inputs.repositories_to_skip }}
+          repositories: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories, 'All') }}
+          repositoriesToSkip: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories_to_skip, 'avm-template') }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
