@@ -57,6 +57,8 @@ $moduleTypes = @{
 
 $finalReposToSkip = $reposToSkip + $additionalReposToSkip
 
+Write-Host "Skipping repositories: $(ConvertTo-Json $finalReposToSkip)"
+
 foreach ($installedRepository in $installedRepositories | Sort-Object -Property name)
 {
   if ($finalReposToSkip -contains $installedRepository.name)

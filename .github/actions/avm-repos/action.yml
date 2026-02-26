@@ -7,7 +7,7 @@ inputs:
     default: "All"
   repositoriesToSkip:
     description: "Repositories to skip, comma separated list of repos to skip, e.g. 'avm-template'."
-    default: "All"
+    default: ""
   outputDirectory:
     description: "Output directory for the repository data"
     default: "${{ github.workspace }}"
@@ -49,12 +49,16 @@ runs:
           $repositories = $repositories -split ','
         }
 
+        Write-Host "Repositories to include: $(ConvertTo-Json $repositories)"
+
         $repositoriesToSkip = "${{ inputs.repositoriesToSkip }}"
         if($repositoriesToSkip -eq "") {
           $repositoriesToSkip = @()
         } else {
           $repositoriesToSkip = $repositoriesToSkip -split ','
         }
+
+        Write-Host "Repositories to skip from input: $(ConvertTo-Json $repositoriesToSkip)"
 
         $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" `
           -repoFilter $repositories `
