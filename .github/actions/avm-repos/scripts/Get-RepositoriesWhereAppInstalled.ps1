@@ -86,7 +86,7 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
   }
 
   $parts = $installedRepository.name.Split("-")
-  $moduleName = $parts[1..($parts.Length - 1)] -join "-"
+  $moduleName = $parts[2..($parts.Length - 1)] -join "-"
 
   $repos += @{
     repoId              = $moduleName
@@ -105,9 +105,9 @@ if (!$warnings.Count -eq 0)
   $warningsJson | Out-File "$outputDirectory/warning.log.json"
 }
 
-Write-Host "Filtering repositories"
 if ($repoFilter.Length -gt 0)
 {
+  Write-Host "Filtering repositories"
   $repos = $repos | Where-Object { $repoFilter -contains $_.repoId }
 }
 
