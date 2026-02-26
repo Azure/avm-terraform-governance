@@ -11,7 +11,7 @@ on:
         type: string
       repositories_to_skip:
         description: 'Override the repositories to skip, use a comma separated list. Leave as empty to not skip any repositories.'
-        default: 'avm-template'
+        default: 'terraform-azurerm-avm-template'
         type: string
       plan_only:
         description: 'Whether to only plan the changes'
@@ -50,7 +50,7 @@ jobs:
         id: matrix
         with:
           repositories: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories, 'All') }}
-          repositoriesToSkip: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories_to_skip, 'avm-template') }}
+          repositoriesToSkip: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories_to_skip, 'terraform-azurerm-avm-template') }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
