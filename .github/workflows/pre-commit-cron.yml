@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: avm
     outputs:
-      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrix: ${{ steps.combined-matrix.outputs.matrix }}
       matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
     steps:
       - name: Checkout
@@ -47,6 +47,39 @@ jobs:
           first_run: ${{ inputs.first_run }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+      - name: Append template repo to matrix
+        id: combined-matrix
+        run: |
+          $matrix = @('${{ steps.matrix.outputs.matrix }}' | ConvertFrom-Json)
+          $repositories = "${{ inputs.repositories }}"
+
+          $includeTemplate = $false
+          if ([string]::IsNullOrEmpty($repositories) -or $repositories -eq "All") {
+            $includeTemplate = $true
+          } else {
+            $repoList = $repositories -split ',' | ForEach-Object { $_.Trim() }
+            if ($repoList -contains "avm-template" -or $repoList -contains "terraform-azurerm-avm-template") {
+              $includeTemplate = $true
+            }
+          }
+
+          if ($includeTemplate) {
+            $templateEntry = [PSCustomObject]@{
+              repoId       = "avm-template"
+              repoName     = "terraform-azurerm-avm-template"
+              repoFullName = "${{ github.repository_owner }}/terraform-azurerm-avm-template"
+              repoUrl      = "https://github.com/${{ github.repository_owner }}/terraform-azurerm-avm-template"
+              repoType     = "avm"
+              repoSubType  = "template"
+            }
+            $matrix += $templateEntry
+          }
+
+          $matrixJson = ConvertTo-Json @($matrix) -Depth 10 -Compress
+          Write-Host (ConvertTo-Json @($matrix) -Depth 10)
+          Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
   run-precommit:
     name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
