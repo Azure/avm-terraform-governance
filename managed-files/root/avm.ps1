@@ -47,12 +47,18 @@ if (Test-Path $AZURE_CONFIG_DIR) {
   $AZURE_CONFIG_MOUNT_PATH = "${AZURE_CONFIG_DIR}:/home/runtimeuser/.azure"
 }
 
-# If AVM_CA_CERT_BUNDLE is set and the file exists, mount it into the container.
+# If we are in GitHub Copilot Coding Agent and AVM_CA_CERT_BUNDLE is not set,
+# default it to the host's CA bundle location (Copilot agents run on Ubuntu/Debian)
+if ($env:COPILOT_AGENT_ACTION -and -not $env:AVM_CA_CERT_BUNDLE) {
+  $env:AVM_CA_CERT_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
+}
+
+# If AVM_CA_CERT_BUNDLE is set, mount it into the container.
 # Note: this replaces the container's default CA bundle, so the provided file should
 # be a complete CA chain (e.g. an enterprise bundle that includes system + corporate CAs).
 $SSL_CERT_MOUNTS = @()
 $AVM_CA_CERT_BUNDLE = if ($env:AVM_CA_CERT_BUNDLE) { $env:AVM_CA_CERT_BUNDLE } else { "" }
-if ($AVM_CA_CERT_BUNDLE -ne "" -and (Test-Path $AVM_CA_CERT_BUNDLE)) {
+if ($AVM_CA_CERT_BUNDLE -ne "") {
   $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro")
   $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro")
 }
