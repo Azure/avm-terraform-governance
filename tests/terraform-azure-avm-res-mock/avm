@@ -62,12 +62,19 @@ if [ -S /var/run/docker.sock ]; then
   DOCKER_SOCK_MOUNT="-v /var/run/docker.sock:/var/run/docker.sock"
 fi
 
-# If we are in GitHub Copilot Coding Agent, we need to mount the SSL certificates from the host
+# If we are in GitHub Copilot Coding Agent and AVM_CA_CERT_BUNDLE is not set,
+# default it to the host's CA bundle location (Copilot agents run on Ubuntu/Debian)
+if [ -n "${COPILOT_AGENT_ACTION}" ] && [ -z "${AVM_CA_CERT_BUNDLE:-}" ]; then
+  AVM_CA_CERT_BUNDLE="/etc/ssl/certs/ca-certificates.crt"
+fi
+
+# If AVM_CA_CERT_BUNDLE is set, mount it into the container.
+# Note: this replaces the container's default CA bundle, so the provided file should
+# be a complete CA chain (e.g. an enterprise bundle that includes system + corporate CAs).
 SSL_CERT_MOUNTS=""
-if [ -n "${COPILOT_AGENT_ACTION}" ]; then
-  # Mount host's CA bundle to container's expected paths
-  SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v /etc/ssl/certs/ca-certificates.crt:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro"
-  SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v /etc/ssl/certs/ca-certificates.crt:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro"
+if [ -n "${AVM_CA_CERT_BUNDLE:-}" ]; then
+  SSL_CERT_MOUNTS="-v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro"
+  SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro"
 fi
 
 # New: allow overriding TUI behavior with PORCH_FORCE_TUI and PORCH_NO_TUI environment variables.
