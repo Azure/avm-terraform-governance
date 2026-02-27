@@ -59,8 +59,13 @@ if ($env:COPILOT_AGENT_ACTION -and -not $env:AVM_CA_CERT_BUNDLE) {
 $SSL_CERT_MOUNTS = @()
 $AVM_CA_CERT_BUNDLE = if ($env:AVM_CA_CERT_BUNDLE) { $env:AVM_CA_CERT_BUNDLE } else { "" }
 if ($AVM_CA_CERT_BUNDLE -ne "") {
-  $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro")
-  $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro")
+  if (Test-Path -Path $AVM_CA_CERT_BUNDLE -PathType Leaf) {
+    $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro")
+    $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro")
+  }
+  else {
+    Write-Warning "AVM_CA_CERT_BUNDLE is set to '$AVM_CA_CERT_BUNDLE' but the file does not exist. Skipping CA certificate bundle mounts."
+  }
 }
 
 # New: allow overriding TUI behavior with PORCH_FORCE_TUI and PORCH_NO_TUI environment variables.
