@@ -47,6 +47,22 @@ if (Test-Path $AZURE_CONFIG_DIR) {
   $AZURE_CONFIG_MOUNT_PATH = "${AZURE_CONFIG_DIR}:/home/runtimeuser/.azure"
 }
 
+# If we are in GitHub Copilot Coding Agent and AVM_CA_CERT_BUNDLE is not set,
+# default it to the host's CA bundle location (Copilot agents run on Ubuntu/Debian)
+if ($env:COPILOT_AGENT_ACTION -and -not $env:AVM_CA_CERT_BUNDLE) {
+  $env:AVM_CA_CERT_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
+}
+
+# If AVM_CA_CERT_BUNDLE is set, mount it into the container.
+# Note: this replaces the container's default CA bundle, so the provided file should
+# be a complete CA chain (e.g. an enterprise bundle that includes system + corporate CAs).
+$SSL_CERT_MOUNTS = @()
+$AVM_CA_CERT_BUNDLE = if ($env:AVM_CA_CERT_BUNDLE) { $env:AVM_CA_CERT_BUNDLE } else { "" }
+if ($AVM_CA_CERT_BUNDLE -ne "") {
+  $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro")
+  $SSL_CERT_MOUNTS += @("-v", "${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro")
+}
+
 # New: allow overriding TUI behavior with PORCH_FORCE_TUI and PORCH_NO_TUI environment variables.
 # - If PORCH_FORCE_TUI is set, force TUI and interactive mode (even in GH Actions).
 # - If PORCH_NO_TUI is set, explicitly disable TUI.
@@ -110,6 +126,10 @@ if (-not $env:AVM_IN_CONTAINER) {
 
   if ($AZURE_CONFIG_MOUNT -and $AZURE_CONFIG_MOUNT_PATH) {
     $dockerArgs += @($AZURE_CONFIG_MOUNT, $AZURE_CONFIG_MOUNT_PATH)
+  }
+
+  if ($SSL_CERT_MOUNTS.Count -gt 0) {
+    $dockerArgs += $SSL_CERT_MOUNTS
   }
 
   # Add environment variables
