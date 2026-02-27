@@ -70,6 +70,14 @@ if [ -n "${COPILOT_AGENT_ACTION}" ]; then
   SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v /etc/ssl/certs/ca-certificates.crt:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro"
 fi
 
+# If AVM_CA_CERT_BUNDLE is set and the file exists, mount it into the container.
+# Note: this replaces the container's default CA bundle, so the provided file should
+# be a complete CA chain (e.g. an enterprise bundle that includes system + corporate CAs).
+if [ -f "${AVM_CA_CERT_BUNDLE:-}" ]; then
+  SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro"
+  SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro"
+fi
+
 # New: allow overriding TUI behavior with PORCH_FORCE_TUI and PORCH_NO_TUI environment variables.
 # - If PORCH_FORCE_TUI is set, force TUI and interactive mode (even in GH Actions).
 # - If PORCH_NO_TUI is set, explicitly disable TUI.
