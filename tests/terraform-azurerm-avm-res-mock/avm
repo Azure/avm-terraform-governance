@@ -72,7 +72,7 @@ fi
 # Note: this replaces the container's default CA bundle, so the provided file should
 # be a complete CA chain (e.g. an enterprise bundle that includes system + corporate CAs).
 SSL_CERT_MOUNTS=""
-if [ -n "${AVM_CA_CERT_BUNDLE:-}" ]; then
+if [ -n "${AVM_CA_CERT_BUNDLE:-}" ] && [ -f "${AVM_CA_CERT_BUNDLE}" ]; then
   SSL_CERT_MOUNTS="-v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem:ro"
   SSL_CERT_MOUNTS="${SSL_CERT_MOUNTS} -v ${AVM_CA_CERT_BUNDLE}:/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt:ro"
 fi
