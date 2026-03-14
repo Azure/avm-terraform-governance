@@ -4,19 +4,18 @@ description: |
   It's typically used in GitHub Actions to configure the environment before running other tasks.
 commands:
   - type: shell
-    name: Check setup.sh
+    name: Run setup.sh if exists
     command_line: |
-      if [ ! -f examples/setup.sh ]; then
-        echo "setup.sh not found" 1>&2
-        echo "Skipping global setup" 1>&2
-        exit 99
+      if [ -f setup.sh ]; then
+        chmod +x ./setup.sh && \
+        ./setup.sh
       fi
-    skip_on_exit_codes:
-      - 99
+    working_directory: examples
 
-  - type: shell
-    name: Run setup.sh
-    command_line: |
-      chmod +x ./setup.sh && \
-      ./setup.sh
+  - type: pwsh
+    name: Run setup.ps1 if exists
+    script: |
+      if (Test-Path setup.ps1) {
+        & ./setup.ps1
+      }
     working_directory: examples

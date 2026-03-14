@@ -93,6 +93,13 @@ commands:
             ./pre.sh
           fi
 
+      - type: pwsh
+        name: run pre.ps1 if exists
+        script: |
+          if (Test-Path pre.ps1) {
+            & ./pre.ps1
+          }
+
       - type: shell
         name: Terraform Init
         command_line: terraform init
@@ -135,6 +142,13 @@ commands:
             chmod +x post.sh && \
             ./post.sh
           fi
+
+      - type: pwsh
+        name: run post.ps1 if exists
+        script: |
+          if (Test-Path post.ps1) {
+            & ./post.ps1
+          }
 
   - type: shell
     name: Clean up
