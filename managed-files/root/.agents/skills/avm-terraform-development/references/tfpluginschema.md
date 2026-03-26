@@ -19,6 +19,18 @@ curl -sSfL https://github.com/matt-FFFFFF/tfpluginschema/releases/latest/downloa
 curl -sSfL https://github.com/matt-FFFFFF/tfpluginschema/releases/latest/download/tfpluginschema_0.8.0_darwin_amd64.tar.gz | tar -xz -C /usr/local/bin tfpluginschema
 ```
 
+```powershell
+# Windows (amd64)
+$url = "https://github.com/matt-FFFFFF/tfpluginschema/releases/latest/download/tfpluginschema_0.8.0_windows_amd64.zip"
+$dest = "$env:LOCALAPPDATA\tfpluginschema"
+New-Item -ItemType Directory -Path $dest -Force | Out-Null
+Invoke-WebRequest -Uri $url -OutFile "$dest\tfpluginschema.zip"
+Expand-Archive -Path "$dest\tfpluginschema.zip" -DestinationPath $dest -Force
+Remove-Item "$dest\tfpluginschema.zip"
+# Add to PATH if not already present
+if ($env:PATH -notlike "*$dest*") { $env:PATH += ";$dest" }
+```
+
 Check latest version at: <https://github.com/matt-FFFFFF/tfpluginschema/releases>
 
 ## Global Options
@@ -38,9 +50,20 @@ Check latest version at: <https://github.com/matt-FFFFFF/tfpluginschema/releases
 tfpluginschema -n Azure -p azapi version list
 ```
 
+```powershell
+tfpluginschema -n Azure -p azapi version list
+```
+
 ### List resources, data sources, functions, or ephemeral resources
 
 ```bash
+tfpluginschema -n Azure -p azapi resource list
+tfpluginschema -n Azure -p azapi datasource list
+tfpluginschema -n Azure -p azapi function list
+tfpluginschema -n Azure -p azapi ephemeral list
+```
+
+```powershell
 tfpluginschema -n Azure -p azapi resource list
 tfpluginschema -n Azure -p azapi datasource list
 tfpluginschema -n Azure -p azapi function list
@@ -53,9 +76,17 @@ tfpluginschema -n Azure -p azapi ephemeral list
 tfpluginschema -n Azure -p azapi resource schema azapi_resource
 ```
 
+```powershell
+tfpluginschema -n Azure -p azapi resource schema azapi_resource
+```
+
 ### Get a data source schema
 
 ```bash
+tfpluginschema -n Azure -p azapi datasource schema azapi_client_config
+```
+
+```powershell
 tfpluginschema -n Azure -p azapi datasource schema azapi_client_config
 ```
 
@@ -65,9 +96,17 @@ tfpluginschema -n Azure -p azapi datasource schema azapi_client_config
 tfpluginschema -n Azure -p azapi function schema build_resource_id
 ```
 
+```powershell
+tfpluginschema -n Azure -p azapi function schema build_resource_id
+```
+
 ### Get an ephemeral resource schema
 
 ```bash
+tfpluginschema -n Azure -p azapi ephemeral schema azapi_resource_action
+```
+
+```powershell
 tfpluginschema -n Azure -p azapi ephemeral schema azapi_resource_action
 ```
 
@@ -77,9 +116,17 @@ tfpluginschema -n Azure -p azapi ephemeral schema azapi_resource_action
 tfpluginschema -n Azure -p azapi provider schema
 ```
 
+```powershell
+tfpluginschema -n Azure -p azapi provider schema
+```
+
 ### Pin to a specific provider version
 
 ```bash
+tfpluginschema -n Azure -p azapi --pv 2.5.0 resource schema azapi_resource
+```
+
+```powershell
 tfpluginschema -n Azure -p azapi --pv 2.5.0 resource schema azapi_resource
 ```
 
@@ -87,6 +134,10 @@ tfpluginschema -n Azure -p azapi --pv 2.5.0 resource schema azapi_resource
 
 ```bash
 tfpluginschema -n hashicorp -p azurerm --pv "~>4.0" resource list
+```
+
+```powershell
+tfpluginschema -n hashicorp -p azurerm --pv '~>4.0' resource list
 ```
 
 ## Output Format
