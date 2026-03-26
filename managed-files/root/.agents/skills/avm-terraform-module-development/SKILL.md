@@ -1,5 +1,5 @@
 ---
-name: avm-terraform-development
+name: avm-terraform-module-development
 description: Azure Verified Modules (AVM) Terraform development workflow for fixing issues and adding features
 glob: "**/*.terraform,**/*.tf,**/*.tfvars,**/*.tfstate,**/*.tflint.hcl,**/*.tf.json,**/*.tfvars.json"
 ---
