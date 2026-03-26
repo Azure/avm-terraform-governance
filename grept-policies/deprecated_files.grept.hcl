@@ -20,7 +20,7 @@ locals {
     alz = toset([
       ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
       ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
-Working    ])
+    ])
   }
 
   deprecated_files_additional_set = env("AVM_MANAGED_FILES_ADDITIONAL")
