@@ -3,7 +3,7 @@
 set -e
 
 usage () {
-  echo "Usage: avm-agent <make target>"
+  echo "Usage: avm <make target>"
 }
 
 # We need to do this because bash doesn't like it when a script is updated in place.
