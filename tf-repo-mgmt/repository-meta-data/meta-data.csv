@@ -157,6 +157,7 @@ avm-res-network-natgateway,Microsoft.Network,natGateways,NAT Gateway,,mbilalamja
 avm-res-network-networkinterface,Microsoft.Network,networkInterfaces,Network Interface,NIC,fafriha,Farouk Friha,,
 avm-res-network-networkmanager,Microsoft.Network,networkManagers,Azure Virtual Network Manager,,cshea-msft,Charles Shea,,
 avm-res-network-networksecuritygroup,Microsoft.Network,networkSecurityGroups,Network Security Group,,maheshbenke,Mahesh Benke,,
+avm-res-network-networksecurityperimeter,Microsoft.Network,networkSecurityPerimeters,Terraform Azure Verified Resource Module for networkSecurityPerimeters,,sujaypillai,Sujay Pillai,,
 avm-res-network-networkwatcher,Microsoft.Network,networkWatchers,Azure Network Watcher,,terrymandin,Terry Mandin,,
 avm-res-network-privatednszone,Microsoft.Network,privateDnsZones,Private DNS Zone,,chianw,Chian Wong,,
 avm-res-network-privateendpoint,Microsoft.Network,privateEndpoints,Private Endpoint,,Misba-Yousuf,Misba Yousuf,,
