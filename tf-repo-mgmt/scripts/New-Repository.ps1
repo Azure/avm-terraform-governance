@@ -16,10 +16,12 @@ param (
   [switch]$skipRepoCreation,
   [switch]$skipRepoSync,
   [switch]$skipMetaDataCreation,
-  [string]$repositorySyncModulePath = "./repository_sync",
   [switch]$skipCleanup,
   [switch]$skipCreateAppInstallationRequest,
-  [string]$appInstallationRequestRepo = "microsoft/github-operations"
+  [string[]]$yamlFilePaths = @(
+    "./apps/azure/azure-verified-modules.yaml",
+    "./apps/azure/terraform-cloud.yaml"
+  )
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -79,7 +81,7 @@ if (!$skipMetaDataCreation) {
   gh repo fork --remote --clone --default-branch-only $governanceRepoUrl
   $tempRepoFolderName = $governanceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
-  $tempOrgAndRepoName = $openSourceRepoUrl.Split('/')[-2..-1] -join '/'
+  $tempOrgAndRepoName = $governanceRepoUrl.Split('/')[-2..-1] -join '/'
   gh repo set-default $tempOrgAndRepoName
   git fetch upstream
   git reset --hard upstream/main
@@ -206,15 +208,23 @@ if (!$skipCreateAppInstallationRequest) {
   git checkout -b "chore/app-install-avm/$moduleName"
 
   Install-Module powershell-yaml -Force
-  $yamlPath = "./apps/azure/azure-verified-modules.yaml"
-  $yamlData = Get-Content -Path $yamlPath | ConvertFrom-Yaml
-  $repoList = @($yamlData.repositories)
-  $repoList += $repositoryName
-  $repoList = $repoList | Sort-Object
-  $yamlData.repositories = $repoList
-  $yamlData | ConvertTo-Yaml -Options WithIndentedSequences | Set-Content -Path $yamlPath -Force
 
-  git add $yamlPath
+  foreach ($yamlFilePath in $yamlFilePaths) {
+    if (-Not (Test-Path -Path $yamlFilePath)) {
+      Write-Error "YAML file not found: $yamlFilePath" -Category NotFound
+      return
+    }
+
+    $yamlData = Get-Content -Path $yamlFilePath | ConvertFrom-Yaml
+    $repoList = @($yamlData.repositories)
+    $repoList += $repositoryName
+    $repoList = $repoList | Sort-Object
+    $yamlData.repositories = $repoList
+    $yamlData | ConvertTo-Yaml -Options WithIndentedSequences | Set-Content -Path $yamlFilePath -Force
+
+    git add $yamlFilePath
+  }
+
   git commit -m "chore: add $moduleName metadata"
   git push --set-upstream origin "chore/app-install-avm/$moduleName"
 

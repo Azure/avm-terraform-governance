@@ -20,6 +20,7 @@ param(
     "terraform-azurerm-avm-ptn-ai-foundry-enterprise",
     "terraform-azurerm-avm-ptn-enterprise-rag"
   ),
+  [array]$additionalReposToSkip = @(),
   [string]$outputDirectory = "."
 )
 
@@ -37,7 +38,8 @@ $incompleteResults = $true
 
 $installedRepositories = @()
 
-while ($incompleteResults) {
+while ($incompleteResults)
+{
   $response = ConvertFrom-Json $(gh api "/installation/repositories?per_page=$itemsPerPage&page=$page")
   $installedRepositories += $response.repositories
   $incompleteResults = $page * $itemsPerPage -lt $response.total_count
@@ -46,13 +48,27 @@ while ($incompleteResults) {
 
 $warnings = @()
 
-foreach ($installedRepository in $installedRepositories | Sort-Object -Property name) {
-  if ($reposToSkip -contains $installedRepository.name) {
+$moduleTypes = @{
+  "res"      = "resource"
+  "ptn"      = "pattern"
+  "utl"      = "utility"
+  "template" = "template"
+}
+
+$finalReposToSkip = $reposToSkip + $additionalReposToSkip
+
+Write-Host "Skipping repositories: $(ConvertTo-Json $finalReposToSkip)"
+
+foreach ($installedRepository in $installedRepositories | Sort-Object -Property name)
+{
+  if ($finalReposToSkip -contains $installedRepository.name)
+  {
     Write-Host "Skipping $($installedRepository.name) as it is in the skip list..."
     continue
   }
 
-  if ($installedRepository.archived) {
+  if ($installedRepository.archived)
+  {
     $warning = @{
       repoId  = $installedRepository.name
       message = "Skipping $($installedRepository.name) as it is archived..."
@@ -62,67 +78,20 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
     continue
   }
 
-  if (!$installedRepository.name.StartsWith("terraform-")) {
+  # Use regex to check if the repository name starts with "terraform-(azurerm|azure|azapi)-avm-(res|ptn|utl|template)"
+  if (!($installedRepository.name -match "^terraform-(azurerm|azure|azapi)-avm-(res|ptn|utl|template)"))
+  {
     $warning = @{
       repoId  = $installedRepository.name
-      message = "Skipping $($installedRepository.name) as it does not start with 'terraform-'..."
+      message = "Skipping $($installedRepository.name) as it does not match the required naming convention: terraform-(azurerm|azure|azapi)-avm-(res|ptn|utl|template)..."
     }
     Write-Warning $warning.message
     $warnings += $warning
     continue
   }
 
-  $skipRepository = $true
-  $moduleName = ""
-
-  foreach ($validProvider in $validProviders) {
-    $validPrefix = "terraform-$validProvider-"
-    if ($installedRepository.name.StartsWith($validPrefix)) {
-      $moduleName = $installedRepository.name.Replace($validPrefix, "")
-      $skipRepository = $false
-    }
-  }
-
-  if ($skipRepository) {
-    $warning = @{
-      repoId  = $installedRepository.name
-      message = "Skipping $($installedRepository.name) as it does not start with a valid provider prefix..."
-    }
-    Write-Warning $warning.message
-    $warnings += $warning
-    continue
-  }
-
-  if (!$moduleName.StartsWith("avm-")) {
-    $warning = @{
-      repoId  = $installedRepository.name
-      message = "Skipping $($installedRepository.name) as it does not start with 'avm-'..."
-    }
-    Write-Warning $warning.message
-    $warnings += $warning
-    continue
-  }
-
-  $moduleType = $moduleName.Split("-")[1]
-
-  if ($moduleType -eq "res") {
-    $moduleType = "resource"
-  }
-  elseif ($moduleType -eq "ptn") {
-    $moduleType = "pattern"
-  }
-  elseif ($moduleType -eq "utl") {
-    $moduleType = "utility"
-  }
-  else {
-    $warning = @{
-      repoId  = $installedRepository.name
-      message = "Skipping $($installedRepository.name) as it does not have a valid module type segment..."
-    }
-    Write-Warning $warning.message
-    $warnings += $warning
-    continue
-  }
+  $parts = $installedRepository.name.Split("-")
+  $moduleName = $parts[2..($parts.Length - 1)] -join "-"
 
   $repos += @{
     repoId              = $moduleName
@@ -130,21 +99,20 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
     repoFullName        = $installedRepository.full_name
     repoUrl             = $installedRepository.html_url
     repoType            = "avm"
-    repoSubType         = $moduleType
+    repoSubType         = ($moduleTypes[$parts[3]] ?? "unknown")
   }
 }
 
-if ($warnings.Count -eq 0) {
-  Write-Host "No issues found"
-}
-else {
+if (!$warnings.Count -eq 0)
+{
   Write-Host "Issues found for"
   $warningsJson = ConvertTo-Json $warnings -Depth 100
   $warningsJson | Out-File "$outputDirectory/warning.log.json"
 }
 
-Write-Host "Filtering repositories"
-if ($repoFilter.Length -gt 0) {
+if ($repoFilter.Length -gt 0)
+{
+  Write-Host "Filtering repositories"
   $repos = $repos | Where-Object { $repoFilter -contains $_.repoId }
 }
 

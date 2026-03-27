@@ -1,59 +1,25 @@
 locals {
-  managed_files = toset([
-    ".devcontainer/devcontainer.json",
-    ".editorconfig",
-    ".gitattributes",
-    ".github/CODEOWNERS",
-    ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
-    ".github/ISSUE_TEMPLATE/avm_question_feedback.yml",
-    ".github/ISSUE_TEMPLATE/config.yml",
-    ".github/PULL_REQUEST_TEMPLATE.md",
-    ".github/copilot-instructions.md",
-    ".github/policies/eventResponder.yml",
-    ".github/policies/scheduledSearches.yml",
-    ".github/workflows/pr-check.yml",
-    ".terraform-docs.yml",
-    ".vscode/mcp.json",
-    ".vscode/extensions.json",
-    ".vscode/settings.json",
-    "AGENTS.md",
-    "CODE_OF_CONDUCT.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "Makefile",
-    "SECURITY.md",
-    "SUPPORT.md",
-    "_footer.md",
-    "avm",
-    "avm.bat",
-    "avm.ps1",
-    "examples/.terraform-docs.yml",
-    "modules/.terraform-docs.yml",
-    # ".github/workflows/copilot-setup-steps.yml", disabled for now until we test more thoroughly
-  ])
+  managed_files_additional_set            = env("AVM_MANAGED_FILES_ADDITIONAL")
+  managed_files_directory_path            = "${env("AVM_GOVERNANCE_REPO_DIR")}/managed-files/%s"
+  managed_files_directory_path_root       = format(local.managed_files_directory_path, "root")
+  managed_files_directory_path_additional = local.managed_files_additional_set == null || local.managed_files_additional_set == "" ? null : format(local.managed_files_directory_path, local.managed_files_additional_set)
 
-  managed_files_ref        = coalesce(env("AVM_MANAGED_FILES_REF"), "main")
-  managed_files_url_prefix = "https://raw.githubusercontent.com/Azure/avm-terraform-governance/${local.managed_files_ref}/managed-files/root/"
-}
-
-data "http" "managed_files" {
-  for_each = local.managed_files
-
-  request_headers = merge({}, local.common_http_headers)
-  url             = "${local.managed_files_url_prefix}${each.value}"
+  managed_files_root           = { for file in fileset(local.managed_files_directory_path_root, "**") : file => file("${local.managed_files_directory_path_root}/${file}") if !contains(local.deprecated_files_final, file) }
+  managed_files_additional     = local.managed_files_directory_path_additional == null || local.managed_files_directory_path_additional == "" ? {} : { for file in fileset(local.managed_files_directory_path_additional, "**") : file => file("${local.managed_files_directory_path_additional}/${file}") if !contains(local.deprecated_files_final, file) }
+  managed_files_final          = merge(local.managed_files_root, local.managed_files_additional)
 }
 
 rule "file_hash" "managed_files" {
-  for_each = local.managed_files
+  for_each = local.managed_files_final
 
-  glob = each.value
-  hash = sha1(data.http.managed_files[each.value].response_body)
+  glob = each.key
+  hash = sha1(each.value)
 }
 
 fix "local_file" "managed_files" {
-  for_each = local.managed_files
+  for_each = local.managed_files_final
 
-  rule_ids = [rule.file_hash.managed_files[each.value].id]
-  paths    = [each.value]
-  content  = data.http.managed_files[each.value].response_body
+  rule_ids = [rule.file_hash.managed_files[each.key].id]
+  paths    = [each.key]
+  content  = each.value
 }

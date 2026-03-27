@@ -24,6 +24,13 @@
         "avm-res-network-privatednszone"
       ],
       "protected": true
+    },
+    {
+      "name": "azure-migrate",
+      "repositories": [
+        "avm-ptn-azure-local-migrate"
+      ],
+      "protected": true
     }
   ],
   "teamMappings": [
@@ -96,7 +103,18 @@
       "repositoryPermission": "maintain",
       "environmentApproval": true,
       "membersAreTeamMaintainers": false
+    },
+    {
+      "name": "avm-owners-azure-migrate",
+      "description": "Contributors to the Azure Verified Module Azure Migrate Terraform repositories.",
+      "repositoryGroups": [
+        "azure-migrate"
+      ],
+      "repositoryPermission": "maintain",
+      "environmentApproval": true,
+      "membersAreTeamMaintainers": false
     }
   ]
 
 }
+

@@ -33,7 +33,17 @@ variable "is_protected_repo" {
   description = "Whether the repository is protected and requires pull request approval."
 }
 
-variable "github_job_workflow_ref_suffix" {
+variable "github_job_workflow_ref" {
   type        = string
-  description = "Suffix to append to the GitHub Actions job workflow ref claim."
+  description = "GitHub Actions job workflow ref."
+}
+
+variable "github_organization_id" {
+  type        = string
+  description = "ID of the GitHub organization."
+}
+
+variable "github_repository_id" {
+  type        = string
+  description = "ID of the GitHub repository."
 }

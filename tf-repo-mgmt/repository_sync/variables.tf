@@ -95,25 +95,30 @@ variable "is_protected_repo" {
   default     = false
 }
 
-variable "github_job_workflow_ref_suffix" {
+variable "github_job_workflow_ref" {
   type        = string
   description = "GitHub job workflow ref to use for the federated identity credentials."
-  default     = ":job_workflow_ref:Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main"
-}
-
-variable "feature_flags" {
-  type        = map(set(string))
-  description = "The feature flags to enable for the job."
-  default = {
-    preview_github_actions_oidc_subject_claim_customization = [
-      "terraform-azure-avm-utl-interfaces",
-      "terraform-azurerm-avm-res-keyvault-vault",
-    ]
-  }
+  default     = "Azure/avm-terraform-governance/.github/workflows/managed-pr-check.yml@refs/heads/main"
 }
 
 variable "github_avm_app_id" {
   type        = string
   description = "The GitHub App ID for the AVM."
   default     = "1049636"
+}
+
+variable "github_copilot_agent_firewall_allow_list_variable_name" {
+  type        = string
+  description = "The name of the variable in the GitHub repository that contains the Copilot Agent firewall allow list."
+  default     = "COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS"
+}
+
+variable "github_copilot_agent_firewall_allow_list" {
+  type        = list(string)
+  description = "List of domains to allow for GitHub Copilot Agent firewall rules."
+  default = [
+    "hashicorp.com",
+    "registry.opentofu.org",
+    "registry.terraform.io",
+  ]
 }

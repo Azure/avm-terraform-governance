@@ -9,6 +9,10 @@ on:
         description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
         default: 'All'
         type: string
+      repositories_to_skip:
+        description: 'Override the repositories to skip, use a comma separated list. Leave as empty to not skip any repositories.'
+        default: 'terraform-azurerm-avm-template'
+        type: string
       plan_only:
         description: 'Whether to only plan the changes'
         default: true
@@ -45,8 +49,8 @@ jobs:
         uses: ./.github/actions/avm-repos
         id: matrix
         with:
-          repositories: ${{ inputs.repositories }}
-          first_run: ${{ inputs.first_run }}
+          repositories: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories, 'All') }}
+          repositoriesToSkip: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories_to_skip, 'terraform-azurerm-avm-template') }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 

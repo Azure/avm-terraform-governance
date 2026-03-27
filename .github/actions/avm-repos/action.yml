@@ -3,14 +3,11 @@ name: avm-repos
 description: Gets AVM repositories based on GH app installation and outputs them as a JSON array.
 inputs:
   repositories:
-    description: "Target repositories, use this syntax to select specific repositories: 'avm-res-keyvault-vault'."
+    description: "Target repositories, comma separated list to select specific repositories: 'avm-res-keyvault-vault'."
     default: "All"
-  first_run:
-    description: "Whether to run in first run mode"
-    default: "false"
-  protectedReposFilePath:
-    description: "Path to the protected repositories file"
-    default: "${{ github.workspace }}/tf-repo-mgmt/protected_repos/ProtectedRepos.csv"
+  repositoriesToSkip:
+    description: "Repositories to skip, comma separated list of repos to skip, e.g. 'avm-template'."
+    default: ""
   outputDirectory:
     description: "Output directory for the repository data"
     default: "${{ github.workspace }}"
@@ -42,28 +39,32 @@ runs:
     - name: Generate Matrix
       id: matrix
       run: |
-        $triggerType = "${{ github.event_name }}"
-
-        $repositories = "All"
-        $firstRun = $false
-
-        if($triggerType -eq "workflow_dispatch") {
-          $repositories = "${{ inputs.repositories }}"
-          $firstRun = "${{ inputs.first_run }}".ToLower() -eq "true"
-        }
-
         $matrixParallel = 5
-        if($firstRun) {
-          $matrixParallel = 1
-        }
         Write-Output "matrixParallel=$matrixParallel" >> $env:GITHUB_OUTPUT
 
+        $repositories = "${{ inputs.repositories }}"
         if($repositories -eq "All") {
           $repositories = @()
         } else {
           $repositories = $repositories -split ','
         }
-        $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" -repoFilter $repositories -outputDirectory "${{ inputs.outputDirectory }}" -protectedReposFilePath "${{ inputs.protectedReposFilePath }}")
+
+        Write-Host "Repositories to include: $(ConvertTo-Json $repositories)"
+
+        $repositoriesToSkip = "${{ inputs.repositoriesToSkip }}"
+        if($repositoriesToSkip -eq "") {
+          $repositoriesToSkip = @()
+        } else {
+          $repositoriesToSkip = $repositoriesToSkip -split ','
+        }
+
+        Write-Host "Repositories to skip from input: $(ConvertTo-Json $repositoriesToSkip)"
+
+        $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" `
+          -repoFilter $repositories `
+          -outputDirectory "${{ inputs.outputDirectory }}" `
+          -additionalReposToSkip $repositoriesToSkip)
+
         $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
         Write-Host (ConvertTo-Json $matrix -Depth 10)
         Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
