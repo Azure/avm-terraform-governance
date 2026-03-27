@@ -95,7 +95,7 @@ Verify all resources are removed. Some resources (e.g., soft-delete enabled Key 
 
 ## Testing Multiple Examples
 
-Use the `avm` tool to do this. See parent skill. If yo udo not specify `AVM_EXAMPLE` then it will test all examples.
+Use the `avm` tool to do this. See parent skill. If you do not specify `AVM_EXAMPLE` then it will test all examples.
 
 ## Distributing Examples Across Subscriptions
 
