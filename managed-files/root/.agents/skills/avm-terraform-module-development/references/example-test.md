@@ -105,6 +105,7 @@ reduce blast radius, or run them in parallel.
 ### Setting the Subscription Per Example
 
 IF IN CODING AGENT DO NOT CHANGE THE ACTIVE SUBSCRIPTION WITHOUT EXPLICIT PROMPT.
+IF RUNNING LOCALLY, ASK THE USER BEFORE CHANGING THE SUBSCRIPTION.
 
 Set the `ARM_SUBSCRIPTION_ID` environment variable before running each example:
 
