@@ -1,149 +1,62 @@
-# Testing Examples Locally
+# Testing Examples Manually
 
-This reference covers manually testing AVM module examples against real Azure infrastructure. Each example in the `examples/` directory is an independent Terraform root module that can be deployed and validated.
+> **When to use this reference:**
+>
+> - You are running on **Windows** (on non-Windows systems, use the `avm` command instead).
+> - You want to **distribute tests across multiple Azure subscriptions**.
+> - You want to **retain deployed resources** after testing for manual validation (skip destroy).
 
-## Example Directory Structure
-
-```
-<module-root>/
-  examples/
-    default/
-      main.tf
-      terraform.tf
-    <other-example>/
-      main.tf
-      terraform.tf
-```
-
-Each subfolder under `examples/` is a standalone Terraform configuration. Test each one independently.
+Each subfolder under `examples/` is a standalone Terraform root module. Test each one independently.
 
 ## Testing Workflow
 
-For each example directory, run the following steps in order. Stop and fix or flag any errors before continuing to the next step.
+For each example directory, run these steps in order. Stop and fix any errors before proceeding.
 
-### Step 1: Initialize
-
-```shell
+```powershell
 cd examples/<example-dir>
+
+# 1. Init
 terraform init -upgrade
-```
 
-This downloads providers and modules at their latest compatible versions. Fix any provider constraint or module source errors before proceeding.
-
-### Step 2: Plan
-
-```shell
+# 2. Plan
 terraform plan -out=tfplan
-```
 
-Review the plan output. Look for:
-
-- **Errors**: Fix configuration issues (missing required variables, invalid references, schema mismatches).
-- **Unexpected changes**: Resources being replaced or destroyed that should be updated in-place may indicate a configuration problem.
-- **Warnings**: Address deprecation warnings or provider-specific advisories.
-
-### Step 3: Apply
-
-```shell
+# 3. Apply
 terraform apply tfplan
-```
 
-This creates the real Azure resources. Monitor for:
-
-- **Provisioning failures**: Quota limits, naming conflicts, region availability, or permission issues.
-- **Timeout errors**: Some resources take longer; check if the timeout is appropriately configured.
-- **Dependency errors**: Resources that fail because a dependency wasn't ready.
-
-Fix any errors, then re-run from Step 2 (plan) before re-applying.
-
-### Step 4: Idempotency Check
-
-```shell
+# 4. Idempotency check - run plan again WITHOUT -out
 terraform plan
 ```
 
-Run plan again **without** `-out`. The expected result is **no changes**:
+The idempotency check (step 4) must show **"No changes"**. If it reports drift, that is a bug - fix it. Common causes:
 
-```
-No changes. Your infrastructure matches the configuration.
-```
+- **Server-side defaults**: A property not set in config gets a default from Azure. Set it explicitly. Use `ignore_changes` only as a last resort.
+- **Computed attributes**: An output or reference that changes on every read.
+- **Provider bugs**: Check for known issues in the provider repository.
 
-If changes are detected, this indicates an idempotency issue — the module or provider is not correctly round-tripping state. Common causes:
+### Destroy
 
-- **Default values applied server-side**: A property not set in config gets a default from Azure, causing drift. Set the default explicitly in the configuration.
-  AS A LAST RESORT ONLY, use `ignore_changes`.
-- **Computed attributes feeding back**: An output or reference that changes on every read.
-- **Provider bugs**: Some provider resources report false drift. Check for known issues.
+**Ask the user before destroying.** They may want to inspect resources in the Azure portal or keep them for debugging.
 
-Flag idempotency failures to the user — these are bugs that must be fixed.
-
-### Step 5: Destroy
-
-IF RUNNING LOCALLY (NOT IN CODING AGENT): **Ask the user before destroying.** They may want to:
-
-- Manually inspect resources in the Azure portal.
-- Run additional tests or validations against the live infrastructure.
-- Keep resources for debugging.
-
-If the user confirms destruction:
-
-```shell
+```powershell
 terraform destroy
 ```
 
-Verify all resources are removed. Some resources (e.g., soft-delete enabled Key Vaults, managed identities with role assignments) may require manual cleanup or purging.
-
-## Testing Multiple Examples
-
-Use the `avm` tool to do this. See parent skill. If you do not specify `AVM_EXAMPLE` then it will test all examples.
+Some resources (e.g., soft-delete enabled Key Vaults) may require manual purging.
 
 ## Distributing Examples Across Subscriptions
 
-When testing many examples, you may want to distribute them across multiple Azure subscriptions to avoid hitting quota limits,
-reduce blast radius, or run them in parallel.
+To avoid quota limits or reduce blast radius, distribute examples across multiple subscriptions.
 
-### Setting the Subscription Per Example
+**Always ask the user before changing the subscription.**
 
-IF IN CODING AGENT DO NOT CHANGE THE ACTIVE SUBSCRIPTION WITHOUT EXPLICIT PROMPT.
-IF RUNNING LOCALLY, ASK THE USER BEFORE CHANGING THE SUBSCRIPTION.
-
-Set the `ARM_SUBSCRIPTION_ID` environment variable before running each example:
-
-```bash
-export ARM_SUBSCRIPTION_ID="<subscription-id>"
-```
+Set `ARM_SUBSCRIPTION_ID` before running each example:
 
 ```powershell
 $env:ARM_SUBSCRIPTION_ID = "<subscription-id>"
 ```
 
-### Round-Robin Across Subscriptions (Edge case)
-
-IF IN CODING AGENT DO NOT CHANGE THE ACTIVE SUBSCRIPTION WITHOUT EXPLICIT PROMPT.
-IF RUNNING LOCALLY, ASK THE USER BEFORE CHANGING THE SUBSCRIPTION.
-
-Distribute examples evenly across a pool of subscriptions:
-
-```bash
-subscriptions=(
-  "00000000-0000-0000-0000-000000000001"
-  "00000000-0000-0000-0000-000000000002"
-  "00000000-0000-0000-0000-000000000003"
-)
-
-i=0
-for dir in examples/*/; do
-  export ARM_SUBSCRIPTION_ID="${subscriptions[$((i % ${#subscriptions[@]}))]}"
-  echo "=== Testing ${dir} on subscription ${ARM_SUBSCRIPTION_ID} ==="
-  cd "${dir}"
-  terraform init -upgrade
-  terraform plan -out=tfplan
-  terraform apply tfplan
-  terraform plan
-  cd -
-  i=$((i + 1))
-done
-```
+### Round-Robin Example
 
 ```powershell
 $subscriptions = @(
@@ -165,65 +78,3 @@ foreach ($dir in Get-ChildItem -Path examples -Directory) {
   $i++
 }
 ```
-
-### Parallel Execution Across Subscriptions (Edge case)
-
-IF IN CODING AGENT DO NOT CHANGE THE ACTIVE SUBSCRIPTION WITHOUT EXPLICIT PROMPT.
-IF RUNNING LOCALLY, ASK THE USER BEFORE CHANGING THE SUBSCRIPTION.
-
-For faster testing, run examples in parallel with each pinned to a different subscription. Ensure each example uses a unique subscription to avoid resource name collisions:
-
-```bash
-subscriptions=(
-  "00000000-0000-0000-0000-000000000001"
-  "00000000-0000-0000-0000-000000000002"
-)
-
-i=0
-for dir in examples/*/; do
-  sub="${subscriptions[$((i % ${#subscriptions[@]}))]}"
-  (
-    export ARM_SUBSCRIPTION_ID="${sub}"
-    cd "${dir}"
-    terraform init -upgrade && terraform plan -out=tfplan && terraform apply tfplan && terraform plan
-  ) &
-  i=$((i + 1))
-done
-wait
-```
-
-```powershell
-$subscriptions = @(
-  "00000000-0000-0000-0000-000000000001"
-  "00000000-0000-0000-0000-000000000002"
-)
-
-$jobs = @()
-$i = 0
-foreach ($dir in Get-ChildItem -Path examples -Directory) {
-  $sub = $subscriptions[$i % $subscriptions.Count]
-  $examplePath = $dir.FullName
-  $jobs += Start-Job -ScriptBlock {
-    $env:ARM_SUBSCRIPTION_ID = $using:sub
-    Set-Location $using:examplePath
-    terraform init -upgrade
-    terraform plan -out=tfplan
-    terraform apply tfplan
-    terraform plan  # idempotency check
-  }
-  $i++
-}
-$jobs | Wait-Job | Receive-Job
-```
-
-## Error Handling Checklist
-
-During each phase, watch for these common issues:
-
-| Phase       | Common Errors                                           | Action                                                                                   |
-| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `init`      | Provider version conflicts, module source not found     | Fix `terraform.tf` constraints or module source references                               |
-| `plan`      | Missing required variables, invalid resource references | Add missing variables, fix references in `main.tf`                                       |
-| `apply`     | Quota exceeded, naming collision, permission denied     | Switch subscription, adjust names, check RBAC                                            |
-| Idempotency | Unexpected diff on re-plan                              | Fix drift — set server-side defaults explicitly or use `ignore_changes` as a LAST RESORT |
-| `destroy`   | Resources stuck or soft-deleted                         | Purge soft-deleted resources manually, check for locks                                   |
