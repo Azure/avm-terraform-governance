@@ -12,21 +12,10 @@ Each subfolder under `examples/` is a standalone Terraform root module. Test eac
 
 For each example directory, run these steps in order. Stop and fix any errors before proceeding.
 
-```powershell
-cd examples/<example-dir>
-
-# 1. Init
-terraform init -upgrade
-
-# 2. Plan
-terraform plan -out=tfplan
-
-# 3. Apply
-terraform apply tfplan
-
-# 4. Idempotency check - run plan again WITHOUT -out
-terraform plan
-```
+1. Run Terraform init
+2. Run Terraform plan
+3. Run Terraform apply
+4. Run Terraform plan again (idempotency check)
 
 The idempotency check (step 4) must show **"No changes"**. If it reports drift, that is a bug - fix it. Common causes:
 
