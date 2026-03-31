@@ -18,12 +18,13 @@ avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheeri
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
 avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,
-avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran
+avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran,
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,
 avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,
 avm-ptn-cloudshell-vnet,,,Cloud Shell with vNET Integration,"CloudShell VNet, Cloud Shell VNET, Cloud Shell in Virtual Network",travishankins,Travis Hankins,,
+avm-ptn-commercial-marketplace,,,"This AVM pattern module deploys the core infrastructure for Commercial Marketplace SaaS Accelerator on Azure (network, SQL, Key Vault, App Service, app registrations). It is intended for partners deploying a production-like SaaS landing zone with optional app code deployment. It does not manage CI/CD pipelines, custom domain/TLS lifecycle, or downstream business app code beyond bootstrap deployment.",,ethanjenkins1,Ethan Jenkins,ShironB,Shiron Babi
 avm-ptn-confidential-compute,,,Confidential Compute,,bjornhofer,Björn Höfer,,
 avm-ptn-dev-center-dev-box,,,Microsoft Dev Center Dev Box,,autocloudarc,Preston Parsard,,
 avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,
@@ -156,6 +157,7 @@ avm-res-network-natgateway,Microsoft.Network,natGateways,NAT Gateway,,mbilalamja
 avm-res-network-networkinterface,Microsoft.Network,networkInterfaces,Network Interface,NIC,fafriha,Farouk Friha,,
 avm-res-network-networkmanager,Microsoft.Network,networkManagers,Azure Virtual Network Manager,,cshea-msft,Charles Shea,,
 avm-res-network-networksecuritygroup,Microsoft.Network,networkSecurityGroups,Network Security Group,,maheshbenke,Mahesh Benke,,
+avm-res-network-networksecurityperimeter,Microsoft.Network,networkSecurityPerimeters,Terraform Azure Verified Resource Module for networkSecurityPerimeters,,sujaypillai,Sujay Pillai,,
 avm-res-network-networkwatcher,Microsoft.Network,networkWatchers,Azure Network Watcher,,terrymandin,Terry Mandin,,
 avm-res-network-privatednszone,Microsoft.Network,privateDnsZones,Private DNS Zone,,chianw,Chian Wong,,
 avm-res-network-privateendpoint,Microsoft.Network,privateEndpoints,Private Endpoint,,Misba-Yousuf,Misba Yousuf,,
@@ -191,7 +193,9 @@ avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Env
 avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
 avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,
 avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,
+avm-utl-compute-linuxvirtualmachine-azapi-replicator,,,utl module that helps users to migrate azurerm_linux_virtual_machine into azapi_resource,,lonegunmanb,lonegunmanb,,
 avm-utl-compute-orchestratedvirtualmachinescaleset-azapi-replicator,,,utl module that helps users to migrate azurerm_orchestrated_virtual_machine_scale_set resource into azapi_resource,,lonegunmanb,lonegunmanb,,
+avm-utl-containerregistry-containerregistry-azapi-replicator,,,utl module that helps users to migrate azurerm_container_registry into azapi_resource,,lonegunmanb,lonegunmanb,,
 avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,
 avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,
 avm-utl-naming,,,AVM Naming,,Nepomuceno,Gabriel Monteiro Nepomuceno,,
