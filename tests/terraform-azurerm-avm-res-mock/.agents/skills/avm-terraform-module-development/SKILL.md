@@ -59,7 +59,7 @@ If your change affects module usage or introduces new functionality, add or upda
 PORCH_NO_TUI=1 AVM_EXAMPLE="<ExampleDir>" ./avm test-examples
 ```
 
-For manual local testing of examples (init, plan, apply, idempotency check, and optional destroy), see [example-test.md](references/example-test.md).
+When running on Windows, distributing tests across multiple Azure subscriptions, or retaining deployed resources for manual validation, see [example-test.md](references/example-test.md) for manual local testing of examples (init, plan, apply, idempotency check, and optional destroy).
 
 ### Step 7: Update documentation (if justified)
 
