@@ -59,19 +59,7 @@ If your change affects module usage or introduces new functionality, add or upda
 PORCH_NO_TUI=1 AVM_EXAMPLE="<ExampleDir>" ./avm test-examples
 ```
 
-If you need more control, run these commands directly in the example directory:
-
-```bash
-cd examples/<example-dir>
-terraform init -upgrade
-terraform plan -out=tfplan
-terraform apply tfplan
-terraform plan  # idempotency check — must show "No changes"
-```
-
-**Ask the user before running `terraform destroy`.** They may want to inspect resources.
-
-Read [example-test.md](references/example-test.md) only if you need to distribute tests across multiple Azure subscriptions.
+For manual local testing of examples (init, plan, apply, idempotency check, and optional destroy), see [example-test.md](references/example-test.md).
 
 ### Step 7: Update documentation (if justified)
 
