@@ -15,6 +15,7 @@ avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-ta
 avm-ptn-alz-sub-vending,,,Subscription Vending,Application Landing Zones Vending,matt-FFFFFF,Matt White,jaredfholgate,Jared Holgate
 avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
 avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
+avm-ptn-app-service-landing-zone,,,ALZ Application Landing Zone for App Service,Production Ready Architectural Pattern for App Service,jaredfholgate,Jared Holgate,,
 avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
 avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
