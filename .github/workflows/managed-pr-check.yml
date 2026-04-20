@@ -29,7 +29,7 @@ jobs:
       subscriptionName: ${{ steps.subscriptions.outputs.subscriptionName }}
       subscriptionsJson: ${{ steps.subscriptions.outputs.subscriptionsJson }}
     steps:
-      - name: Get Randomised Subscriptions 
+      - name: Get Randomised Subscriptions
         id: subscriptions
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDs | ConvertFrom-Json
@@ -43,6 +43,7 @@ jobs:
           Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
         env:
           TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
+        shell: pwsh
 
   pr-check:
     if: github.event.pull_request.head.repo.fork == false
@@ -305,7 +306,7 @@ jobs:
     needs: [checkteardown, subscriptions]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
-      
+
       - name: Run teardown script
         run: |
           set -e
