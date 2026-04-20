@@ -34,10 +34,7 @@ jobs:
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
           $subscriptions = $subscriptions | Get-Random -Shuffle
-          foreach ($subscription in $subscriptions) {
-            #echo "::add-mask::$($subscription.id)"
-            Write-Host "Setting subscription $($subscription.name) $($subscription.id)"
-          }
+
           $subscriptionsJson = ConvertTo-Json $subscriptions -Compress
           Write-Host "Randomized subscriptions: $subscriptionsJson"
           Write-Output "subscriptionsJson=$($subscriptionsJson)" >> $env:GITHUB_OUTPUT
@@ -171,8 +168,7 @@ jobs:
           $examples = Get-ChildItem -Directory
           $processedExamples = @()
 
-          $subscriptionsJson = "${{ needs.subscriptions.outputs.subscriptionsJson }}"
-          $subscriptions = $subscriptionsJson | ConvertFrom-Json
+          $subscriptions = $env:subscriptionsJson | ConvertFrom-Json
 
           for ($i = 0; $i -lt $examples.Count; $i++) {
             if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
@@ -193,6 +189,8 @@ jobs:
 
         working-directory: examples
         shell: pwsh
+        env:
+          subscriptionsJson: ${{ needs.subscriptions.outputs.subscriptionsJson }}
 
   checksetup:
     runs-on: ubuntu-latest
