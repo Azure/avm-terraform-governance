@@ -43,6 +43,7 @@ jobs:
           Write-Output "subscriptionsJson=$($subscriptionsJson)" >> $env:GITHUB_OUTPUT
 
           $defaultSubscription = $subscriptions[0]
+          Write-Host "Defaulting to subscription $($defaultSubscription.name) $($defaultSubscription.id) for this workflow run"
           Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
           Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
         env:
