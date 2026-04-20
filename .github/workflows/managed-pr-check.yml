@@ -22,7 +22,7 @@ env:
 jobs:
   subscriptions:
     runs-on: ubuntu-latest
-    environment: empty-no-approval
+    environment: test-no-approval
     outputs:
       subscriptionId: ${{ steps.subscriptions.outputs.subscriptionId }}
       subscriptionName: ${{ steps.subscriptions.outputs.subscriptionName }}
