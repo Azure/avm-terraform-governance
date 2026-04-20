@@ -46,6 +46,11 @@ variable "github_repository_environment_name" {
   description = "Name of the environment used to store secrets for the test environment."
 }
 
+variable "github_repository_test_no_approval_environment_name" {
+  type        = string
+  description = "Name of the environment used to store secrets for the test environment without approval."
+}
+
 variable "github_repository_no_approval_environment_name" {
   type        = string
   description = "Name of the environment used as a dummy no approval environment."
