@@ -29,10 +29,10 @@ jobs:
       subscriptionName: ${{ steps.subscriptions.outputs.subscriptionName }}
       subscriptionsJson: ${{ steps.subscriptions.outputs.subscriptionsJson }}
     steps:
-      - name: Get Randomised Subscriptions
+      - name: Get Randomized Subscriptions
         id: subscriptions
         run: |
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDs | ConvertFrom-Json
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
           $subscriptions = $subscriptions | Get-Random -Shuffle
           $subscriptionsJson = ConvertTo-Json $subscriptions -Compress
           Write-Output "subscriptionsJson=$($subscriptionsJson)" >> $env:GITHUB_OUTPUT
