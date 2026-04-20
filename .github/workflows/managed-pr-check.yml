@@ -9,7 +9,6 @@ env:
   ARM_CLIENT_ID_OVERRIDE: ${{ secrets.ARM_CLIENT_ID_OVERRIDE }}
   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
   ARM_SUBSCRIPTION_ID_OVERRIDE: ${{ secrets.ARM_SUBSCRIPTION_ID_OVERRIDE }}
-  TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
   ARM_TENANT_ID_OVERRIDE: ${{ secrets.ARM_TENANT_ID_OVERRIDE }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
   ARM_USE_OIDC: "true"
@@ -21,10 +20,35 @@ env:
   VARS_CONTEXT: ${{ toJson(vars) }}
 
 jobs:
+  subscriptions:
+    if: github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    environment: test-no-approval
+    outputs:
+      subscriptionId: ${{ steps.subscriptions.outputs.subscriptionId }}
+      subscriptionName: ${{ steps.subscriptions.outputs.subscriptionName }}
+      subscriptionsJson: ${{ steps.subscriptions.outputs.subscriptionsJson }}
+    steps:
+      - name: Get Randomised Subscriptions 
+        id: subscriptions
+        run: |
+          $subscriptions = $env:TEST_SUBSCRIPTION_IDs | ConvertFrom-Json
+          $subscriptions = $subscriptions | Get-Random -Shuffle
+          $subscriptionsJson = ConvertTo-Json $subscriptions -Compress
+          Write-Output "subscriptionsJson=$($subscriptionsJson)" >> $env:GITHUB_OUTPUT
+
+          $defaultSubscription = $subscriptions[0]
+          echo "::add-mask::$($defaultSubscription.id)"
+          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
+          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
+        env:
+          TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
+
   pr-check:
     if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     environment: test
+    needs: subscriptions
     steps:
       - name: Free up disk space
         run: |
@@ -36,22 +60,12 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
-      - name: Get Default Subscription ID
-        id: get-subscription
-        run: |
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          $defaultSubscription = $subscriptions[0]
-          echo "::add-mask::$($defaultSubscription.id)"
-          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
-          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-
       - name: pr-check
         run: |
           set -e
 
-          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
-          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for PR check"
+          export ARM_SUBSCRIPTION_ID=${{ needs.subscriptions.outputs.subscriptionId }}
+          echo "Using subscription ${{ needs.subscriptions.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for PR check"
 
           if ! [ -z "$RUNNER_DEBUG" ]; then
             echo "PORCH_LOG_LEVEL=DEBUG" >> $GITHUB_ENV
@@ -102,6 +116,7 @@ jobs:
     name: Integration Test Run
     runs-on: ubuntu-latest
     environment: test
+    needs: subscriptions
     steps:
       - name: Free up disk space
         run: |
@@ -113,22 +128,12 @@ jobs:
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
 
-      - name: Get Default Subscription ID
-        id: get-subscription
-        run: |
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          $defaultSubscription = $subscriptions[0]
-          echo "::add-mask::$($defaultSubscription.id)"
-          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
-          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-
       - name: Integration Test Run
         run: |
           set -e
 
-          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
-          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for Integration Tests"
+          export ARM_SUBSCRIPTION_ID=${{ needs.subscriptions.outputs.subscriptionId }}
+          echo "Using subscription ${{ needs.subscriptions.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for Integration Tests"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -149,6 +154,7 @@ jobs:
     if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     environment: test
+    needs: subscriptions
     outputs:
       examples: ${{ steps.getexamples.outputs.examples }}
     steps:
@@ -159,7 +165,9 @@ jobs:
           $examples = Get-ChildItem -Directory
           $processedExamples = @()
 
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
+          $subscriptionsJson = "${{ needs.subscriptions.outputs.subscriptionsJson }}"
+          $subscriptions = $subscriptionsJson | ConvertFrom-Json
+          $subscriptions = $subscriptions | Get-Random -Shuffle
 
           for ($i = 0; $i -lt $examples.Count; $i++) {
             if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
@@ -202,24 +210,16 @@ jobs:
     if: needs.checksetup.outputs.setup_exists == 'true' && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     environment: test
-    needs: checksetup
+    needs: [ checksetup, subscriptions ]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
-      - name: Get Default Subscription ID
-        id: get-subscription
-        run: |
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          $defaultSubscription = $subscriptions[0]
-          echo "::add-mask::$($defaultSubscription.id)"
-          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
-          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+
       - name: Run global setup script
         run: |
           set -e
 
-          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
-          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global setup"
+          export ARM_SUBSCRIPTION_ID=${{ needs.subscriptions.outputs.subscriptionId }}
+          echo "Using subscription ${{ needs.subscriptions.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global setup"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
@@ -302,24 +302,16 @@ jobs:
     if: always() && needs.checkteardown.outputs.teardown_exists == 'true' && github.event.repository.name != 'terraform-azurerm-avm-template' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     environment: test
-    needs: checkteardown
+    needs: [checkteardown, subscriptions]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
-      - name: Get Default Subscription ID
-        id: get-subscription
-        run: |
-          $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-          $defaultSubscription = $subscriptions[0]
-          echo "::add-mask::$($defaultSubscription.id)"
-          Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
-          Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+      
       - name: Run teardown script
         run: |
           set -e
 
-          export ARM_SUBSCRIPTION_ID=${{ steps.get-subscription.outputs.subscriptionId }}
-          echo "Using subscription ${{ steps.get-subscription.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global teardown"
+          export ARM_SUBSCRIPTION_ID=${{ needs.subscriptions.outputs.subscriptionId }}
+          echo "Using subscription ${{ needs.subscriptions.outputs.subscriptionName }} $ARM_SUBSCRIPTION_ID for global teardown"
 
           export REMOTE_SCRIPT="https://raw.githubusercontent.com/Azure/avm-terraform-governance/main/scripts"
           # This needs to be in the parent directory to avoid git seeing the file as a change
