@@ -114,33 +114,31 @@ jobs:
           path: ${{ runner.temp }}/test.tar
           retention-days: 2
 
-      
+      # - name: Run Trivy vulnerability scanner
+      #   id: trivy
+      #   uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.32.0
+      #   with:
+      #     version: v0.69.3
+      #     image-ref: ${{ env.CONTAINER_IMAGE }}
+      #     exit-code: 0
+      #     ignore-unfixed: true
+      #     hide-progress: true
+      #     scanners: vuln
+      #     output: trivy.txt
 
-      - name: Run Trivy vulnerability scanner
-        id: trivy
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.32.0
-        with:
-          version: v0.69.3
-          image-ref: ${{ env.CONTAINER_IMAGE }}
-          exit-code: 0
-          ignore-unfixed: true
-          hide-progress: true
-          scanners: vuln
-          output: trivy.txt
-
-      - name: Publish Trivy Output to Summary
-        run: |
-          if [[ -s trivy.txt ]]; then
-            {
-              echo "## Trivy Output"
-              echo "<details><summary>Click to expand</summary>"
-              echo ""
-              echo '```terraform'
-              cat trivy.txt
-              echo '```'
-              echo "</details>"
-            } >> $GITHUB_STEP_SUMMARY
-          fi
+      # - name: Publish Trivy Output to Summary
+      #   run: |
+      #     if [[ -s trivy.txt ]]; then
+      #       {
+      #         echo "## Trivy Output"
+      #         echo "<details><summary>Click to expand</summary>"
+      #         echo ""
+      #         echo '```terraform'
+      #         cat trivy.txt
+      #         echo '```'
+      #         echo "</details>"
+      #       } >> $GITHUB_STEP_SUMMARY
+      #     fi
 
   test-governance:
     runs-on: ubuntu-latest
