@@ -482,12 +482,6 @@ if(!$repositoryCreationModeEnabled) {
     }
 }
 
-# Shuffle the test subscription IDs to distribute load
-$seed = 0
-foreach($char in $repoName.ToCharArray()) {
-    $seed += [int][char]$char
-}
-$testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle -SetSeed $seed
 Write-Host "Using test subscription IDs:"
 Write-Host $($testSubscriptionIds | ConvertTo-Json)
 
