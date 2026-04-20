@@ -30,9 +30,9 @@ resource "github_actions_environment_secret" "client_id" {
 }
 
 resource "github_repository_environment" "test_no_approval" {
-  count               = var.repository_creation_mode_enabled ? 0 : 1
-  environment         = var.github_repository_test_no_approval_environment_name
-  repository          = github_repository.this.name
+  count       = var.repository_creation_mode_enabled ? 0 : 1
+  environment = var.github_repository_test_no_approval_environment_name
+  repository  = github_repository.this.name
 }
 
 resource "github_actions_environment_secret" "test_subscription_ids" {
