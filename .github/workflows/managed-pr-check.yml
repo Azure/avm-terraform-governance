@@ -34,11 +34,15 @@ jobs:
         run: |
           $subscriptions = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
           $subscriptions = $subscriptions | Get-Random -Shuffle
+          foreach ($subscription in $subscriptions) {
+            #echo "::add-mask::$($subscription.id)"
+            Write-Host "Setting subscription $($subscription.name) $($subscription.id)"
+          }
           $subscriptionsJson = ConvertTo-Json $subscriptions -Compress
+          Write-Host "Randomized subscriptions: $subscriptionsJson"
           Write-Output "subscriptionsJson=$($subscriptionsJson)" >> $env:GITHUB_OUTPUT
 
           $defaultSubscription = $subscriptions[0]
-          echo "::add-mask::$($defaultSubscription.id)"
           Write-Output "subscriptionId=$($defaultSubscription.id)" >> $env:GITHUB_OUTPUT
           Write-Output "subscriptionName=$($defaultSubscription.name)" >> $env:GITHUB_OUTPUT
         env:
@@ -168,7 +172,6 @@ jobs:
 
           $subscriptionsJson = "${{ needs.subscriptions.outputs.subscriptionsJson }}"
           $subscriptions = $subscriptionsJson | ConvertFrom-Json
-          $subscriptions = $subscriptions | Get-Random -Shuffle
 
           for ($i = 0; $i -lt $examples.Count; $i++) {
             if (Test-Path "$($examples[$i].FullName)/.e2eignore") {
