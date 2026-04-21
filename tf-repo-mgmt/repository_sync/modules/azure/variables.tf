@@ -18,9 +18,9 @@ variable "github_repository_name" {
   description = "Name of the GitHub repository."
 }
 
-variable "github_repository_environment_name" {
-  type        = string
-  description = "Name of the environment used to store secrets for the test environment."
+variable "github_repository_environment_names" {
+  type        = set(string)
+  description = "Names of the GitHub environments to create federated identity credentials for. The OIDC subject claim includes the environment name, so one credential is created per environment."
 }
 
 variable "location" {
