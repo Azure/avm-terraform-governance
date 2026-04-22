@@ -3,8 +3,9 @@ locals {
 
   # Approval-gated environments. Map key -> environment name.
   approval_environments = var.repository_creation_mode_enabled ? {} : {
-    pr_check      = var.github_repository_pr_check_environment_name
-    examples_test = var.github_repository_examples_test_environment_name
+    pr_check         = var.github_repository_pr_check_environment_name
+    integration_test = var.github_repository_integration_test_environment_name
+    examples_test    = var.github_repository_examples_test_environment_name
   }
 }
 

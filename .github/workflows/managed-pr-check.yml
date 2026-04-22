@@ -122,7 +122,7 @@ jobs:
     name: Terraform Integration Tests
     if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
-    environment: pr-check
+    environment: integration-test
     needs: subscriptions
     steps:
       - name: Free up runner disk space
