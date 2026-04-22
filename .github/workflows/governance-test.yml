@@ -7,10 +7,11 @@ on:
       - main
     paths:
       - .github/workflows/governance-test.yml
+      - .github/workflows/managed-pr-check.yml
       - container/**
       - porch-configs/**
       - grept-policies/**
-      - managed-files/root/**
+      - managed-files/**
       - mapotf-configs/**
       - Makefile
       - tflint-configs/**
