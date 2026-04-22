@@ -57,7 +57,7 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_TOKEN }}
 
-      - uses: juliangruber/read-file-action@02bbba9876a8f870efd4ad64e3b9088d3fb94d4b # v1.1.6
+      - uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
         id: readenv
         with:
           path: ./container/version.env
