@@ -28,13 +28,13 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
-          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       - name: Get Repository Data
         run: |
-          $repositories = @(../.github/actions/avm-repos/scripts/Get-RepositoriesWhereAppInstalled.ps1 -outputDirectory "${{ github.workspace }}")
+          $repositories = @(../.github/actions/avm-repos/scripts/Get-RepositoriesWhereAppInstalled.ps1 -outputDirectory "${{ github.workspace }}" -metaDataFilePath "${{ github.workspace }}/tf-repo-mgmt/repository-meta-data/meta-data.csv")
           Write-Host (ConvertTo-Json $repositories -Depth 10)
 
           # remove the terraform-azurerm-avm-template repo from the list
@@ -62,18 +62,21 @@ jobs:
             *.csv
 
       - name: Upload Repo Logs Json
-        if: always() && hashFiles('warning.log.json') != ''
+        if: always() && hashFiles('issues.log.json') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: warning.log.json
-          path: warning.log.json
+          name: issues.log.json
+          path: issues.log.json
 
       - name: Repo Error
-        if: always() && hashFiles('warning.log.json') != ''
+        if: always() && hashFiles('issues.log.json') != ''
         run: |
-          $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/issues.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
-          $issueLog | ForEach-Object {
+          $issueLog | Where-Object { $_.severity -eq "error" } | ForEach-Object {
             echo "::error title=$($_.repoId) has issues::$($_.message)"
+          }
+          $issueLog | Where-Object { $_.severity -eq "warning" } | ForEach-Object {
+            echo "::warning title=$($_.repoId) has issues::$($_.message)"
           }
         shell: pwsh

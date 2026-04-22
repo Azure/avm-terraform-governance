@@ -19,7 +19,7 @@ param(
     [string]$moduleDisplayName = "Example Repository",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
-    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
+    [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
         "github_repository"
@@ -239,13 +239,17 @@ $moduleName = $moduleDisplayName
 $moduleMetaData = $null
 
 if(!$repositoryCreationModeEnabled){
-    $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
-    $moduleMetaData = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId }
+    $moduleMetaData = $repoMetaData
     if(!$moduleMetaData) {
         Write-Warning "Module metadata missing for: $($repoId)"
         $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist." -data $repoId -issueLog $issueLog
         $moduleName = $repoId
     } else {
+        $moduleName = $moduleMetaData.moduleDisplayName
+    }
+} elseif($repoMetaData) {
+    $moduleMetaData = $repoMetaData
+    if($moduleMetaData.moduleDisplayName) {
         $moduleName = $moduleMetaData.moduleDisplayName
     }
 }

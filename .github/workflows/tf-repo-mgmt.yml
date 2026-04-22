@@ -78,7 +78,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         with:
-          app-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
@@ -107,6 +107,12 @@ jobs:
 
           $testSubscriptionIds = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
 
+          $repoMetaDataJson = $env:REPO_META_DATA_JSON
+          $repoMetaData = $null
+          if ($repoMetaDataJson -and $repoMetaDataJson -ne 'null') {
+            $repoMetaData = $repoMetaDataJson | ConvertFrom-Json
+          }
+
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
           Write-Host "Running repo sync"
@@ -120,6 +126,7 @@ jobs:
             -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `
+            -repoMetaData $repoMetaData `
             -outputDirectory "${{ github.workspace }}" `
             -forceUserRemoval:$forceUserRemoval
 
@@ -132,6 +139,7 @@ jobs:
           ARM_USE_AZUREAD: true
           ARM_USE_OIDC: true
           TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
+          REPO_META_DATA_JSON: ${{ toJson(matrix.repoMetaData) }}
 
       - name: Upload Issue Logs Json
         if: always() && hashFiles('issue.log.json') != ''
