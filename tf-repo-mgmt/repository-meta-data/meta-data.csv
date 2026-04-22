@@ -1,5 +1,6 @@
 moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName,isArchived
 avm-ptn-aca-lza-hosting-environment,,,Azure Container Apps LZA Hosting Environment,,sam-cogan,Sam Cogan,,,false
+avm-ptn-ai-foundry-enterprise,,,AI Foundry Enterprise,,,,,,true
 avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,,false
 avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,,false
 avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,,false
@@ -8,6 +9,7 @@ avm-ptn-aks-enterprise,,,AKS Enterprise,,ms-henglu,Heng Lu,,,false
 avm-ptn-aks-production,,,Azure Kubernetes Service,,zioproto,Saverio Proto,,,false
 avm-ptn-alz,,,Azure Landing Zone,,matt-FFFFFF,Matt White,,,false
 avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops,,,ALZ Application Landing Zone CI/CD Bootstrap - Azure DevOps,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-application-landing-zone-cicd-bootstrap-github,,,ALZ Application Landing Zone CI/CD Bootstrap - GitHub,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-alz-application-landing-zone-identity-and-access,,,ALZ Identity and Access Management,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-alz-connectivity-hub-and-spoke-vnet,,,ALZ Connectivity Hub and Spoke,Azure Landing Zones - Hub and Spoke,jaredfholgate,Jared Holgate,,,false
 avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,,false
@@ -15,6 +17,7 @@ avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-ta
 avm-ptn-alz-sub-vending,,,Subscription Vending,Application Landing Zones Vending,matt-FFFFFF,Matt White,jaredfholgate,Jared Holgate,false
 avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,,false
 avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,,false
+avm-ptn-app-service-landing-zone,,,App Service Landing Zone,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
 avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
 avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,,false
@@ -28,6 +31,8 @@ avm-ptn-cloudshell-vnet,,,Cloud Shell with vNET Integration,"CloudShell VNet, Cl
 avm-ptn-commercial-marketplace,,,"This AVM pattern module deploys the core infrastructure for Commercial Marketplace SaaS Accelerator on Azure (network, SQL, Key Vault, App Service, app registrations). It is intended for partners deploying a production-like SaaS landing zone with optional app code deployment. It does not manage CI/CD pipelines, custom domain/TLS lifecycle, or downstream business app code beyond bootstrap deployment.",,ethanjenkins1,Ethan Jenkins,ShironB,Shiron Babi,false
 avm-ptn-confidential-compute,,,Confidential Compute,,bjornhofer,Björn Höfer,,,false
 avm-ptn-dev-center-dev-box,,,Microsoft Dev Center Dev Box,,autocloudarc,Preston Parsard,,,false
+avm-ptn-enterprise-rag,,,Enterprise RAG,,,,,,true
+avm-ptn-ephemeral-credential,,,AVM Ephemeral Credential Pattern,,lonegunmanb,Zijie He,,,false
 avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-finopstoolkit-finopshub,,,FinOps Toolkit FinOps Hub,,didayal,Divyadeep Dayal,,,false
 avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoint-secured Storage,,donovm4,Donovan McCoy,,,false
@@ -98,6 +103,7 @@ avm-res-desktopvirtualization-scalingplan,Microsoft.DesktopVirtualization,scalin
 avm-res-desktopvirtualization-workspace,Microsoft.DesktopVirtualization,workspaces,Azure Virtual Desktop (AVD) Workspace,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
 avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msft,Charles Shea,,,false
 avm-res-deviceregistry-assetendpointprofile,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profile,,lonegunmanb,Zijie He,,,false
+avm-res-deviceregistry-assetendpointprofiles,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profiles,,lonegunmanb,Zijie He,,,false
 avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,,false
 avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,,false
 avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,,false
@@ -126,6 +132,7 @@ avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed S
 avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,,false
 avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,,false
 avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,,false
+avm-res-kubernetesconfiguration-extension,Microsoft.KubernetesConfiguration,extensions,Kubernetes Configuration Extension,,lonegunmanb,Zijie He,,,false
 avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,,false
 avm-res-loadtestservice-loadtest,Microsoft.LoadTestService,loadTests,Load Testing Service,,LaurentLesle,Laurent Lesle,,,false
 avm-res-logic-workflow,Microsoft.Logic,workflows,Logic Apps (Workflow),,bakrish,Bala Krishnamoorthy,,,false
@@ -196,6 +203,7 @@ avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Lo
 avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,,false
 avm-utl-compute-linuxvirtualmachine-azapi-replicator,,,utl module that helps users to migrate azurerm_linux_virtual_machine into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-compute-orchestratedvirtualmachinescaleset-azapi-replicator,,,utl module that helps users to migrate azurerm_orchestrated_virtual_machine_scale_set resource into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-compute-windowsvirtualmachine-azapi-replicator,,,utl module that helps users to migrate azurerm_windows_virtual_machine into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-containerregistry-containerregistry-azapi-replicator,,,utl module that helps users to migrate azurerm_container_registry into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,,false
 avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,,false
@@ -204,6 +212,7 @@ avm-utl-network-ip-addresses,,,AVM Network IP Addresses,IPv4 CIDR,jaredfholgate,
 avm-utl-network-privatednszone-azapi-replicator,,,utl module that helps users to migrate azurerm_private_dns_zone into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-network-subnet-azapi-replicator,,,utl module that helps users to migrate azurerm_subnet into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-network-virtualnetwork-azapi-replicator,,,utl module that helps users to migrate azurerm_virtual_network into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-privatedns-privatednszone-azapi-replicator,,,utl module that helps users to migrate azurerm_private_dns_zone into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-regions,,,Azure Regions Data,,matt-FFFFFF,Matt White,,,false
 avm-utl-resources-resourcegroup-azapi-replicator,,,utl module that helps users to migrate azurerm_resource_group into azapi_resource,,lonegunmanb,lonegunmanb,,,false
 avm-utl-roledefinitions,,,AVM Utility module for role definitions,,matt-FFFFFF,Matt White,,,false

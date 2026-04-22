@@ -16,7 +16,6 @@ param(
     [bool]$planOnly = $false,
     [string]$repoId = "avm-ptn-example-repo",
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
-    [string]$moduleDisplayName = "Example Repository",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [object]$repoMetaData = $null,
@@ -43,12 +42,15 @@ function Add-IssueToLog {
         [string]$message,
         [object]$data,
         [array]$issueLog,
+        [ValidateSet("warning", "error")]
+        [string]$severity = "error",
         [string]$issueLogFile="issue.log"
     )
 
     $issueLogItem = @{
         orgAndRepoName = $orgAndRepoName
         type = $type
+        severity = $severity
         message = $message
         data = $data
     }
@@ -234,7 +236,7 @@ $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
 
-$moduleName = $moduleDisplayName
+$moduleName = $repoId
 
 $moduleMetaData = $null
 
@@ -242,7 +244,7 @@ if(!$repositoryCreationModeEnabled){
     $moduleMetaData = $repoMetaData
     if(!$moduleMetaData) {
         Write-Warning "Module metadata missing for: $($repoId)"
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist." -data $repoId -issueLog $issueLog
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist in meta-data.csv. Add an entry to meta-data.csv." -data $repoId -severity "warning" -issueLog $issueLog
         $moduleName = $repoId
     } else {
         $moduleName = $moduleMetaData.moduleDisplayName
