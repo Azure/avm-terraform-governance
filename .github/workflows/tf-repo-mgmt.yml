@@ -153,8 +153,15 @@ jobs:
         run: |
           $issueLogJson = Get-Content -Path "${{ github.workspace }}/issue.log.json" -Raw
           $issueLog = ConvertFrom-Json $issueLogJson
+          $hasError = $false
           $issueLog | ForEach-Object {
-            echo "::error title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+            $severity = if ($_.severity) { $_.severity } else { "error" }
+            if ($severity -eq "warning") {
+              echo "::warning title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+            } else {
+              echo "::error title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+              $hasError = $true
+            }
           }
-          exit 1
+          if ($hasError) { exit 1 }
         shell: pwsh
