@@ -245,7 +245,7 @@ jobs:
             echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
-          ./avm global-teardown
+          ./avm globalsetup
         shell: bash
 
   testexamples:
@@ -339,6 +339,6 @@ jobs:
             echo "AVM_PORCH_STDOUT=--stdout --success" >> $GITHUB_ENV
           fi
 
-          ./avm global-teardown
+          ./avm globalteardown
         id: global-teardown
         shell: bash
