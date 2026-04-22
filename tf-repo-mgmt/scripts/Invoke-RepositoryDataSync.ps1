@@ -10,7 +10,8 @@ param(
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
     [string]$outputDirectory = ".",
     [string]$applicationName = "azure-verified-modules",
-    [string]$applicationId = "1049636"
+    [string]$applicationId = "1049636",
+    [bool]$skipPrCreation = $true
 )
 
 # Meta Data
@@ -215,6 +216,13 @@ if(!$gitStatus) {
 }
 
 git reset --hard HEAD
+
+if($skipPrCreation) {
+    Write-Host "skipPrCreation is true. Skipping PR creation for repository data sync."
+    Set-Location -Path $currentPath
+    Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+    exit 0
+}
 
 $existingPR = gh pr list --state open --search "chore: terraform csv update" --json number,title,url,headRefName --repo $avmDocsRepositoryName | ConvertFrom-Json
 

@@ -61,19 +61,20 @@ if($ownerPrimaryDisplayName -eq "") {
   return
 }
 
-if (!$skipMetaDataCreation) {
+$metaDataVariables = [PSCustomObject]@{
+  moduleId                   = $moduleName
+  providerNamespace          = $resourceProviderNamespace
+  providerResourceType       = $resourceType
+  moduleDisplayName          = $moduleDisplayName
+  alternativeNames           = $moduleAlternativeNames
+  primaryOwnerGitHubHandle   = $ownerPrimaryGitHubHandle
+  primaryOwnerDisplayName    = $ownerPrimaryDisplayName
+  secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
+  secondaryOwnerDisplayName  = $ownerSecondaryDisplayName
+  isArchived                 = "false"
+}
 
-  $metaDataVariables = [PSCustomObject]@{
-    moduleId                   = $moduleName
-    providerNamespace          = $resourceProviderNamespace
-    providerResourceType       = $resourceType
-    moduleDisplayName          = $moduleDisplayName
-    alternativeNames           = $moduleAlternativeNames
-    primaryOwnerGitHubHandle   = $ownerPrimaryGitHubHandle
-    primaryOwnerDisplayName    = $ownerPrimaryDisplayName
-    secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
-    secondaryOwnerDisplayName  = $ownerSecondaryDisplayName
-  }
+if (!$skipMetaDataCreation) {
 
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
@@ -177,6 +178,7 @@ if(!$skipRepoSync){
     -planOnly $false `
     -repoId $moduleName `
     -repoUrl $repositoryUrl `
+    -repoMetaData $metaDataVariables `
     -skipCleanup:$skipCleanup.IsPresent
 
   Write-Host ""

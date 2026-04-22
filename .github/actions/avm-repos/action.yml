@@ -11,6 +11,9 @@ inputs:
   outputDirectory:
     description: "Output directory for the repository data"
     default: "${{ github.workspace }}"
+  metaDataFilePath:
+    description: "Path to the meta-data.csv file used to determine expected archive state for repositories."
+    default: "${{ github.workspace }}/tf-repo-mgmt/repository-meta-data/meta-data.csv"
   clientId:
     description: "GitHub App Client ID"
     required: true
@@ -63,7 +66,8 @@ runs:
         $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" `
           -repoFilter $repositories `
           -outputDirectory "${{ inputs.outputDirectory }}" `
-          -additionalReposToSkip $repositoriesToSkip)
+          -additionalReposToSkip $repositoriesToSkip `
+          -metaDataFilePath "${{ inputs.metaDataFilePath }}")
 
         $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
         Write-Host (ConvertTo-Json $matrix -Depth 10)
@@ -73,18 +77,21 @@ runs:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
     - name: Upload Repo Logs Json
-      if: always() && hashFiles('warning.log.json') != ''
+      if: always() && hashFiles('issues.log.json') != ''
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: warning.log.json
-        path: warning.log.json
+        name: issues.log.json
+        path: issues.log.json
 
     - name: Repo Error
-      if: always() && hashFiles('warning.log.json') != ''
+      if: always() && hashFiles('issues.log.json') != ''
       run: |
-        $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
+        $issueLogJson = Get-Content -Path "${{ github.workspace }}/issues.log.json" -Raw
         $issueLog = ConvertFrom-Json $issueLogJson
-        $issueLog | ForEach-Object {
+        $issueLog | Where-Object { $_.severity -eq "error" } | ForEach-Object {
           echo "::error title=$($_.repoId) has issues::$($_.message)"
+        }
+        $issueLog | Where-Object { $_.severity -eq "warning" } | ForEach-Object {
+          echo "::warning title=$($_.repoId) has issues::$($_.message)"
         }
       shell: pwsh
