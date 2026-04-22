@@ -43,7 +43,12 @@ variable "module_name" {
 
 variable "github_repository_pr_check_environment_name" {
   type        = string
-  description = "Name of the approval-gated environment used by the PR check and integration test jobs."
+  description = "Name of the approval-gated environment used by the PR check job."
+}
+
+variable "github_repository_integration_test_environment_name" {
+  type        = string
+  description = "Name of the approval-gated environment used by the integration test job."
 }
 
 variable "github_repository_examples_test_environment_name" {
