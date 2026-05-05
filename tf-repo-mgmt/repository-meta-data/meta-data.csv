@@ -23,6 +23,7 @@ avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Man
 avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,,false
 avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,,false
 avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran,,false
+avm-ptn-azureimagebuilder,,,Azure Image Builder,,ethanjenkins1,Ethan Jenkins MSFT,,,false
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,,false
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,,false
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,,false
