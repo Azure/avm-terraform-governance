@@ -242,11 +242,7 @@ $moduleMetaData = $null
 
 if(!$repositoryCreationModeEnabled){
     $moduleMetaData = $repoMetaData
-    if(!$moduleMetaData) {
-        Write-Warning "Module metadata missing for: $($repoId)"
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist in meta-data.csv. Add an entry to meta-data.csv." -data $repoId -severity "warning" -issueLog $issueLog
-        $moduleName = $repoId
-    } else {
+    if($moduleMetaData) {
         $moduleName = $moduleMetaData.moduleDisplayName
     }
 } elseif($repoMetaData) {
