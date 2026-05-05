@@ -79,7 +79,7 @@ if (!$skipMetaDataCreation) {
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
-  gh repo fork --remote --clone --default-branch-only $governanceRepoUrl
+  gh repo fork --clone --default-branch-only $governanceRepoUrl
   $tempRepoFolderName = $governanceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
   $tempOrgAndRepoName = $governanceRepoUrl.Split('/')[-2..-1] -join '/'
@@ -200,7 +200,7 @@ if (!$skipCreateAppInstallationRequest) {
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
-  gh repo fork --remote --clone --default-branch-only $openSourceRepoUrl
+  gh repo fork --clone --default-branch-only $openSourceRepoUrl
   $tempRepoFolderName = $openSourceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
   $tempOrgAndRepoName = $openSourceRepoUrl.Split('/')[-2..-1] -join '/'
