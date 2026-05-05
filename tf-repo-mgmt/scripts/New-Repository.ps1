@@ -61,24 +61,25 @@ if($ownerPrimaryDisplayName -eq "") {
   return
 }
 
-if (!$skipMetaDataCreation) {
+$metaDataVariables = [PSCustomObject]@{
+  moduleId                   = $moduleName
+  providerNamespace          = $resourceProviderNamespace
+  providerResourceType       = $resourceType
+  moduleDisplayName          = $moduleDisplayName
+  alternativeNames           = $moduleAlternativeNames
+  primaryOwnerGitHubHandle   = $ownerPrimaryGitHubHandle
+  primaryOwnerDisplayName    = $ownerPrimaryDisplayName
+  secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
+  secondaryOwnerDisplayName  = $ownerSecondaryDisplayName
+  isArchived                 = "false"
+}
 
-  $metaDataVariables = [PSCustomObject]@{
-    moduleId                   = $moduleName
-    providerNamespace          = $resourceProviderNamespace
-    providerResourceType       = $resourceType
-    moduleDisplayName          = $moduleDisplayName
-    alternativeNames           = $moduleAlternativeNames
-    primaryOwnerGitHubHandle   = $ownerPrimaryGitHubHandle
-    primaryOwnerDisplayName    = $ownerPrimaryDisplayName
-    secondaryOwnerGitHubHandle = $ownerSecondaryGitHubHandle
-    secondaryOwnerDisplayName  = $ownerSecondaryDisplayName
-  }
+if (!$skipMetaDataCreation) {
 
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
-  gh repo fork --remote --clone --default-branch-only $governanceRepoUrl
+  gh repo fork --clone --default-branch-only $governanceRepoUrl
   $tempRepoFolderName = $governanceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
   $tempOrgAndRepoName = $governanceRepoUrl.Split('/')[-2..-1] -join '/'
@@ -177,6 +178,7 @@ if(!$skipRepoSync){
     -planOnly $false `
     -repoId $moduleName `
     -repoUrl $repositoryUrl `
+    -repoMetaData $metaDataVariables `
     -skipCleanup:$skipCleanup.IsPresent
 
   Write-Host ""
@@ -198,7 +200,7 @@ if (!$skipCreateAppInstallationRequest) {
   $currentPath = Get-Location
   New-Item -ItemType Directory -Path $tempPath -Force | Out-Null
   Set-Location -Path $tempPath
-  gh repo fork --remote --clone --default-branch-only $openSourceRepoUrl
+  gh repo fork --clone --default-branch-only $openSourceRepoUrl
   $tempRepoFolderName = $openSourceRepoUrl.Split('/')[-1]
   Set-Location -Path $tempRepoFolderName
   $tempOrgAndRepoName = $openSourceRepoUrl.Split('/')[-2..-1] -join '/'

@@ -16,10 +16,9 @@ param(
     [bool]$planOnly = $false,
     [string]$repoId = "avm-ptn-example-repo",
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
-    [string]$moduleDisplayName = "Example Repository",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
-    [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
+    [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
         "github_repository"
@@ -43,12 +42,15 @@ function Add-IssueToLog {
         [string]$message,
         [object]$data,
         [array]$issueLog,
+        [ValidateSet("warning", "error")]
+        [string]$severity = "error",
         [string]$issueLogFile="issue.log"
     )
 
     $issueLogItem = @{
         orgAndRepoName = $orgAndRepoName
         type = $type
+        severity = $severity
         message = $message
         data = $data
     }
@@ -234,18 +236,22 @@ $env:ARM_USE_AZUREAD = "true"
 
 $issueLog = @()
 
-$moduleName = $moduleDisplayName
+$moduleName = $repoId
 
 $moduleMetaData = $null
 
 if(!$repositoryCreationModeEnabled){
-    $repositoryMetaData = Get-Content -Path $metaDataFilePath -Raw | ConvertFrom-Csv
-    $moduleMetaData = $repositoryMetaData | Where-Object { $_.moduleId -eq $repoId }
+    $moduleMetaData = $repoMetaData
     if(!$moduleMetaData) {
         Write-Warning "Module metadata missing for: $($repoId)"
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist." -data $repoId -issueLog $issueLog
+        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "module-metadata-missing" -message "Module metadata for $repoId does not exist in meta-data.csv. Add an entry to meta-data.csv." -data $repoId -severity "warning" -issueLog $issueLog
         $moduleName = $repoId
     } else {
+        $moduleName = $moduleMetaData.moduleDisplayName
+    }
+} elseif($repoMetaData) {
+    $moduleMetaData = $repoMetaData
+    if($moduleMetaData.moduleDisplayName) {
         $moduleName = $moduleMetaData.moduleDisplayName
     }
 }
@@ -482,12 +488,6 @@ if(!$repositoryCreationModeEnabled) {
     }
 }
 
-# Shuffle the test subscription IDs to distribute load
-$seed = 0
-foreach($char in $repoName.ToCharArray()) {
-    $seed += [int][char]$char
-}
-$testSubscriptionIds = $testSubscriptionIds | Get-Random -Shuffle -SetSeed $seed
 Write-Host "Using test subscription IDs:"
 Write-Host $($testSubscriptionIds | ConvertTo-Json)
 

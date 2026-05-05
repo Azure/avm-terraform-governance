@@ -1,205 +1,221 @@
-moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName
-avm-ptn-aca-lza-hosting-environment,,,Azure Container Apps LZA Hosting Environment,,sam-cogan,Sam Cogan,,
-avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,
-avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,
-avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,
-avm-ptn-aks-economy,,,AKS economy,,ms-henglu,Heng Lu,,
-avm-ptn-aks-enterprise,,,AKS Enterprise,,ms-henglu,Heng Lu,,
-avm-ptn-aks-production,,,Azure Kubernetes Service,,zioproto,Saverio Proto,,
-avm-ptn-alz,,,Azure Landing Zone,,matt-FFFFFF,Matt White,,
-avm-ptn-alz-application-landing-zone-identity-and-access,,,ALZ Identity and Access Management,,jaredfholgate,Jared Holgate,,
-avm-ptn-alz-connectivity-hub-and-spoke-vnet,,,ALZ Connectivity Hub and Spoke,Azure Landing Zones - Hub and Spoke,jaredfholgate,Jared Holgate,,
-avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,
-avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-taylor,Luke Taylor,,
-avm-ptn-alz-sub-vending,,,Subscription Vending,Application Landing Zones Vending,matt-FFFFFF,Matt White,jaredfholgate,Jared Holgate
-avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
-avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,
-avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,
-avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,
-avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran
-avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,
-avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,
-avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,
-avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,
-avm-ptn-cloudshell-vnet,,,Cloud Shell with vNET Integration,"CloudShell VNet, Cloud Shell VNET, Cloud Shell in Virtual Network",travishankins,Travis Hankins,,
-avm-ptn-confidential-compute,,,Confidential Compute,,bjornhofer,Björn Höfer,,
-avm-ptn-dev-center-dev-box,,,Microsoft Dev Center Dev Box,,autocloudarc,Preston Parsard,,
-avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,
-avm-ptn-finopstoolkit-finopshub,,,FinOps Toolkit FinOps Hub,,didayal,Divyadeep Dayal,,
-avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoint-secured Storage,,donovm4,Donovan McCoy,,
-avm-ptn-hci-ad-provisioner,,,Arc for AD registration,,xhy8759,Hangyu Xu,,
-avm-ptn-hci-server-provisioner,,,Arc for Server registration,,xhy8759,Hangyu Xu,,
-avm-ptn-hubnetworking,,,Hub Networking,,jaredfholgate,Jared Holgate,,
-avm-ptn-lbvmss,,,VMSS Flex Deployment,,terrymandin,Terry Mandin,,
-avm-ptn-mongodb-atlas-lza,,,MongoDB Atlas on Azure - Landing Zone (LZ),,cloud-architect-dev,Deven Wagle,,
-avm-ptn-monitoring-amba-alz,,,AMBA ALZ Pattern,Azure Monitor Baseline Alerts - Azure Landing Zones Pattern,arjenhuitema,Arjen Huitema,,
-avm-ptn-network-private-link-private-dns-zones,,,Private Link Private DNS Zones,,jtracey93,Jack Tracey,,
-avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,,
-avm-ptn-odaa,,,Oracle Exedata Workload,,terrymandin,Terry Mandin,,
-avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,
-avm-ptn-openai-cognitivesearch,,,Corporate Line of Business (LoB) ChatBot ,,mikestiers,Mike Stiers,,
-avm-ptn-policyassignment,,,Policy assignment,,bjornhofer,Bjorn Hofer,,
-avm-ptn-subnets-nsgs-routes,,,Network Security Groups,NSG,swathialuganti,Swathi Aluganti Narasimhulu,,
-avm-ptn-subscription-service-health-alerts,,,Subscription Service Health Alerts,,ASHR4,Rhys Ash,,
-avm-ptn-virtualwan,,,Virtual WAN,vWAN,khushal08,Khush Kaviraj,,
-avm-ptn-vnetgateway,,,Virtual Network Gateway,VNET GW,matt-FFFFFF,Matt White,,
-avm-res-aad-domainservice,Microsoft.AAD,domainServices,Entra ID Domain Services,,itamarh,Itamar Hirosh,,
-avm-res-alertsmanagement-actionrule,Microsoft.AlertsManagement,actionRules,Alert Action Rules,,JoeyBarnes,Joseph Barnes,ASHR4,Rhys Ash
-avm-res-analysisservices-server,Microsoft.AnalysisServices,servers,Analysis Services Server,,Bhavyasree08,Bhavyasree Damarla,,
-avm-res-apimanagement-service,Microsoft.ApiManagement,service,API Management Service,,swatilekhapaul,Swatilekha Paul,,
-avm-res-app-containerapp,Microsoft.App,containerApps,Container App,,lonegunmanb,Zijie He,,
-avm-res-app-job,Microsoft.App,Jobs,App Job,,sujaypillai,Sujay Pillai,,
-avm-res-app-managedenvironment,Microsoft.App,managedEnvironments,App Managed Environment,,segraef,Sebastian Graef,,
-avm-res-appconfiguration-configurationstore,Microsoft.AppConfiguration,configurationStores,App Configuration Store,,matt-FFFFFF,Matt White,,
-avm-res-authorization-roleassignment,Microsoft.Authorization,roleAssignments,Role Assignment,,jaredfholgate,Jared Holgate,,
-avm-res-automation-automationaccount,Microsoft.Automation,automationAccounts,Automation Account,,poven,Poornima Venkataramanan,,
-avm-res-avs-privatecloud,Microsoft.AVS,privateClouds,AVS Private Cloud,,jchancellor-ms,Jon Chancellor,,
-avm-res-azurestackhci-cluster,Microsoft.AzureStackHCI,clusters,Azure Stack HCI Cluster,,xhy8759,Hangyu Xu,,
-avm-res-azurestackhci-logicalnetwork,Microsoft.AzureStackHCI,logicalNetworks,AzureStackHCI logical network,,xhy8759,Hangyu Xu,,
-avm-res-azurestackhci-virtualmachineinstance,Microsoft.AzureStackHCI,virtualMachineInstances,Stack HCI Virtual Machine Instance,,xhy8759,Hangyu Xu,,
-avm-res-batch-batchaccount,Microsoft.Batch,batchAccounts,Batch Account,,ethanjenkins1,Ethan Jenkins,,
-avm-res-botservice-botservice,Microsoft.BotService,botServices,Bot Service,,salujamanish,Manish Saluja,,
-avm-res-cache-redis,Microsoft.Cache,Redis,Redis Cache,,jchancellor-ms,Jon Chancellor,,
-avm-res-cache-redis-enterprise,Microsoft.Cache,redisEnterprise,Redis Cached Enterprise,,Ankur1106,Ankur Sharma (HK),,
-avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Venkataramanan,didayal-msft,Divyadeep Dayal
-avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,
-avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,
-avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,
-avm-res-compute-capacityreservationgroup,,,Compute Capacity Reservation Group,,chianw,Chian Wong,,
-avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,
-avm-res-compute-diskencryptionset,Microsoft.Compute,diskEncryptionSets,Disk Encryption Set,,Akashc0807,Akash Choudhary,,
-avm-res-compute-gallery,Microsoft.Compute,galleries,Azure Compute Gallery,,Akashc0807,Akash Choudhary,,
-avm-res-compute-hostgroup,Microsoft.Compute,hostGroups,Host Groups,,chianw,Chian Wong,,
-avm-res-compute-image,Microsoft.Compute,images,Image,,,,,
-avm-res-compute-proximityplacementgroup,Microsoft.Compute,proximityPlacementGroups,Proximity Placement Group,,fafriha,Farouk Friha,,
-avm-res-compute-sshpublickey,Microsoft.Compute,sshPublicKeys,Public SSH Key,,ChrisSidebotham,Chris Sidebotham,,
-avm-res-compute-virtualmachine,Microsoft.Compute,virtualMachines,Virtual Machine,VM,jchancellor-ms,Jon Chancellor,,
-avm-res-compute-virtualmachinescaleset,Microsoft.Compute,virtualMachineScaleSets,Virtual Machine Scale Set,VMSS,terrymandin,Terry Mandin,marcelkmfst,Marcel Keller
-avm-res-consumption-budget,Microsoft.Consumption,budgets,Consumption Budget,,Akashc0807,Akash Choudhary,,
-avm-res-containerinstance-containergroup,Microsoft.ContainerInstance,containerGroups,Container Instance,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-containerregistry-registry,Microsoft.ContainerRegistry,registries,Azure Container Registry (ACR),,Akashc0807,Akash Choudhary,,
-avm-res-containerservice-fleet,Microsoft.ContainerService,fleets,Azure Kubernetes Service Fleet,,didayal-msft,Divyadeep Dayal,,
-avm-res-containerservice-managedcluster,Microsoft.ContainerService,managedClusters,AKS managed clusters,,ibersanoMS,Isabelle Bersano,,
-avm-res-dashboard-grafana,Microsoft.Dashboard,grafana,Azure Managed Grafana,,khajour,Abdelaziz Khajour,,
-avm-res-databricks-accessconnector,Microsoft.Databricks,accessConnectors,Azure Databricks Access Connector,,,,,
-avm-res-databricks-workspace,Microsoft.Databricks,workspaces,Azure Databricks Workspace,,segraef,Sebastian Graef,,
-avm-res-datafactory-factory,Microsoft.DataFactory,factories,Data Factory,,asishr,Asish R,,
-avm-res-dataprotection-backupvault,Microsoft.DataProtection,backupVaults,Data Protection Backup Vault,,ethanjenkins1,Ethan Jenkins,,
-avm-res-dataprotection-resourceguard,Microsoft.DataProtection,resourceGuards,Data Protection Resource Guard,,WenAI2020,Wen Tian,,
-avm-res-dbformysql-flexibleserver,Microsoft.DBforMySQL,flexibleServers,DB for MySQL Flexible Server,,mbilalamjad,Bilal Amjad,,
-avm-res-dbforpostgresql-flexibleserver,Microsoft.DBforPostgreSQL,flexibleServers,DB for Postgre SQL Flexible Server,,mbilalamjad,Bilal Amjad,,
-avm-res-desktopvirtualization-applicationgroup,Microsoft.DesktopVirtualization,applicationGroups,Azure Virtual Desktop (AVD) Application Group,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-res-desktopvirtualization-hostpool,Microsoft.DesktopVirtualization,hostPools,Azure Virtual Desktop (AVD) Host Pool,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-res-desktopvirtualization-scalingplan,Microsoft.DesktopVirtualization,scalingPlans,Azure Virtual Desktop (AVD) Scaling Plan,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-res-desktopvirtualization-workspace,Microsoft.DesktopVirtualization,workspaces,Azure Virtual Desktop (AVD) Workspace,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea
-avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msft,Charles Shea,,
-avm-res-deviceregistry-assetendpointprofile,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profile,,lonegunmanb,Zijie He,,
-avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,
-avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,
-avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,
-avm-res-documentdb-mongocluster,Microsoft.DocumentDB,mongoClusters,Cosmos DB for MongoDB (vCore),,sujaypillai,Sujay Pillai,,
-avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,
-avm-res-eventgrid-domain,Microsoft.EventGrid,domains,EventGrid Domain,,fafriha,Farouk Friha,,
-avm-res-eventgrid-namespace,Microsoft.EventGrid,namespaces,EventGrid Namespace,,dassbernd,Berna Sandalli,,
-avm-res-eventgrid-systemtopic,Microsoft.EventGrid,systemTopics,EventGrid System Topic,,fafriha,Farouk Friha,,
-avm-res-eventgrid-topic,Microsoft.EventGrid,topics,EventGrid Topic,,fafriha,Farouk Friha,,
-avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mbilalamjad,Bilal Amjad,,
-avm-res-fabric-capacity,Microsoft.Fabric,capacities,Fabric Capacity,,DariuszPorowski,Dariusz Porowski,,
-avm-res-features-feature,Microsoft.Features,features,Subcription Feature,,lonegunmanb,Zijie He,,
-avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot,,,,,
-avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,
-avm-res-hybridcontainerservice-provisionedclusterinstance,Microsoft.HybridContainerService,provisionedClusterInstances,AKS Arc,,xhy8759,Hangyu Xu,,
-avm-res-insights-actiongroup,Microsoft.Insights,actionGroups,Insights Action Group,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli
-avm-res-insights-activitylogalert,Microsoft.Insights,activityLogAlerts,Activity Log Alerts,,tagolovina,Tanya Golovina,,
-avm-res-insights-autoscalesetting,Microsoft.Insights,autoscalesettings,Auto scale settings,,chianw,Chian Wong,,
-avm-res-insights-component,Microsoft.Insights,components,Application Insight,,Jfolberth,John Folberth,,
-avm-res-insights-datacollectionendpoint,Microsoft.Insights,dataCollectionEndpoints,Data Collection Endpoint,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-insights-datacollectionrule,Microsoft.Insights,dataCollectionRules,Data Collection Rule,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-insights-logprofile,Microsoft.Insights,logProfiles,Log profile,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-insights-metricalert,Microsoft.Insights,metricAlerts,Insights Metric Alert,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli
-avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,
-avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,
-avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,
-avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,
-avm-res-loadtestservice-loadtest,Microsoft.LoadTestService,loadTests,Load Testing Service,,LaurentLesle,Laurent Lesle,,
-avm-res-logic-workflow,Microsoft.Logic,workflows,Logic Apps (Workflow),,bakrish,Bala Krishnamoorthy,,
-avm-res-machinelearningservices-workspace,Microsoft.MachineLearningServices,workspaces,Machine Learning Services Workspace,ML Workspace,Nepomuceno,Gabriel Monteiro Nepomuceno,,
-avm-res-maintenance-maintenanceconfiguration,Microsoft.Maintenance,maintenanceConfigurations,Maintenance Configuration,,ASHR4,Rhys Ash,,
-avm-res-managedidentity-userassignedidentity,Microsoft.ManagedIdentity,userAssignedIdentities,User Assigned Identity,MSI,Jfolberth,John Folberth,,
-avm-res-managedservices-registrationdefinition,Microsoft.ManagedServices,registrationDefinitions,Managed Services Registration Definition,,,,,
-avm-res-management-managementgroup,Microsoft.Management,managementGroups,Management Groups,,herms14,Hermes Miraflor II,,
-avm-res-management-servicegroup,Microsoft.Management,serviceGroups,Service Group,,haflidif,Haflidi Fridthjofsson,,
-avm-res-migrate,azurerem,azurerem,Provide Azure Migrate and Azure Local Migrate services and commands through Terraform modules,"avm-azure-migrate,avm-azre-stack-migrae,avm-azure-local-migrate",saifaldin14,Saif Al-Din Ali,,
-avm-res-netapp-netappaccount,Microsoft.NetApp,netAppAccounts,Azure NetApp File,,jtracey93,Jack Tracey,,
-avm-res-network-applicationgateway,Microsoft.Network,applicationGateways,Application Gateway,App GW,mofaizal,Mohamed Faizal,,
-avm-res-network-applicationgatewaywebapplicationfirewallpolicy,Microsoft.Network,ApplicationGatewayWebApplicationFirewallPolicies,Application Gateway Web Application Firewall (WAF) Policy,,mofaizal,Mohamed Faizal,,
-avm-res-network-applicationsecuritygroup,Microsoft.Network,applicationSecurityGroups,Application Security Group (ASG),ASG,mbilalamjad,Bilal Amjad,,
-avm-res-network-azurefirewall,Microsoft.Network,azureFirewalls,Azure Firewall,Azure FW,cshea-msft,Charles Shea,,
-avm-res-network-bastionhost,Microsoft.Network,bastionHosts,Bastion Host,,humanascode,Itamar Hirosh,,
-avm-res-network-connection,Microsoft.Network,connections,Virtual Network Gateway Connection,,jchancellor-ms,Jon Chancellor,,
-avm-res-network-ddosprotectionplan,Microsoft.Network,ddosProtectionPlans,DDoS Protection,,sitarant,Simona Tarantola,jtracey93,Jack Tracey
-avm-res-network-dnsforwardingruleset,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Ruleset,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-network-dnsforwardingrulesets,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Rulesets,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-network-dnsresolver,Microsoft.Network,dnsResolvers,DNS Resolver,,humanascode,Itamar Hirosh,,
-avm-res-network-dnszone,Microsoft.Network,dnsZones,Public DNS Zone,,sharmilamusunuru,Sharmila Musunuru,,
-avm-res-network-expressroutecircuit,Microsoft.Network,expressRouteCircuits,ExpressRoute Circuit,ER,khushal08,Khush Kaviraj,adammontlake,Adam Montlake
-avm-res-network-firewallpolicy,Microsoft.Network,firewallPolicies,Azure Firewall Policy,,cshea-msft,Charles Shea,,
-avm-res-network-frontdoorwebapplicationfirewallpolicy,Microsoft.Network,frontDoorWebApplicationFirewallPolicies,Front Door Web Application Firewall (WAF) Policy,,sihbher,Gerardo Reyes,,
-avm-res-network-ipgroup,Microsoft.Network,ipGroups,IP Group,,mathewsg,Mathew George,,
-avm-res-network-loadbalancer,Microsoft.Network,loadBalancers,Loadbalancer,,donovm4,Donovan McCoy,,
-avm-res-network-localnetworkgateway,Microsoft.Network,localNetworkGateways,Local Network Gateway,,Bhavyasree08,Bhavyasree Damarla,,
-avm-res-network-natgateway,Microsoft.Network,natGateways,NAT Gateway,,mbilalamjad,Bilal Amjad,,
-avm-res-network-networkinterface,Microsoft.Network,networkInterfaces,Network Interface,NIC,fafriha,Farouk Friha,,
-avm-res-network-networkmanager,Microsoft.Network,networkManagers,Azure Virtual Network Manager,,cshea-msft,Charles Shea,,
-avm-res-network-networksecuritygroup,Microsoft.Network,networkSecurityGroups,Network Security Group,,maheshbenke,Mahesh Benke,,
-avm-res-network-networkwatcher,Microsoft.Network,networkWatchers,Azure Network Watcher,,terrymandin,Terry Mandin,,
-avm-res-network-privatednszone,Microsoft.Network,privateDnsZones,Private DNS Zone,,chianw,Chian Wong,,
-avm-res-network-privateendpoint,Microsoft.Network,privateEndpoints,Private Endpoint,,Misba-Yousuf,Misba Yousuf,,
-avm-res-network-privatelinkservice,Microsoft.Network,privateLinkServices,Private Link Service,,avivshrem,Aviv Shrem,,
-avm-res-network-publicipaddress,Microsoft.Network,publicIPAddresses,Public IP Address,PIP,,,,
-avm-res-network-publicipprefix,Microsoft.Network,publicIPPrefixes,Public IP Prefix,,PmeshramPM,Pankaj Meshram,,
-avm-res-network-routetable,Microsoft.Network,routeTables,Route Table,UDR,adammontlake,Adam Montlake,,
-avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,Service Endpoint Policies,,,,,
-avm-res-network-trafficmanagerprofile,Microsoft.Network,trafficmanagerprofiles,Traffic Manager Profile,,AnubhaR94,Anubha Rana,,
-avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,
-avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin
-avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Database Autonomous,,sihbher,Gerardo Reyes,,
-avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
-avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin
-avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,
-avm-res-recoveryservices-vault,Microsoft.RecoveryServices,vaults,Recovery Services Vault,,elsalvos,Cesar Abrego,,
-avm-res-redhatopenshift-openshiftcluster,Microsoft.RedHatOpenShift,openShiftClusters,OpenShift Cluster,,ljtill,Lyon Till,,
-avm-res-relay-namespace,Microsoft.Relay,namespaces,Relay Namespace,,sujaypillai,Sujay Pillai,,
-avm-res-resourcegraph-query,Microsoft.ResourceGraph,queries,Resource Graph Query,,SJAYAP,S Jayaprakash,,
-avm-res-resources-resourcegroup,Microsoft.Resources,resourceGroups,Resource Group,RG,Jfolberth,John Folberth,,
-avm-res-search-searchservice,Microsoft.Search,searchServices,Search Service,,seekerofsai,Bhanu Neti,,
-avm-res-servicebus-namespace,Microsoft.ServiceBus,namespaces,Service Bus Namespace,,bryansan-msft,Bryan Sanchez Pernia,,
-avm-res-servicenetworking-trafficcontroller,Microsoft.ServiceNetworking,trafficControllers,Application Gateway for Containers (Traffic Controller),,jaredfholgate,Mohamed Faizal,,
-avm-res-sql-instancepool,Microsoft.Sql,instancePools,Azure SQL Managed Instance Pools.,,sujaypillai,Sujay Pillai,,
-avm-res-sql-managedinstance,Microsoft.Sql,managedInstances,SQL Managed Instance,SQL MI,mbilalamjad,Bilal Amjad,,
-avm-res-sql-server,Microsoft.Sql,servers,Azure SQL Server,,mbilalamjad,Bilal Amjad,,
-avm-res-sqlvirtualmachine-sqlvirtualmachine,Microsoft.SqlVirtualMachine,sqlVirtualMachines,Sql Virtual Machine,SQL VM,timchapman,Tim Chapman,,
-avm-res-storage-storageaccount,Microsoft.Storage,storageAccounts,Storage Account,,chinthakaru,Chinthaka Rupasinghe,,
-avm-res-synapse-workspace,Microsoft.Synapse,workspaces,Synapse Workspace,,Karni-G,Karni Gupta,,
-avm-res-virtualmachineimages-imagetemplate,Microsoft.Compute,virtualMachineImages/imageTemplates,Virtual Machine Image Template,"ImageTemplate, VMImageBuilder, AVDImageBuilder, AzureImageBuilder",travishankins,Travis Hankins,,
-avm-res-web-connection,Microsoft.Web,connection,API Connection,,donovm4,Donovan McCoy,,
-avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Environment,ASE,ibersanoMS,Isabelle Bersano,,
-avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,
-avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,
-avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,
-avm-utl-compute-orchestratedvirtualmachinescaleset-azapi-replicator,,,utl module that helps users to migrate azurerm_orchestrated_virtual_machine_scale_set resource into azapi_resource,,lonegunmanb,lonegunmanb,,
-avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,
-avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,
-avm-utl-naming,,,AVM Naming,,Nepomuceno,Gabriel Monteiro Nepomuceno,,
-avm-utl-network-ip-addresses,,,AVM Network IP Addresses,IPv4 CIDR,jaredfholgate,Jared Holgate,,
-avm-utl-network-privatednszone-azapi-replicator,,,utl module that helps users to migrate azurerm_private_dns_zone into azapi_resource,,lonegunmanb,lonegunmanb,,
-avm-utl-network-subnet-azapi-replicator,,,utl module that helps users to migrate azurerm_subnet into azapi_resource,,lonegunmanb,lonegunmanb,,
-avm-utl-network-virtualnetwork-azapi-replicator,,,utl module that helps users to migrate azurerm_virtual_network into azapi_resource,,lonegunmanb,lonegunmanb,,
-avm-utl-regions,,,Azure Regions Data,,matt-FFFFFF,Matt White,,
-avm-utl-resources-resourcegroup-azapi-replicator,,,utl module that helps users to migrate azurerm_resource_group into azapi_resource,,lonegunmanb,lonegunmanb,,
-avm-utl-roledefinitions,,,AVM Utility module for role definitions,,matt-FFFFFF,Matt White,,
-avm-utl-sku-finder,,,AVM SKU Finder ,Sku,jchancellor-ms,Jon Chancellor,,
+moduleId,providerNamespace,providerResourceType,moduleDisplayName,alternativeNames,primaryOwnerGitHubHandle,primaryOwnerDisplayName,secondaryOwnerGitHubHandle,secondaryOwnerDisplayName,isArchived
+avm-ptn-aca-lza-hosting-environment,,,Azure Container Apps LZA Hosting Environment,,sam-cogan,Sam Cogan,,,false
+avm-ptn-ai-foundry-enterprise,,,AI Foundry Enterprise,,,,,,true
+avm-ptn-aiml-ai-foundry,,,Azure AI Foundry Pattern,,mikestiers,Mike Stiers,,,false
+avm-ptn-aiml-landing-zone,,,Azure AI and ML Landing Zone,,mbilalamjad,Bilal Amjad,,,false
+avm-ptn-aks-dev,,,AKS dev,,ms-henglu,Heng Lu,,,false
+avm-ptn-aks-economy,,,AKS economy,,ms-henglu,Heng Lu,,,false
+avm-ptn-aks-enterprise,,,AKS Enterprise,,ms-henglu,Heng Lu,,,false
+avm-ptn-aks-production,,,Azure Kubernetes Service,,zioproto,Saverio Proto,,,false
+avm-ptn-alz,,,Azure Landing Zone,,matt-FFFFFF,Matt White,,,false
+avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops,,,ALZ Application Landing Zone CI/CD Bootstrap - Azure DevOps,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-application-landing-zone-cicd-bootstrap-github,,,ALZ Application Landing Zone CI/CD Bootstrap - GitHub,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-application-landing-zone-identity-and-access,,,ALZ Identity and Access Management,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-connectivity-hub-and-spoke-vnet,,,ALZ Connectivity Hub and Spoke,Azure Landing Zones - Hub and Spoke,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-taylor,Luke Taylor,,,false
+avm-ptn-alz-sub-vending,,,Subscription Vending,Application Landing Zones Vending,matt-FFFFFF,Matt White,jaredfholgate,Jared Holgate,false
+avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,,false
+avm-ptn-app-paas-ase-cosmosdb-tier-four,,,Corporate Line of Business application architecture using PaaS components Application Service Environment and CosmosDB in the context of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,,false
+avm-ptn-app-service-landing-zone,,,App Service Landing Zone,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-avd-lza-insights,,,AVD Insights,Azure Virtual Desktop Insights,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-ptn-avd-lza-managementplane,,,AVD Management Plane,Azure Virtual Desktop Management Plane,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-ptn-avd-lza-sessionhosts,,,AVD Session Host,Azure Virtual Desktop Session Host,jensheerin,Jen Sheerin,,,false
+avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,,false
+avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran,,false
+avm-ptn-azureimagebuilder,,,Azure Image Builder,,ethanjenkins1,Ethan Jenkins MSFT,,,false
+avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,,false
+avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,,false
+avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,,false
+avm-ptn-cloudshell-vnet,,,Cloud Shell with vNET Integration,"CloudShell VNet, Cloud Shell VNET, Cloud Shell in Virtual Network",travishankins,Travis Hankins,,,false
+avm-ptn-commercial-marketplace,,,"This AVM pattern module deploys the core infrastructure for Commercial Marketplace SaaS Accelerator on Azure (network, SQL, Key Vault, App Service, app registrations). It is intended for partners deploying a production-like SaaS landing zone with optional app code deployment. It does not manage CI/CD pipelines, custom domain/TLS lifecycle, or downstream business app code beyond bootstrap deployment.",,ethanjenkins1,Ethan Jenkins,ShironB,Shiron Babi,false
+avm-ptn-confidential-compute,,,Confidential Compute,,bjornhofer,Björn Höfer,,,false
+avm-ptn-dev-center-dev-box,,,Microsoft Dev Center Dev Box,,autocloudarc,Preston Parsard,,,false
+avm-ptn-enterprise-rag,,,Enterprise RAG,,,,,,true
+avm-ptn-ephemeral-credential,,,AVM Ephemeral Credential Pattern,,lonegunmanb,Zijie He,,,false
+avm-ptn-example-repo,,,Example Repository for Testing,,jaredfholgate,Jared Holgate,,,false
+avm-ptn-finopstoolkit-finopshub,,,FinOps Toolkit FinOps Hub,,didayal,Divyadeep Dayal,,,false
+avm-ptn-function-app-storage-private-endpoints,,,Function App and private endpoint-secured Storage,,donovm4,Donovan McCoy,,,false
+avm-ptn-hci-ad-provisioner,,,Arc for AD registration,,xhy8759,Hangyu Xu,,,false
+avm-ptn-hci-server-provisioner,,,Arc for Server registration,,xhy8759,Hangyu Xu,,,false
+avm-ptn-hubnetworking,,,Hub Networking,,jaredfholgate,Jared Holgate,,,true
+avm-ptn-lbvmss,,,VMSS Flex Deployment,,terrymandin,Terry Mandin,,,false
+avm-ptn-mongodb-atlas-lza,,,MongoDB Atlas on Azure - Landing Zone (LZ),,cloud-architect-dev,Deven Wagle,,,false
+avm-ptn-monitoring-amba-alz,,,AMBA ALZ Pattern,Azure Monitor Baseline Alerts - Azure Landing Zones Pattern,arjenhuitema,Arjen Huitema,,,false
+avm-ptn-network-private-link-private-dns-zones,,,Private Link Private DNS Zones,,jtracey93,Jack Tracey,,,false
+avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,,,false
+avm-ptn-odaa,,,Oracle Exedata Workload,,terrymandin,Terry Mandin,,,false
+avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,,false
+avm-ptn-openai-cognitivesearch,,,Corporate Line of Business (LoB) ChatBot ,,mikestiers,Mike Stiers,,,false
+avm-ptn-policyassignment,,,Policy assignment,,bjornhofer,Bjorn Hofer,,,false
+avm-ptn-subnets-nsgs-routes,,,Network Security Groups,NSG,swathialuganti,Swathi Aluganti Narasimhulu,,,false
+avm-ptn-subscription-service-health-alerts,,,Subscription Service Health Alerts,,ASHR4,Rhys Ash,,,false
+avm-ptn-virtualwan,,,Virtual WAN,vWAN,khushal08,Khush Kaviraj,,,true
+avm-ptn-vnetgateway,,,Virtual Network Gateway,VNET GW,matt-FFFFFF,Matt White,,,true
+avm-res-aad-domainservice,Microsoft.AAD,domainServices,Entra ID Domain Services,,itamarh,Itamar Hirosh,,,false
+avm-res-alertsmanagement-actionrule,Microsoft.AlertsManagement,actionRules,Alert Action Rules,,JoeyBarnes,Joseph Barnes,ASHR4,Rhys Ash,false
+avm-res-analysisservices-server,Microsoft.AnalysisServices,servers,Analysis Services Server,,Bhavyasree08,Bhavyasree Damarla,,,false
+avm-res-apimanagement-service,Microsoft.ApiManagement,service,API Management Service,,swatilekhapaul,Swatilekha Paul,,,false
+avm-res-app-containerapp,Microsoft.App,containerApps,Container App,,lonegunmanb,Zijie He,,,false
+avm-res-app-job,Microsoft.App,Jobs,App Job,,sujaypillai,Sujay Pillai,,,false
+avm-res-app-managedenvironment,Microsoft.App,managedEnvironments,App Managed Environment,,segraef,Sebastian Graef,,,false
+avm-res-appconfiguration-configurationstore,Microsoft.AppConfiguration,configurationStores,App Configuration Store,,matt-FFFFFF,Matt White,,,false
+avm-res-authorization-roleassignment,Microsoft.Authorization,roleAssignments,Role Assignment,,jaredfholgate,Jared Holgate,,,false
+avm-res-automation-automationaccount,Microsoft.Automation,automationAccounts,Automation Account,,poven,Poornima Venkataramanan,,,false
+avm-res-avs-privatecloud,Microsoft.AVS,privateClouds,AVS Private Cloud,,jchancellor-ms,Jon Chancellor,,,false
+avm-res-azurestackhci-cluster,Microsoft.AzureStackHCI,clusters,Azure Stack HCI Cluster,,xhy8759,Hangyu Xu,,,false
+avm-res-azurestackhci-logicalnetwork,Microsoft.AzureStackHCI,logicalNetworks,AzureStackHCI logical network,,xhy8759,Hangyu Xu,,,false
+avm-res-azurestackhci-virtualmachineinstance,Microsoft.AzureStackHCI,virtualMachineInstances,Stack HCI Virtual Machine Instance,,xhy8759,Hangyu Xu,,,false
+avm-res-batch-batchaccount,Microsoft.Batch,batchAccounts,Batch Account,,ethanjenkins1,Ethan Jenkins,,,false
+avm-res-botservice-botservice,Microsoft.BotService,botServices,Bot Service,,salujamanish,Manish Saluja,,,false
+avm-res-cache-redis,Microsoft.Cache,Redis,Redis Cache,,jchancellor-ms,Jon Chancellor,,,false
+avm-res-cache-redis-enterprise,Microsoft.Cache,redisEnterprise,Redis Cached Enterprise,,Ankur1106,Ankur Sharma (HK),,,false
+avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Venkataramanan,didayal-msft,Divyadeep Dayal,false
+avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,,false
+avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,,false
+avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,,false
+avm-res-compute-capacityreservationgroup,,,Compute Capacity Reservation Group,,chianw,Chian Wong,,,false
+avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,,false
+avm-res-compute-diskencryptionset,Microsoft.Compute,diskEncryptionSets,Disk Encryption Set,,Akashc0807,Akash Choudhary,,,false
+avm-res-compute-gallery,Microsoft.Compute,galleries,Azure Compute Gallery,,Akashc0807,Akash Choudhary,,,false
+avm-res-compute-hostgroup,Microsoft.Compute,hostGroups,Host Groups,,chianw,Chian Wong,,,false
+avm-res-compute-image,Microsoft.Compute,images,Image,,,,,,false
+avm-res-compute-proximityplacementgroup,Microsoft.Compute,proximityPlacementGroups,Proximity Placement Group,,fafriha,Farouk Friha,,,false
+avm-res-compute-sshpublickey,Microsoft.Compute,sshPublicKeys,Public SSH Key,,ChrisSidebotham,Chris Sidebotham,,,false
+avm-res-compute-virtualmachine,Microsoft.Compute,virtualMachines,Virtual Machine,VM,jchancellor-ms,Jon Chancellor,,,false
+avm-res-compute-virtualmachinescaleset,Microsoft.Compute,virtualMachineScaleSets,Virtual Machine Scale Set,VMSS,terrymandin,Terry Mandin,marcelkmfst,Marcel Keller,false
+avm-res-consumption-budget,Microsoft.Consumption,budgets,Consumption Budget,,Akashc0807,Akash Choudhary,,,false
+avm-res-containerinstance-containergroup,Microsoft.ContainerInstance,containerGroups,Container Instance,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-containerregistry-registry,Microsoft.ContainerRegistry,registries,Azure Container Registry (ACR),,Akashc0807,Akash Choudhary,,,false
+avm-res-containerservice-fleet,Microsoft.ContainerService,fleets,Azure Kubernetes Service Fleet,,didayal-msft,Divyadeep Dayal,,,false
+avm-res-containerservice-managedcluster,Microsoft.ContainerService,managedClusters,AKS managed clusters,,ibersanoMS,Isabelle Bersano,,,false
+avm-res-dashboard-grafana,Microsoft.Dashboard,grafana,Azure Managed Grafana,,khajour,Abdelaziz Khajour,,,false
+avm-res-databricks-accessconnector,Microsoft.Databricks,accessConnectors,Azure Databricks Access Connector,,,,,,false
+avm-res-databricks-workspace,Microsoft.Databricks,workspaces,Azure Databricks Workspace,,segraef,Sebastian Graef,,,false
+avm-res-datafactory-factory,Microsoft.DataFactory,factories,Data Factory,,asishr,Asish R,,,false
+avm-res-dataprotection-backupvault,Microsoft.DataProtection,backupVaults,Data Protection Backup Vault,,ethanjenkins1,Ethan Jenkins,,,false
+avm-res-dataprotection-resourceguard,Microsoft.DataProtection,resourceGuards,Data Protection Resource Guard,,WenAI2020,Wen Tian,,,false
+avm-res-dbformysql-flexibleserver,Microsoft.DBforMySQL,flexibleServers,DB for MySQL Flexible Server,,mbilalamjad,Bilal Amjad,,,false
+avm-res-dbforpostgresql-flexibleserver,Microsoft.DBforPostgreSQL,flexibleServers,DB for Postgre SQL Flexible Server,,mbilalamjad,Bilal Amjad,,,false
+avm-res-desktopvirtualization-applicationgroup,Microsoft.DesktopVirtualization,applicationGroups,Azure Virtual Desktop (AVD) Application Group,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-res-desktopvirtualization-hostpool,Microsoft.DesktopVirtualization,hostPools,Azure Virtual Desktop (AVD) Host Pool,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-res-desktopvirtualization-scalingplan,Microsoft.DesktopVirtualization,scalingPlans,Azure Virtual Desktop (AVD) Scaling Plan,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-res-desktopvirtualization-workspace,Microsoft.DesktopVirtualization,workspaces,Azure Virtual Desktop (AVD) Workspace,,jensheerin,Jen Sheerin,cshea-msft,Charles Shea,false
+avm-res-devcenter-devcenter,Microsoft.DevCenter,devcenters,Dev Center,,cshea-msft,Charles Shea,,,false
+avm-res-deviceregistry-assetendpointprofile,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profile,,lonegunmanb,Zijie He,,,false
+avm-res-deviceregistry-assetendpointprofiles,Microsoft.DeviceRegistry,assetEndpointProfiles,Device Registry Asset Endpoint Profiles,,lonegunmanb,Zijie He,,,false
+avm-res-devopsinfrastructure-pool,Microsoft.DevOpsInfrastructure,Pools,DevOps Pools,,jaredfholgate,Jared Holgate,,,false
+avm-res-devtestlab-lab,Microsoft.DevTestLab,labs,Digital Twins Instance,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-digitaltwins-digitaltwinsinstance,Microsoft.DigitalTwins,digitalTwinsInstances,Digital Twins Instance,,,,,,false
+avm-res-documentdb-databaseaccount,Microsoft.DocumentDB,databaseAccount,CosmosDB Database Account,,bryansan-msft,Bryan Sanchez Pernia,,,false
+avm-res-documentdb-mongocluster,Microsoft.DocumentDB,mongoClusters,Cosmos DB for MongoDB (vCore),,sujaypillai,Sujay Pillai,,,false
+avm-res-edge-site,Microsoft.Edge,sites,Azure Arc Site manager,,xhy8759,Hangyu Xu,,,false
+avm-res-eventgrid-domain,Microsoft.EventGrid,domains,EventGrid Domain,,fafriha,Farouk Friha,,,false
+avm-res-eventgrid-namespace,Microsoft.EventGrid,namespaces,EventGrid Namespace,,dassbernd,Berna Sandalli,,,false
+avm-res-eventgrid-systemtopic,Microsoft.EventGrid,systemTopics,EventGrid System Topic,,fafriha,Farouk Friha,,,false
+avm-res-eventgrid-topic,Microsoft.EventGrid,topics,EventGrid Topic,,fafriha,Farouk Friha,,,false
+avm-res-eventhub-namespace,Microsoft.EventHub,namespaces,Event Hub Namespace,,mbilalamjad,Bilal Amjad,,,false
+avm-res-fabric-capacity,Microsoft.Fabric,capacities,Fabric Capacity,,DariuszPorowski,Dariusz Porowski,,,false
+avm-res-features-feature,Microsoft.Features,features,Subcription Feature,,lonegunmanb,Zijie He,,,false
+avm-res-healthbot-healthbot,Microsoft.HealthBot,healthBots,Health Bot,,,,,,false
+avm-res-hybridcompute-machine,Microsoft.HybridCompute,machines,Hybrid Compute Machine,,,,,,false
+avm-res-hybridcontainerservice-provisionedclusterinstance,Microsoft.HybridContainerService,provisionedClusterInstances,AKS Arc,,xhy8759,Hangyu Xu,,,false
+avm-res-insights-actiongroup,Microsoft.Insights,actionGroups,Insights Action Group,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli,false
+avm-res-insights-activitylogalert,Microsoft.Insights,activityLogAlerts,Activity Log Alerts,,tagolovina,Tanya Golovina,,,false
+avm-res-insights-autoscalesetting,Microsoft.Insights,autoscalesettings,Auto scale settings,,chianw,Chian Wong,,,false
+avm-res-insights-component,Microsoft.Insights,components,Application Insight,,Jfolberth,John Folberth,,,false
+avm-res-insights-datacollectionendpoint,Microsoft.Insights,dataCollectionEndpoints,Data Collection Endpoint,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-insights-datacollectionrule,Microsoft.Insights,dataCollectionRules,Data Collection Rule,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-insights-logprofile,Microsoft.Insights,logProfiles,Log profile,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-insights-metricalert,Microsoft.Insights,metricAlerts,Insights Metric Alert,,arjenhuitema,Arjen Huitema,Brunoga-MS,Bruno Gabrielli,false
+avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,,false
+avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,,false
+avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,,false
+avm-res-kubernetesconfiguration-extension,Microsoft.KubernetesConfiguration,extensions,Kubernetes Configuration Extension,,lonegunmanb,Zijie He,,,false
+avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,,false
+avm-res-loadtestservice-loadtest,Microsoft.LoadTestService,loadTests,Load Testing Service,,LaurentLesle,Laurent Lesle,,,false
+avm-res-logic-workflow,Microsoft.Logic,workflows,Logic Apps (Workflow),,bakrish,Bala Krishnamoorthy,,,false
+avm-res-machinelearningservices-workspace,Microsoft.MachineLearningServices,workspaces,Machine Learning Services Workspace,ML Workspace,Nepomuceno,Gabriel Monteiro Nepomuceno,,,false
+avm-res-maintenance-maintenanceconfiguration,Microsoft.Maintenance,maintenanceConfigurations,Maintenance Configuration,,ASHR4,Rhys Ash,,,false
+avm-res-managedidentity-userassignedidentity,Microsoft.ManagedIdentity,userAssignedIdentities,User Assigned Identity,MSI,Jfolberth,John Folberth,,,false
+avm-res-managedservices-registrationdefinition,Microsoft.ManagedServices,registrationDefinitions,Managed Services Registration Definition,,,,,,false
+avm-res-management-managementgroup,Microsoft.Management,managementGroups,Management Groups,,herms14,Hermes Miraflor II,,,false
+avm-res-management-servicegroup,Microsoft.Management,serviceGroups,Service Group,,haflidif,Haflidi Fridthjofsson,,,false
+avm-res-migrate,azurerem,azurerem,Provide Azure Migrate and Azure Local Migrate services and commands through Terraform modules,"avm-azure-migrate,avm-azre-stack-migrae,avm-azure-local-migrate",saifaldin14,Saif Al-Din Ali,,,false
+avm-res-netapp-netappaccount,Microsoft.NetApp,netAppAccounts,Azure NetApp File,,jtracey93,Jack Tracey,,,false
+avm-res-network-applicationgateway,Microsoft.Network,applicationGateways,Application Gateway,App GW,mofaizal,Mohamed Faizal,,,false
+avm-res-network-applicationgatewaywebapplicationfirewallpolicy,Microsoft.Network,ApplicationGatewayWebApplicationFirewallPolicies,Application Gateway Web Application Firewall (WAF) Policy,,mofaizal,Mohamed Faizal,,,false
+avm-res-network-applicationsecuritygroup,Microsoft.Network,applicationSecurityGroups,Application Security Group (ASG),ASG,mbilalamjad,Bilal Amjad,,,false
+avm-res-network-azurefirewall,Microsoft.Network,azureFirewalls,Azure Firewall,Azure FW,cshea-msft,Charles Shea,,,false
+avm-res-network-bastionhost,Microsoft.Network,bastionHosts,Bastion Host,,humanascode,Itamar Hirosh,,,false
+avm-res-network-connection,Microsoft.Network,connections,Virtual Network Gateway Connection,,jchancellor-ms,Jon Chancellor,,,false
+avm-res-network-ddosprotectionplan,Microsoft.Network,ddosProtectionPlans,DDoS Protection,,sitarant,Simona Tarantola,jtracey93,Jack Tracey,false
+avm-res-network-dnsforwardingruleset,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Ruleset,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-network-dnsforwardingrulesets,Microsoft.Network,dnsForwardingRulesets,DNS Forwarding Rulesets,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-network-dnsresolver,Microsoft.Network,dnsResolvers,DNS Resolver,,humanascode,Itamar Hirosh,,,false
+avm-res-network-dnszone,Microsoft.Network,dnsZones,Public DNS Zone,,sharmilamusunuru,Sharmila Musunuru,,,false
+avm-res-network-expressroutecircuit,Microsoft.Network,expressRouteCircuits,ExpressRoute Circuit,ER,khushal08,Khush Kaviraj,adammontlake,Adam Montlake,false
+avm-res-network-expressrouteport,Microsoft.Network,Network,AVM Module for ExpresRoute Port (Direct),,adammontlake,Adam Montlake,,,false
+avm-res-network-firewallpolicy,Microsoft.Network,firewallPolicies,Azure Firewall Policy,,cshea-msft,Charles Shea,,,false
+avm-res-network-frontdoorwebapplicationfirewallpolicy,Microsoft.Network,frontDoorWebApplicationFirewallPolicies,Front Door Web Application Firewall (WAF) Policy,,sihbher,Gerardo Reyes,,,false
+avm-res-network-ipgroup,Microsoft.Network,ipGroups,IP Group,,mathewsg,Mathew George,,,false
+avm-res-network-loadbalancer,Microsoft.Network,loadBalancers,Loadbalancer,,donovm4,Donovan McCoy,,,false
+avm-res-network-localnetworkgateway,Microsoft.Network,localNetworkGateways,Local Network Gateway,,Bhavyasree08,Bhavyasree Damarla,,,false
+avm-res-network-natgateway,Microsoft.Network,natGateways,NAT Gateway,,mbilalamjad,Bilal Amjad,,,false
+avm-res-network-networkinterface,Microsoft.Network,networkInterfaces,Network Interface,NIC,fafriha,Farouk Friha,,,false
+avm-res-network-networkmanager,Microsoft.Network,networkManagers,Azure Virtual Network Manager,,cshea-msft,Charles Shea,,,false
+avm-res-network-networksecuritygroup,Microsoft.Network,networkSecurityGroups,Network Security Group,,maheshbenke,Mahesh Benke,,,false
+avm-res-network-networksecurityperimeter,Microsoft.Network,networkSecurityPerimeters,Terraform Azure Verified Resource Module for networkSecurityPerimeters,,sujaypillai,Sujay Pillai,,,false
+avm-res-network-networkwatcher,Microsoft.Network,networkWatchers,Azure Network Watcher,,terrymandin,Terry Mandin,,,false
+avm-res-network-privatednszone,Microsoft.Network,privateDnsZones,Private DNS Zone,,chianw,Chian Wong,,,false
+avm-res-network-privateendpoint,Microsoft.Network,privateEndpoints,Private Endpoint,,Misba-Yousuf,Misba Yousuf,,,false
+avm-res-network-privatelinkservice,Microsoft.Network,privateLinkServices,Private Link Service,,avivshrem,Aviv Shrem,,,false
+avm-res-network-publicipaddress,Microsoft.Network,publicIPAddresses,Public IP Address,PIP,,,,,false
+avm-res-network-publicipprefix,Microsoft.Network,publicIPPrefixes,Public IP Prefix,,PmeshramPM,Pankaj Meshram,,,false
+avm-res-network-routetable,Microsoft.Network,routeTables,Route Table,UDR,adammontlake,Adam Montlake,,,false
+avm-res-network-serviceendpointpolicy,Microsoft.Network,serviceEndpointPolicies,Service Endpoint Policies,,,,,,false
+avm-res-network-trafficmanagerprofile,Microsoft.Network,trafficmanagerprofiles,Traffic Manager Profile,,AnubhaR94,Anubha Rana,,,false
+avm-res-network-virtualnetwork,Microsoft.Network,virtualNetworks,Virtual Network,VNET,jaredfholgate,Jared Holgate,,,false
+avm-res-operationalinsights-workspace,Microsoft.OperationalInsights,workspaces,Log Analytics workspace,,cshea-msft,Charles Shea,jensheerin,Jen Sheerin,false
+avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Database Autonomous,,sihbher,Gerardo Reyes,,,false
+avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
+avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
+avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,,false
+avm-res-recoveryservices-vault,Microsoft.RecoveryServices,vaults,Recovery Services Vault,,elsalvos,Cesar Abrego,,,false
+avm-res-redhatopenshift-openshiftcluster,Microsoft.RedHatOpenShift,openShiftClusters,OpenShift Cluster,,ljtill,Lyon Till,,,false
+avm-res-relay-namespace,Microsoft.Relay,namespaces,Relay Namespace,,sujaypillai,Sujay Pillai,,,false
+avm-res-resourcegraph-query,Microsoft.ResourceGraph,queries,Resource Graph Query,,SJAYAP,S Jayaprakash,,,false
+avm-res-resources-resourcegroup,Microsoft.Resources,resourceGroups,Resource Group,RG,Jfolberth,John Folberth,,,false
+avm-res-search-searchservice,Microsoft.Search,searchServices,Search Service,,seekerofsai,Bhanu Neti,,,false
+avm-res-servicebus-namespace,Microsoft.ServiceBus,namespaces,Service Bus Namespace,,bryansan-msft,Bryan Sanchez Pernia,,,false
+avm-res-servicenetworking-trafficcontroller,Microsoft.ServiceNetworking,trafficControllers,Application Gateway for Containers (Traffic Controller),,jaredfholgate,Mohamed Faizal,,,false
+avm-res-sql-instancepool,Microsoft.Sql,instancePools,Azure SQL Managed Instance Pools.,,sujaypillai,Sujay Pillai,,,false
+avm-res-sql-managedinstance,Microsoft.Sql,managedInstances,SQL Managed Instance,SQL MI,mbilalamjad,Bilal Amjad,,,false
+avm-res-sql-server,Microsoft.Sql,servers,Azure SQL Server,,mbilalamjad,Bilal Amjad,,,false
+avm-res-sqlvirtualmachine-sqlvirtualmachine,Microsoft.SqlVirtualMachine,sqlVirtualMachines,Sql Virtual Machine,SQL VM,timchapman,Tim Chapman,,,false
+avm-res-storage-storageaccount,Microsoft.Storage,storageAccounts,Storage Account,,chinthakaru,Chinthaka Rupasinghe,,,false
+avm-res-synapse-workspace,Microsoft.Synapse,workspaces,Synapse Workspace,,Karni-G,Karni Gupta,,,false
+avm-res-virtualmachineimages-imagetemplate,Microsoft.Compute,virtualMachineImages/imageTemplates,Virtual Machine Image Template,"ImageTemplate, VMImageBuilder, AVDImageBuilder, AzureImageBuilder",travishankins,Travis Hankins,,,false
+avm-res-web-connection,Microsoft.Web,connection,API Connection,,donovm4,Donovan McCoy,,,false
+avm-res-web-hostingenvironment,Microsoft.Web,hostingEnvironments,App Service Environment,ASE,ibersanoMS,Isabelle Bersano,,,false
+avm-res-web-serverfarm,Microsoft.Web,serverfarms,App Service Plan,,ibersanoMS,Isabelle Bersano,,,false
+avm-res-web-site,Microsoft.Web,sites,Web/Function App,"App Service, Web Site, Logic App, Function App",donovm4,Donovan McCoy,,,false
+avm-res-web-staticsite,Microsoft.Web,staticSites,Static Web App,,donovm4,Donovan McCoy,,,false
+avm-utl-compute-linuxvirtualmachine-azapi-replicator,,,utl module that helps users to migrate azurerm_linux_virtual_machine into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-compute-orchestratedvirtualmachinescaleset-azapi-replicator,,,utl module that helps users to migrate azurerm_orchestrated_virtual_machine_scale_set resource into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-compute-windowsvirtualmachine-azapi-replicator,,,utl module that helps users to migrate azurerm_windows_virtual_machine into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-containerregistry-containerregistry-azapi-replicator,,,utl module that helps users to migrate azurerm_container_registry into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-ephemeral-credential,,,AVM ephemeral credentials,,lonegunmanb,Zijie He,,,false
+avm-utl-interfaces,,,AVM Interfaces,,matt-FFFFFF,Matt White,,,false
+avm-utl-naming,,,AVM Naming,,Nepomuceno,Gabriel Monteiro Nepomuceno,,,false
+avm-utl-network-ip-addresses,,,AVM Network IP Addresses,IPv4 CIDR,jaredfholgate,Jared Holgate,,,false
+avm-utl-network-privatednszone-azapi-replicator,,,utl module that helps users to migrate azurerm_private_dns_zone into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-network-subnet-azapi-replicator,,,utl module that helps users to migrate azurerm_subnet into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-network-virtualnetwork-azapi-replicator,,,utl module that helps users to migrate azurerm_virtual_network into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-privatedns-privatednszone-azapi-replicator,,,utl module that helps users to migrate azurerm_private_dns_zone into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-regions,,,Azure Regions Data,,matt-FFFFFF,Matt White,,,false
+avm-utl-resources-resourcegroup-azapi-replicator,,,utl module that helps users to migrate azurerm_resource_group into azapi_resource,,lonegunmanb,lonegunmanb,,,false
+avm-utl-roledefinitions,,,AVM Utility module for role definitions,,matt-FFFFFF,Matt White,,,false
+avm-utl-sku-finder,,,AVM SKU Finder ,Sku,jchancellor-ms,Jon Chancellor,,,false

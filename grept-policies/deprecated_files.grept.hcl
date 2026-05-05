@@ -11,6 +11,11 @@ locals {
       ".vscode/mcp.json",
       "locals.telemetry.tf",
       "locals.version.tf.json",
+      ".agents/skills/AVM-Terraform-Development/SKILL.md",
+      ".agents/skills/AVM-Terraform-Development/azure-schema",
+      ".agents/skills/AVM-Terraform-Development/AzAPI.md",
+      ".agents/skills/AVM-Terraform-Development/terraform-test.md",
+      ".agents/skills/AVM-Terraform-Development/tfpluginschema.md",
     ])
     alz = toset([
       ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
