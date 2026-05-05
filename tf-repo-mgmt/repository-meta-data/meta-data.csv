@@ -156,6 +156,7 @@ avm-res-network-dnsforwardingrulesets,Microsoft.Network,dnsForwardingRulesets,DN
 avm-res-network-dnsresolver,Microsoft.Network,dnsResolvers,DNS Resolver,,humanascode,Itamar Hirosh,,,false
 avm-res-network-dnszone,Microsoft.Network,dnsZones,Public DNS Zone,,sharmilamusunuru,Sharmila Musunuru,,,false
 avm-res-network-expressroutecircuit,Microsoft.Network,expressRouteCircuits,ExpressRoute Circuit,ER,khushal08,Khush Kaviraj,adammontlake,Adam Montlake,false
+avm-res-network-expressrouteport,Microsoft.Network,Network,AVM Module for ExpresRoute Port (Direct),,adammontlake,Adam Montlake,,,false
 avm-res-network-firewallpolicy,Microsoft.Network,firewallPolicies,Azure Firewall Policy,,cshea-msft,Charles Shea,,,false
 avm-res-network-frontdoorwebapplicationfirewallpolicy,Microsoft.Network,frontDoorWebApplicationFirewallPolicies,Front Door Web Application Firewall (WAF) Policy,,sihbher,Gerardo Reyes,,,false
 avm-res-network-ipgroup,Microsoft.Network,ipGroups,IP Group,,mathewsg,Mathew George,,,false
