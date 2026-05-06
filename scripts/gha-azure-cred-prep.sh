@@ -15,6 +15,10 @@ for key in "${!secrets[@]}"; do
     lowerKey=$(echo "$key" | tr '[:upper:]' '[:lower:]')
     finalKey=${lowerKey/tf_var_/TF_VAR_}
     export "$finalKey"="${secrets[$key]}"
+    echo "Exported Terraform secret: $finalKey"
+  elif [[ $key = AVM_BARE_* ]]; then
+    export "$key"="${secrets[$key]}"
+    echo "Exported AVM bare secret: $key (will be passed to container as ${key#AVM_BARE_})"
   fi
 done
 
@@ -23,10 +27,12 @@ for key in "${!variables[@]}"; do
     lowerKey=$(echo "$key" | tr '[:upper:]' '[:lower:]')
     finalKey=${lowerKey/tf_var_/TF_VAR_}
     export "$finalKey"="${variables[$key]}"
+    echo "Exported Terraform variable: $finalKey"
+  elif [[ $key = AVM_BARE_* ]]; then
+    export "$key"="${variables[$key]}"
+    echo "Exported AVM bare variable: $key (will be passed to container as ${key#AVM_BARE_})"
   fi
 done
-
-echo -e "Custom environment variables:\n$(env | grep '^TF_VAR_')"
 
 # Use override values if provided, otherwise use the default values from the environment
 export ARM_TENANT_ID="${ARM_TENANT_ID_OVERRIDE:-${ARM_TENANT_ID}}"
