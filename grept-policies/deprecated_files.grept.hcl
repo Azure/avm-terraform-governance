@@ -2,13 +2,20 @@ locals {
   deprecated_files = {
     root = toset([
       ".github/actions/version-check/action.yml",
+      ".github/copilot-instructions.md",
       ".github/policies/avmrequiredfiles.yml",
       ".github/workflows/e2e.yml",
       ".github/workflows/grept_cronjob.yml",
       ".github/workflows/linting.yml",
       ".github/workflows/version-check.yml",
+      ".vscode/mcp.json",
       "locals.telemetry.tf",
       "locals.version.tf.json",
+      ".agents/skills/AVM-Terraform-Development/SKILL.md",
+      ".agents/skills/AVM-Terraform-Development/azure-schema",
+      ".agents/skills/AVM-Terraform-Development/AzAPI.md",
+      ".agents/skills/AVM-Terraform-Development/terraform-test.md",
+      ".agents/skills/AVM-Terraform-Development/tfpluginschema.md",
     ])
     alz = toset([
       ".github/ISSUE_TEMPLATE/avm_module_issue.yml",

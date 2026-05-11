@@ -51,6 +51,14 @@ command_groups:
               ./tests/$AVM_TEST_TYPE/setup.sh
             fi
 
+        - type: pwsh
+          name: Check and Run setup.ps1
+          script: |
+            if (Test-Path ./tests/$env:AVM_TEST_TYPE/setup.ps1) {
+              Write-Host "Running setup.ps1"
+              & ./tests/$env:AVM_TEST_TYPE/setup.ps1
+            }
+
         - type: shell
           name: "Terraform Init"
           command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"

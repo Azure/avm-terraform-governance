@@ -4,19 +4,18 @@ description: |
   It's typically used in GitHub Actions to configure the environment before running other tasks.
 commands:
   - type: shell
-    name: Check teardown.sh
+    name: Run teardown.sh if exists
     command_line: |
-      if [ ! -f examples/teardown.sh ]; then
-        echo "teardown.sh not found" 1>&2
-        echo "Skipping global teardown" 1>&2
-        exit 99
+      if [ -f teardown.sh ]; then
+        chmod +x ./teardown.sh && \
+        ./teardown.sh
       fi
-    skip_on_exit_codes:
-      - 99
+    working_directory: examples
 
-  - type: shell
-    name: Run teardown.sh
-    command_line: |
-      chmod +x ./teardown.sh && \
-      ./teardown.sh
+  - type: pwsh
+    name: Run teardown.ps1 if exists
+    script: |
+      if (Test-Path teardown.ps1) {
+        & ./teardown.ps1
+      }
     working_directory: examples

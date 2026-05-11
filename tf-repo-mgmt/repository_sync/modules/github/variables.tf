@@ -41,14 +41,24 @@ variable "module_name" {
   description = "Description of the AVM (e.g. Azure Landing Zones Management Resources)"
 }
 
-variable "github_repository_environment_name" {
+variable "github_repository_pr_check_environment_name" {
   type        = string
-  description = "Name of the environment used to store secrets for the test environment."
+  description = "Name of the approval-gated environment used by the PR check job."
+}
+
+variable "github_repository_integration_test_environment_name" {
+  type        = string
+  description = "Name of the approval-gated environment used by the integration test job."
+}
+
+variable "github_repository_examples_test_environment_name" {
+  type        = string
+  description = "Name of the approval-gated environment used by the example test jobs."
 }
 
 variable "github_repository_no_approval_environment_name" {
   type        = string
-  description = "Name of the environment used as a dummy no approval environment."
+  description = "Name of the environment used by jobs that do not require approval."
 }
 
 variable "github_repository_copilot_environment_name" {

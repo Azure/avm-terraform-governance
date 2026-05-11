@@ -3,17 +3,17 @@ name: avm-repos
 description: Gets AVM repositories based on GH app installation and outputs them as a JSON array.
 inputs:
   repositories:
-    description: "Target repositories, use this syntax to select specific repositories: 'avm-res-keyvault-vault'."
+    description: "Target repositories, comma separated list to select specific repositories: 'avm-res-keyvault-vault'."
     default: "All"
-  first_run:
-    description: "Whether to run in first run mode"
-    default: "false"
-  protectedReposFilePath:
-    description: "Path to the protected repositories file"
-    default: "${{ github.workspace }}/tf-repo-mgmt/protected_repos/ProtectedRepos.csv"
+  repositoriesToSkip:
+    description: "Repositories to skip, comma separated list of repos to skip, e.g. 'avm-template'."
+    default: ""
   outputDirectory:
     description: "Output directory for the repository data"
     default: "${{ github.workspace }}"
+  metaDataFilePath:
+    description: "Path to the meta-data.csv file used to determine expected archive state for repositories."
+    default: "${{ github.workspace }}/tf-repo-mgmt/repository-meta-data/meta-data.csv"
   clientId:
     description: "GitHub App Client ID"
     required: true
@@ -33,37 +33,42 @@ runs:
   steps:
     - name: Create GitHub App Token
       id: app-token
-      uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+      uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
       with:
-        app-id: ${{ inputs.clientId }}
+        client-id: ${{ inputs.clientId }}
         private-key: ${{ inputs.privateKey }}
         owner: ${{ github.repository_owner }}
 
     - name: Generate Matrix
       id: matrix
       run: |
-        $triggerType = "${{ github.event_name }}"
-
-        $repositories = "All"
-        $firstRun = $false
-
-        if($triggerType -eq "workflow_dispatch") {
-          $repositories = "${{ inputs.repositories }}"
-          $firstRun = "${{ inputs.first_run }}".ToLower() -eq "true"
-        }
-
         $matrixParallel = 5
-        if($firstRun) {
-          $matrixParallel = 1
-        }
         Write-Output "matrixParallel=$matrixParallel" >> $env:GITHUB_OUTPUT
 
+        $repositories = "${{ inputs.repositories }}"
         if($repositories -eq "All") {
           $repositories = @()
         } else {
           $repositories = $repositories -split ','
         }
-        $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" -repoFilter $repositories -outputDirectory "${{ inputs.outputDirectory }}" -protectedReposFilePath "${{ inputs.protectedReposFilePath }}")
+
+        Write-Host "Repositories to include: $(ConvertTo-Json $repositories)"
+
+        $repositoriesToSkip = "${{ inputs.repositoriesToSkip }}"
+        if($repositoriesToSkip -eq "") {
+          $repositoriesToSkip = @()
+        } else {
+          $repositoriesToSkip = $repositoriesToSkip -split ','
+        }
+
+        Write-Host "Repositories to skip from input: $(ConvertTo-Json $repositoriesToSkip)"
+
+        $matrix = @(& "${{ github.action_path }}/scripts/Get-RepositoriesWhereAppInstalled.ps1" `
+          -repoFilter $repositories `
+          -outputDirectory "${{ inputs.outputDirectory }}" `
+          -additionalReposToSkip $repositoriesToSkip `
+          -metaDataFilePath "${{ inputs.metaDataFilePath }}")
+
         $matrixJson = ConvertTo-Json $matrix -Depth 10 -Compress
         Write-Host (ConvertTo-Json $matrix -Depth 10)
         Write-Output "matrix=$matrixJson" >> $env:GITHUB_OUTPUT
@@ -72,18 +77,21 @@ runs:
         GH_TOKEN: ${{ steps.app-token.outputs.token }}
 
     - name: Upload Repo Logs Json
-      if: always() && hashFiles('warning.log.json') != ''
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: always() && hashFiles('issues.log.json') != ''
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: warning.log.json
-        path: warning.log.json
+        name: issues.log.json
+        path: issues.log.json
 
     - name: Repo Error
-      if: always() && hashFiles('warning.log.json') != ''
+      if: always() && hashFiles('issues.log.json') != ''
       run: |
-        $issueLogJson = Get-Content -Path "${{ github.workspace }}/warning.log.json" -Raw
+        $issueLogJson = Get-Content -Path "${{ github.workspace }}/issues.log.json" -Raw
         $issueLog = ConvertFrom-Json $issueLogJson
-        $issueLog | ForEach-Object {
+        $issueLog | Where-Object { $_.severity -eq "error" } | ForEach-Object {
           echo "::error title=$($_.repoId) has issues::$($_.message)"
+        }
+        $issueLog | Where-Object { $_.severity -eq "warning" } | ForEach-Object {
+          echo "::warning title=$($_.repoId) has issues::$($_.message)"
         }
       shell: pwsh

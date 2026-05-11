@@ -104,6 +104,13 @@ commands:
                     ./tflint-pre.sh
                   fi
 
+              - type: pwsh
+                name: run tflint-pre.ps1 if exists
+                script: |
+                  if (Test-Path tflint-pre.ps1) {
+                    & ./tflint-pre.ps1
+                  }
+
               - type: shell
                 name: run example
                 command_line: |
@@ -348,6 +355,13 @@ commands:
                 ./pre.sh
               fi
 
+          - type: pwsh
+            name: run pre.ps1 if exists
+            script: |
+              if (Test-Path pre.ps1) {
+                & ./pre.ps1
+              }
+
           # conftest
           - type: shell
             name: terraform init
@@ -441,3 +455,10 @@ commands:
                 chmod +x post.sh && \
                 ./post.sh
               fi
+
+          - type: pwsh
+            name: run post.ps1 if exists
+            script: |
+              if (Test-Path post.ps1) {
+                & ./post.ps1
+              }

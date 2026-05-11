@@ -14,15 +14,17 @@ resource "azapi_resource" "identity" {
 }
 
 resource "azapi_resource" "identity_federated_credentials" {
+  for_each = var.github_repository_environment_names
+
   type      = "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials@2023-07-31-preview"
-  name      = local.owner_repo_name
+  name      = "${local.owner_repo_name}-${each.value}"
   parent_id = azapi_resource.identity.id
-  locks     = [azapi_resource.identity.id] # not needed but added if we configure more than one environment
+  locks     = [azapi_resource.identity.id]
   body = {
     properties = {
       audiences = ["api://AzureADTokenExchange"]
       issuer    = "https://token.actions.githubusercontent.com"
-      subject   = "repository_owner_id:${var.github_organization_id}:repository_id:${var.github_repository_id}:environment:${var.github_repository_environment_name}:job_workflow_ref:${var.github_job_workflow_ref}"
+      subject   = "repository_owner_id:${var.github_organization_id}:repository_id:${var.github_repository_id}:environment:${each.value}:job_workflow_ref:${var.github_job_workflow_ref}"
     }
   }
 }

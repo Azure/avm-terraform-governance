@@ -10,7 +10,8 @@ param(
     [string]$metaDataFilePath = "./repository-meta-data/meta-data.csv",
     [string]$outputDirectory = ".",
     [string]$applicationName = "azure-verified-modules",
-    [string]$applicationId = "1049636"
+    [string]$applicationId = "1049636",
+    [bool]$skipPrCreation = $true
 )
 
 # Meta Data
@@ -39,6 +40,7 @@ foreach($repository in $repositories) {
     if($filteredMetaData.Count -eq 0) {
         $warning = @{
             repoId = $repository.repoId
+            severity = "warning"
             message = "No metadata found for repository $($repository.repoId). Skipping..."
         }
         Write-Warning $warning.message
@@ -169,6 +171,7 @@ foreach($output in $metaDataConfig.outputs) {
                     if($required) {
                         $warning = @{
                             repoId = $dataItem["repo.moduleID"]
+                            severity = "warning"
                             message = "Required field '$($fieldMap.name)' is missing for repository $($dataItem["repo.moduleID"]) as required filters are not met."
                         }
                         Write-Warning $warning.message
@@ -188,8 +191,8 @@ if($warnings.Count -eq 0) {
 } else {
     Write-Host "Issues found ($($warnings.Count))"
     $warningsJson = ConvertTo-Json $warnings -Depth 100
-    $warningsJson | Out-File "$outputDirectory/warning.log.json"
-    Write-Host "Warnings written to $outputDirectory/warning.log.json"
+    $warningsJson | Out-File "$outputDirectory/issues.log.json"
+    Write-Host "Issues written to $outputDirectory/issues.log.json"
 }
 
 # PR
@@ -215,6 +218,13 @@ if(!$gitStatus) {
 }
 
 git reset --hard HEAD
+
+if($skipPrCreation) {
+    Write-Host "skipPrCreation is true. Skipping PR creation for repository data sync."
+    Set-Location -Path $currentPath
+    Remove-Item -Path $tempFolder -Force -Recurse | Out-Null
+    exit 0
+}
 
 $existingPR = gh pr list --state open --search "chore: terraform csv update" --json number,title,url,headRefName --repo $avmDocsRepositoryName | ConvertFrom-Json
 
