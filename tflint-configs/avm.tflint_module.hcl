@@ -192,7 +192,3 @@ rule "tags" {
 rule "provider_modtm_version_constraint" {
   enabled = false
 }
-
-rule "valid_template_interpolation" {
-  enabled = true
-}
