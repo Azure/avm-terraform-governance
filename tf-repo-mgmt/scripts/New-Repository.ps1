@@ -2,7 +2,7 @@ param (
   [string]$tempPath = "~/temp-avm-repo-creation",
   [string]$governanceRepoUrl = "https://github.com/Azure/avm-terraform-governance",
   [string]$openSourceRepoUrl = "https://github.com/microsoft/github-operations",
-  [string]$moduleProvider = "azurerm",
+  [string]$moduleProvider = "azure",
   [string]$moduleName,
   [string]$moduleDisplayName,
   [string]$resourceProviderNamespace,
