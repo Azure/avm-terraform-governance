@@ -365,12 +365,16 @@ commands:
           # conftest
           - type: shell
             name: terraform init
-            command_line: terraform init -input=false
+            command_line: |
+              set -a; [ -f .env ] && . ./.env; set +a
+              terraform init -input=false
 
           # conftest
           - name: terraform plan
             type: shell
-            command_line: terraform plan -out=tfplan -input=false
+            command_line: |
+              set -a; [ -f .env ] && . ./.env; set +a
+              terraform plan -out=tfplan -input=false
 
             # conftest
           - name: terraform show

@@ -102,19 +102,27 @@ commands:
 
       - type: shell
         name: Terraform Init
-        command_line: terraform init
+        command_line: |
+          set -a; [ -f .env ] && . ./.env; set +a
+          terraform init
 
       - type: shell
         name: Terraform Plan
-        command_line: terraform plan -out tfplan
+        command_line: |
+          set -a; [ -f .env ] && . ./.env; set +a
+          terraform plan -out tfplan
 
       - type: shell
         name: Terraform Apply
-        command_line: terraform apply -auto-approve tfplan
+        command_line: |
+          set -a; [ -f .env ] && . ./.env; set +a
+          terraform apply -auto-approve tfplan
 
       - type: shell
         name: Terraform Plan Idempotency Check
-        command_line: terraform plan -detailed-exitcode -out tfplan
+        command_line: |
+          set -a; [ -f .env ] && . ./.env; set +a
+          terraform plan -detailed-exitcode -out tfplan
 
         # This command will run if the previous plan was not idempotent
         # and will output the plan to stderr.
@@ -132,6 +140,7 @@ commands:
             exit 0
           fi
           ls -al 1>&2
+          set -a; [ -f .env ] && . ./.env; set +a
           terraform destroy -auto-approve
         runs_on_condition: always
 
