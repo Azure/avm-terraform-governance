@@ -19,6 +19,9 @@ for key in "${!secrets[@]}"; do
   elif [[ $key = AVM_BARE_* ]]; then
     export "$key"="${secrets[$key]}"
     echo "Exported AVM bare secret: $key (will be passed to container as ${key#AVM_BARE_})"
+  elif [[ $key = AVM_* ]]; then
+    export "$key"="${secrets[$key]}"
+    echo "Exported AVM secret: $key"
   fi
 done
 
@@ -31,6 +34,9 @@ for key in "${!variables[@]}"; do
   elif [[ $key = AVM_BARE_* ]]; then
     export "$key"="${variables[$key]}"
     echo "Exported AVM bare variable: $key (will be passed to container as ${key#AVM_BARE_})"
+  elif [[ $key = AVM_* ]]; then
+    export "$key"="${variables[$key]}"
+    echo "Exported AVM variable: $key"
   fi
 done
 
