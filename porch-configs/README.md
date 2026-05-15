@@ -97,3 +97,52 @@ The root level commands are always run in series.
       name: Will be run concurrently as well!
       command_line: |
         echo "This is the second step in a parallel group"
+```
+
+## Per-example hooks and `.env` auto-sourcing
+
+The per-example `foreachdirectory` blocks in [`test-examples.porch.yaml`](./test-examples.porch.yaml) and the `well architected` block in [`pr-check.porch.yaml`](./pr-check.porch.yaml) provide optional per-example hook scripts that run inside each example's working directory:
+
+- `pre.sh` / `pre.ps1` — run before the terraform steps.
+- `post.sh` / `post.ps1` — run after the terraform steps (always, including on failure).
+
+Each step in a Porch run executes in its own subprocess, so environment variables `export`ed from `pre.sh` / `pre.ps1` do not propagate to the subsequent `terraform init` / `terraform plan` / `terraform apply` / `terraform destroy` steps.
+
+To bridge this, every terraform step in those blocks auto-sources a file named `.env` from the example's working directory if one exists:
+
+```bash
+set -a; [ -f .env ] && . ./.env; set +a
+terraform <command>
+```
+
+`set -a` causes assignments in `.env` to be auto-exported, so the `terraform` process (and any subprocess it spawns, e.g. `gh` via `local-exec`) inherits them as real environment variables for that step only. File presence is the opt-in — examples without a `.env` are unaffected.
+
+### Usage
+
+If your example needs an env var that should not be set on the host (for example, a token that would interfere with local `gh` authentication), have your `pre.sh` write a `.env` file in the example directory and your `post.sh` remove it:
+
+```bash
+# pre.sh
+cat > .env <<EOF
+GITHUB_TOKEN=${AVM_E2E_GITHUB_TOKEN}
+EOF
+```
+
+```bash
+# post.sh
+rm -f .env
+```
+
+Add `.env` to your module's `.gitignore` so it is never committed.
+
+> If pwsh-typed terraform steps are added to these configs in the future, use the analogous PowerShell preamble:
+>
+> ```powershell
+> if (Test-Path .env) {
+>   Get-Content .env | ForEach-Object {
+>     if ($_ -match '^([^=]+)=(.*)$') {
+>       [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2])
+>     }
+>   }
+> }
+> ```
