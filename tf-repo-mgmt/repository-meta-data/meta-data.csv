@@ -48,6 +48,7 @@ avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,
 avm-ptn-odaa,,,Oracle Exedata Workload,,terrymandin,Terry Mandin,,,false
 avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,,false
 avm-ptn-openai-cognitivesearch,,,Corporate Line of Business (LoB) ChatBot ,,mikestiers,Mike Stiers,,,false
+avm-ptn-pipeline-agent-container-job,,,This module will be used to deploy self hosted Azure Pipeline Agent in Azure Container Apps with autoscaling capabilities,,mathewsg,Mathews George,,,false
 avm-ptn-policyassignment,,,Policy assignment,,bjornhofer,Bjorn Hofer,,,false
 avm-ptn-subnets-nsgs-routes,,,Network Security Groups,NSG,swathialuganti,Swathi Aluganti Narasimhulu,,,false
 avm-ptn-subscription-service-health-alerts,,,Subscription Service Health Alerts,,ASHR4,Rhys Ash,,,false
