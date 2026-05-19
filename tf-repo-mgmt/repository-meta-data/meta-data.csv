@@ -25,6 +25,7 @@ avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,,false
 avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran,,false
 avm-ptn-azureimagebuilder,,,Azure Image Builder,,ethanjenkins1,Ethan Jenkins MSFT,,,false
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,,false
+avm-ptn-bcdr-vm-replication,,,"The avm-ptn-bcdr-vm-replication module is designed to simplify the deployment and configuration of Virtual Machine replication using Azure Site Recovery Services (ASR) within Azure. It abstracts the complexity involved in setting up a disaster recovery scenario by managing all necessary resources to replicate a VM from one Azure region to another, ensuring that in case of a regional outage, your VM can be quickly recovered in the secondary location.",,ns-github-design,Nasreen Sarah,,,false
 avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,,false
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,,false
