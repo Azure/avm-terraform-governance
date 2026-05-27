@@ -65,6 +65,16 @@
       "membersAreTeamMaintainers": false
     },
     {
+      "name": "avm-module-contributors-terraform",
+      "description": "Azure Verified Module Contributors.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": false,
+      "membersAreTeamMaintainers": false
+    },
+    {
       "name": "alz-accelerator-contributors-external",
       "description": "Contributors to the Azure Landing Zones Accelerator repository.",
       "repositoryGroups": [
