@@ -16,6 +16,8 @@ locals {
       ".agents/skills/AVM-Terraform-Development/AzAPI.md",
       ".agents/skills/AVM-Terraform-Development/terraform-test.md",
       ".agents/skills/AVM-Terraform-Development/tfpluginschema.md",
+      ".agents/skills/avm-terraform-module-development/scripts/azure-schema",
+      ".agents/skills/avm-terraform-module-development/scripts/azure-schema.ps1",
     ])
     alz = toset([
       ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
