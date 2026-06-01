@@ -53,7 +53,7 @@ Before you claim a change is done, verify the module still satisfies these MUST-
 
 - `TFNFR1` / `TFNFR17` / `TFNFR18` — Every variable and output has a `description` and a precise `type`.
 - `TFNFR20` — Collection variables (`map`, `set`, `list`) default to `{}` / `[]` with `nullable = false` rather than `null`.
-- `RMFR7` / `TFNFR16` — Outputs expose the whole resource reference, not individual attributes; variable and output names follow the AVM naming rules.
+- `RMFR7` / `TFFR2` / `TFNFR16` — Outputs follow AVM minimum requirements and naming rules. For Terraform-specific additional outputs, prefer discrete computed attributes over whole resource object outputs.
 - `TFRMFR1` — **Resource Module Parent ID**: expose the parent scope as a single `string` variable named `parent_id`, `nullable = false`, no default. Assign it to `parent_id` on every primary `azapi_resource`. Modules **MUST NOT** accept `resource_group_name`, `resource_group_resource_id`, or any other parent-scope-specific variable. Modules **MUST NOT** create the parent scope themselves (supersedes the Terraform clause of `RMFR3`). Submodules typically receive `parent_id = azapi_resource.this.id` from the parent.
 - `TFNFR38` — Validate `parent_id` with `can(provider::azapi::parse_resource_id("<ExpectedParentType>", var.parent_id))`. The expected parent type **MUST** be a literal string (e.g. `"Microsoft.Resources/resourceGroups"` or `"Microsoft.Network/virtualNetworks"`). Hand-rolled `regex`/`startswith`/`length` checks are not allowed. Extension-resource modules (locks, role assignments, diagnostic settings, tags, etc.) are the only exception and use a generic `startswith` check on `/subscriptions/` or `/providers/`, with the reason documented in the README.
 
@@ -61,11 +61,11 @@ Before you claim a change is done, verify the module still satisfies these MUST-
 
 - `TFRMNFR2` — **Primary Resource Naming**: the primary `azapi_resource` (or equivalent AzAPI resource) **MUST** be named `this`. Every satellite resource (lock, role assignments, diagnostic settings, private endpoints, child resources required by the primary, etc.) **MUST NOT** be named `this` — it **MUST** be named after what it represents (e.g. `azapi_resource.lock`, `azapi_resource.role_assignments`, `azapi_resource.diagnostic_settings`). Each submodule has its own `this`. This is what lets consumers and the AVM interface utility module rely on `azapi_resource.this.id` and `azapi_resource.this.output`.
 - `TFRMNFR1` — **Subresources as submodules**: every ARM subresource (a child resource type in the API spec) **MUST** be implemented as a Terraform submodule under `modules/<singular-subresource-name>/`. Submodules are full AVM modules in their own right (same shared/RM/TF specs apply), each with their own `_header.md` and `_footer.md`. Submodules **MUST NOT** declare `count` / `for_each` on their primary `azapi_resource` — cardinality is the parent's responsibility. Parent modules **MUST** reference submodules by local relative path (`./modules/<name>`), not via the registry or git.
-- `TFFR3` — Resources are implemented with the **AzAPI provider** (`Azure/azapi ~> 2.8`). Only fall back to `azurerm` (preferring data sources) when AzAPI genuinely lacks an equivalent; document the reason in code.
+- `TFFR3` — Resources are implemented with the **AzAPI provider** (`Azure/azapi` `>= 2.0, < 3.0`). Only fall back to `azurerm` (preferring data sources) when AzAPI genuinely lacks an equivalent; document the reason in code and in `README.md` per the exception requirements.
 - `TFFR4` — Every `azapi_resource` **MUST** specify `response_export_values`, even if it is `[]`. Use it (list or map form) to surface read-only properties needed by the module's outputs.
 - `TFFR5` — Every `azapi_resource` **MUST** specify `replace_triggers_refs`, listing the body paths that should force replacement when changed. `name` and `location` already trigger replacement and don't need to be listed.
 - `TFFR6` — The `type` argument **MUST NOT** be hard-coded. Source it from a `resource_types` object variable with one `optional(string, "<provider>/<resource>@<api-version>")` field per AzAPI resource the module declares. Defaults must be stable (non-preview) API versions. Parent modules **MUST** cascade the relevant subset of `resource_types` to each submodule.
-- `TFFR7` — Expose `retry` and `timeouts` variables and apply them to every `azapi_resource`. `retry` is an attribute (assign directly); `timeouts` is a block (use `dynamic "timeouts"` so the `null` default works). Cascade unchanged into submodules. See [AzAPI.md](references/AzAPI.md#retry-and-timeouts).
+- `TFFR7` — Expose `retry` and `timeouts` variables and apply them to every `azapi_resource`. `retry` is an attribute (assign directly); `timeouts` is a block (use `dynamic "timeouts"` so the `null` default works). Cascade unchanged into submodules. See [AzAPI.md](references/AzAPI.md).
 
 For full AzAPI patterns, the `parent_id` variable shape, the `Get-AzureSchema` lookup CLI, and provider configuration, read [AzAPI.md](references/AzAPI.md).
 
@@ -86,7 +86,7 @@ AVM defines a fixed set of standard interfaces that resource modules expose wher
 
 The resource-feature interfaces are backed by the shared utility module `Azure/avm-utl-interfaces/azure` — compose it rather than redefining variable shapes by hand. The diagnostic-settings interface MUST use the v2 shape (`diagnostic_settings_v2` input / `diagnostic_settings_azapi_v2` output on the utility module).
 
-For variable shapes, defaults, the v2 diagnostic-settings details, and which interfaces apply to which resource, read [interfaces.md](references/interfaces.md). For the `retry` / `timeouts` variable schemas and the required `dynamic "timeouts"` wiring on `azapi_resource`, read [AzAPI.md](references/AzAPI.md#retry-and-timeouts).
+For variable shapes, defaults, the v2 diagnostic-settings details, and which interfaces apply to which resource, read [interfaces.md](references/interfaces.md). For the `retry` / `timeouts` variable schemas and the required `dynamic "timeouts"` wiring on `azapi_resource`, read [AzAPI.md](references/AzAPI.md).
 
 ### Module composition reference
 
@@ -184,6 +184,43 @@ When creating the PR, include:
 - The issue number(s) the PR closes.
 - Any relevant context for reviewers.
 
+## Handling fork PRs
+
+End-to-end tests cannot run on PRs from forks — GitHub does not expose secrets to fork-triggered workflows, so `pr-check.yml` short-circuits with a warning. The standard flow when a fork PR is ready to land:
+
+1. Review the fork PR normally (read the diff, request changes via review comments). Iterate with the contributor on their fork until the change is ready.
+2. **Hand the PR off to a release branch** in the upstream module repo. The handoff workflow (in `Azure/avm-terraform-governance`):
+   - Creates an `e2e/pr-<N>` branch from `main` in the module repo.
+   - Retargets the fork PR's base from `main` to `e2e/pr-<N>`.
+   - Squash-merges the fork PR into `e2e/pr-<N>`, preserving the original author and emitting `Co-authored-by:` trailers for every commit author.
+   - Closes the fork PR (auto-closed by the squash-merge) and comments on it with a link to the new PR.
+   - Opens a release-branch PR (`e2e/pr-<N>` → `main`) on which `pr-check.yml` runs with full credentials.
+3. **From the handoff onward, the module owners own the change.** Any further work — review fixes, conflict resolution, lint fixes — happens on the release-branch PR, **not** the original fork PR. The fork PR is closed and will not receive further commits.
+4. Squash-merge the release-branch PR as usual. The `Co-authored-by:` trailers in the PR body keep crediting the original contributor on the final commit.
+
+### Trigger the handoff
+
+Two equivalent options.
+
+**From the governance Actions UI:** run the `Fork PR Handoff` workflow in `Azure/avm-terraform-governance`, supplying `target_repo` (e.g. `Azure/terraform-azurerm-avm-res-storage-storageaccount`) and `pr_number`.
+
+**From the agent or a local shell** using `gh`:
+
+```pwsh
+'{"event_type":"fork-pr-handoff","client_payload":{"target_repo":"Azure/<this-module-repo>","pr_number":<fork-pr-number>}}' |
+  gh api repos/Azure/avm-terraform-governance/dispatches --method POST --input -
+```
+
+For polling and richer error handling, the governance repo also exposes [`tf-repo-mgmt/scripts/Invoke-ForkPrHandoff.ps1`](https://github.com/Azure/avm-terraform-governance/blob/main/tf-repo-mgmt/scripts/Invoke-ForkPrHandoff.ps1).
+
+### Pre-flight checks the workflow enforces
+
+The handoff workflow refuses to proceed when:
+
+- The fork PR is not open, or is not from a fork, or is in draft.
+- The fork PR has merge conflicts against `main` — ask the contributor to rebase their fork first.
+- An `e2e/pr-<N>` branch already exists — delete it first if a re-handoff is genuinely needed.
+
 ## Common mistakes to avoid
 
 - **Citing a spec from memory.** AVM specs change. Always fetch the current text via `llms.txt`. Several spec IDs are easy to mix up (e.g. `TFFR4` is `response_export_values`, `TFFR5` is `replace_triggers_refs`, `TFFR6` is `resource_types`, `TFFR7` is `retry`/`timeouts`).
@@ -195,7 +232,7 @@ When creating the PR, include:
 - **Omitting `response_export_values` (`TFFR4`) or `replace_triggers_refs` (`TFFR5`)** — both are MUST on every `azapi_resource`, even when the value is `[]`.
 - **Editing `README.md`, `main.telemetry.tf`, or `terraform.tf` provider versions by hand.** These are generated/enforced — edit `_header.md`, the `modtm` source via mapotf configs, and so on.
 - **Defaulting collection variables to `null`** instead of `{}` / `[]` with `nullable = false` (`TFNFR20`).
-- **Exposing a single attribute as an output** instead of the whole object reference (`RMFR7`).
+- **Outputting whole resource objects by default** instead of discrete computed attributes (`TFFR2`), or missing required outputs (`RMFR7`).
 - **Implementing an ARM subresource inline in the parent module** instead of as a submodule under `modules/<singular-name>/` (`TFRMNFR1`), or declaring `count`/`for_each` on a submodule's primary resource.
 - **Adding a new interface (locks, diagnostic settings, role assignments, etc.) without re-using `Azure/avm-utl-interfaces/azure`**. See [interfaces.md](references/interfaces.md).
 - **Using the legacy `diagnostic_settings` shape** instead of the v2 schema. The utility module's `diagnostic_settings_v2` input is the required entry point.
