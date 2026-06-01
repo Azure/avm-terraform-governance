@@ -1,0 +1,222 @@
+---
+name: Fork PR Handoff
+
+# End-to-end tests in module repos cannot run on PRs from forks because GitHub
+# does not expose secrets to fork-triggered workflows. This workflow performs a
+# one-shot, maintainer-owned handoff:
+#
+#   1. Creates an `e2e/pr-<N>` branch from `main` in the target module repo.
+#   2. Retargets the fork PR's base to that branch.
+#   3. Squash-merges the fork PR (preserving the original author and emitting
+#      Co-authored-by trailers for every commit author).
+#   4. Opens a release-branch PR (`e2e/pr-<N>` -> `main`) on which the standard
+#      pr-check.yml runs with full credentials.
+#   5. Comments on the (now closed) fork PR linking the release-branch PR.
+#
+# From the handoff onward, the module owners are responsible for the change.
+# Any further changes are made on the release-branch PR, not on the original
+# fork PR.
+#
+# The workflow lives in the governance repo because module repos do not have
+# the AVM GitHub App credentials, and only an App token can create the release
+# branch PR in a way that triggers the downstream pr-check.yml workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: 'Target module repository in owner/name form (e.g. Azure/terraform-azurerm-avm-res-storage-storageaccount).'
+        type: string
+        required: true
+      pr_number:
+        description: 'Number of the fork PR to hand off to a release branch.'
+        type: number
+        required: true
+  repository_dispatch:
+    types: [fork-pr-handoff]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-pr-handoff-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.target_repo || inputs.target_repo }}-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.pr_number || inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  handoff:
+    name: Hand off fork PR
+    runs-on: ubuntu-latest
+    environment: avm
+    permissions:
+      contents: read
+    steps:
+      - name: Resolve inputs
+        id: resolve
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "repository_dispatch") {
+            $target = "${{ github.event.client_payload.target_repo }}"
+            $pr     = "${{ github.event.client_payload.pr_number }}"
+          } else {
+            $target = "${{ inputs.target_repo }}"
+            $pr     = "${{ inputs.pr_number }}"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($target)) { throw "target_repo is required." }
+          if ([string]::IsNullOrWhiteSpace($pr))     { throw "pr_number is required." }
+          if ($target -notmatch '^[^/]+/[^/]+$')     { throw "target_repo '$target' must be in owner/name form." }
+          if (-not [int]::TryParse($pr, [ref]$null)) { throw "pr_number '$pr' must be an integer." }
+
+          $owner, $name = $target.Split('/')
+          Write-Output "target_repo=$target"   >> $env:GITHUB_OUTPUT
+          Write-Output "target_owner=$owner"   >> $env:GITHUB_OUTPUT
+          Write-Output "target_name=$name"     >> $env:GITHUB_OUTPUT
+          Write-Output "pr_number=$pr"         >> $env:GITHUB_OUTPUT
+          Write-Host "Handing off fork PR #$pr in $target."
+
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+          owner: ${{ steps.resolve.outputs.target_owner }}
+          repositories: ${{ steps.resolve.outputs.target_name }}
+
+      - name: Hand off fork PR to release branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_REPO: ${{ steps.resolve.outputs.target_repo }}
+          PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $repo     = $env:TARGET_REPO
+          $prNumber = [int]$env:PR_NUMBER
+
+          function Assert-GhOk {
+            param([string]$Operation)
+            if ($LASTEXITCODE -ne 0) { throw "$Operation failed (gh exit $LASTEXITCODE)." }
+          }
+
+          Write-Host "Looking up fork PR #$prNumber in $repo..."
+          $prJson = gh pr view $prNumber --repo $repo --json 'number,title,body,state,isCrossRepository,isDraft,headRefName,author,commits'
+          Assert-GhOk "gh pr view #$prNumber"
+          $pr = $prJson | ConvertFrom-Json
+
+          if ($pr.state -ne 'OPEN')   { throw "Fork PR #$($pr.number) is not open (state=$($pr.state))." }
+          if (-not $pr.isCrossRepository) { throw "PR #$($pr.number) is not from a fork; use the standard flow." }
+          if ($pr.isDraft)            { throw "PR #$($pr.number) is a draft. Mark it ready for review first." }
+
+          $branch = "e2e/pr-$($pr.number)"
+          Write-Host "Release branch will be '$branch'."
+
+          # Refuse to overwrite an existing release branch.
+          gh api "repos/$repo/git/ref/heads/$branch" 2>$null | Out-Null
+          $branchExists = ($LASTEXITCODE -eq 0)
+          $global:LASTEXITCODE = 0
+          if ($branchExists) {
+            throw "Branch '$branch' already exists in $repo. Delete it manually and re-run if a fresh handoff is genuinely needed."
+          }
+
+          # Resolve main's tip and create the release branch from it.
+          $mainRefJson = gh api "repos/$repo/git/ref/heads/main"
+          Assert-GhOk "gh api git/ref/heads/main"
+          $mainSha = ($mainRefJson | ConvertFrom-Json).object.sha
+          Write-Host "main tip: $mainSha"
+
+          gh api "repos/$repo/git/refs" --method POST -f "ref=refs/heads/$branch" -f "sha=$mainSha" | Out-Null
+          Assert-GhOk "create branch $branch"
+          Write-Host "Created branch '$branch' from main."
+
+          # Build Co-authored-by trailers from the distinct commit authors on the fork PR.
+          $authorSet = [System.Collections.Generic.HashSet[string]]::new()
+          foreach ($commit in $pr.commits) {
+            foreach ($author in $commit.authors) {
+              if ([string]::IsNullOrWhiteSpace($author.email)) { continue }
+              if ([string]::IsNullOrWhiteSpace($author.name))  { continue }
+              if ($author.login -and $author.login.EndsWith('[bot]')) { continue }
+              [void]$authorSet.Add("Co-authored-by: $($author.name) <$($author.email)>")
+            }
+          }
+          $trailers = ($authorSet | Sort-Object) -join "`n"
+
+          # Retarget the fork PR's base from main to the release branch.
+          gh pr edit $prNumber --repo $repo --base $branch | Out-Null
+          Assert-GhOk "gh pr edit --base"
+          Write-Host "Retargeted PR #$prNumber base to '$branch'."
+
+          # Poll for GitHub to recompute mergeability after the base change.
+          $ready = $false
+          for ($i = 0; $i -lt 6 -and -not $ready; $i++) {
+            Start-Sleep -Seconds 5
+            $checkJson = gh pr view $prNumber --repo $repo --json 'mergeable,mergeStateStatus'
+            Assert-GhOk "gh pr view (mergeability)"
+            $check = $checkJson | ConvertFrom-Json
+            Write-Host "Mergeability attempt $($i + 1): mergeable=$($check.mergeable), state=$($check.mergeStateStatus)"
+            if ($check.mergeable -eq 'CONFLICTING') {
+              throw "Fork PR #$prNumber has merge conflicts against main. Ask the contributor to rebase their fork before handoff."
+            }
+            if ($check.mergeable -eq 'MERGEABLE') { $ready = $true }
+          }
+          if (-not $ready) { throw "Timed out waiting for GitHub to compute mergeability after base retargeting." }
+
+          # Synthesize the squash commit message.
+          $mergeSubject = "$($pr.title) (#$prNumber)"
+          $bodyParts = @()
+          if (-not [string]::IsNullOrWhiteSpace($pr.body)) { $bodyParts += $pr.body.Trim() }
+          $bodyParts += "Closes #$prNumber"
+          if (-not [string]::IsNullOrWhiteSpace($trailers)) { $bodyParts += $trailers }
+          $mergeBody = $bodyParts -join "`n`n"
+
+          # Squash-merge the fork PR. GitHub auto-closes the fork PR on merge.
+          gh pr merge $prNumber --repo $repo --squash --subject $mergeSubject --body $mergeBody | Out-Null
+          Assert-GhOk "gh pr merge --squash"
+          Write-Host "Squash-merged fork PR #$prNumber into '$branch'."
+
+          # Open the release-branch PR. The PR body re-asserts the Co-authored-by
+          # trailers so they survive whichever squash-message mode the repo uses.
+          $author   = $pr.author.login
+          $relTitle = "$($pr.title) (release branch for fork PR #$prNumber)"
+          $relBody  = @"
+          This release-branch PR continues the work from fork PR #$prNumber by @$author.
+
+          The original fork PR has been squash-merged into the ``$branch`` release branch so the end-to-end test workflows (which require Azure credentials and therefore cannot run on fork PRs) can execute against the change. From this point on, the module owners are responsible for landing this change. Any further changes will be made on **this** PR; the original fork PR is closed and will not receive further commits.
+
+          Original fork PR: #$prNumber
+
+          $trailers
+          "@.Trim()
+
+          $relPrUrl = gh pr create --repo $repo --base main --head $branch --title $relTitle --body $relBody
+          Assert-GhOk "gh pr create"
+          $relPrUrl = ($relPrUrl | Select-Object -Last 1).Trim()
+
+          $relPrNumber = (gh pr view $relPrUrl --repo $repo --json number | ConvertFrom-Json).number
+          Assert-GhOk "gh pr view (release PR)"
+          Write-Host "Opened release-branch PR #${relPrNumber}: $relPrUrl"
+
+          # Comment on the (now closed) fork PR linking the release-branch PR.
+          $forkComment = "Thanks for the contribution, @$author! This PR has been squash-merged into the release branch ``$branch`` so the end-to-end tests can run. Continued review and any follow-up will happen on the release-branch PR #$relPrNumber."
+          gh pr comment $prNumber --repo $repo --body $forkComment | Out-Null
+          Assert-GhOk "gh pr comment"
+
+          # Best-effort label both PRs. Label creation may fail if it already exists; that's fine.
+          gh label create e2e-handoff --repo $repo --color BFD4F2 --description 'Fork PR handed off to a release branch for end-to-end testing.' 2>$null | Out-Null
+          $global:LASTEXITCODE = 0
+          gh pr edit $prNumber    --repo $repo --add-label e2e-handoff 2>$null | Out-Null
+          $global:LASTEXITCODE = 0
+          gh pr edit $relPrNumber --repo $repo --add-label e2e-handoff 2>$null | Out-Null
+          $global:LASTEXITCODE = 0
+
+          Write-Host "::notice title=Fork PR handoff complete::Fork PR #$prNumber in $repo handed off to release-branch PR #$relPrNumber."
+
+          @"
+          ## Fork PR handoff complete
+
+          - **Target repository:** ``$repo``
+          - **Source fork PR:** #$prNumber (closed)
+          - **Release branch:** ``$branch``
+          - **Release-branch PR:** #$relPrNumber ($relPrUrl)
+          - **Original contributor:** @$author
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
