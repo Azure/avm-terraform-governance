@@ -8,20 +8,8 @@
         "avm-ptn-alz-connectivity-hub-and-spoke-vnet",
         "avm-ptn-alz-connectivity-virtual-wan",
         "avm-ptn-alz-sub-vending",
-        "avm-ptn-hubnetworking",
-        "avm-ptn-virtualwan",
-        "avm-ptn-vnetgateway",
-        "avm-ptn-network-private-link-private-dns-zones",
-        "avm-res-resources-resourcegroup",
-        "avm-ptn-monitoring-amba-alz",
-        "avm-res-portal-dashboard",
-        "avm-res-network-firewallpolicy",
-        "avm-res-network-publicipaddress",
-        "avm-res-network-ddosprotectionplan",
-        "avm-res-network-networksecuritygroup",
-        "avm-res-network-bastionhost",
-        "avm-res-network-virtualnetwork",
-        "avm-res-network-privatednszone"
+        "avm-ptn-alz-application-landing-zone-cicd-bootstrap-github",
+        "avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops"
       ],
       "protected": true
     },
@@ -45,16 +33,6 @@
       "membersAreTeamMaintainers": true
     },
     {
-      "name": "avm-core-team-non-technical",
-      "description": "Core team for Azure Verified Modules Triage",
-      "repositoryGroups": [
-        "all"
-      ],
-      "repositoryPermission": "triage",
-      "environmentApproval": false,
-      "membersAreTeamMaintainers": false
-    },
-    {
       "name": "avm-module-owners-terraform",
       "description": "Azure Verified Module Owners.",
       "repositoryGroups": [
@@ -75,8 +53,8 @@
       "membersAreTeamMaintainers": false
     },
     {
-      "name": "alz-accelerator-contributors-external",
-      "description": "Contributors to the Azure Landing Zones Accelerator repository.",
+      "name": "azure-landing-zone-contributors",
+      "description": "Contributors of Azure Landing Zone modules.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
@@ -85,33 +63,13 @@
       "membersAreTeamMaintainers": false
     },
     {
-      "name": "alz-core-team",
-      "description": "Core team for Azure Landing Zones.",
+      "name": "azure-landing-zone-readers",
+      "description": "Readers of Azure Landing Zone modules.",
       "repositoryGroups": [
         "azure-landing-zones"
       ],
       "repositoryPermission": "triage",
       "environmentApproval": false,
-      "membersAreTeamMaintainers": false
-    },
-    {
-      "name": "alz-core-team-technical",
-      "description": "Core team for Azure Landing Zones Terraform Governance.",
-      "repositoryGroups": [
-        "azure-landing-zones"
-      ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
-    },
-    {
-      "name": "alz-non-core-team-contributors-terraform",
-      "description": "Contributors to the Azure Landing Zones Terraform repositories.",
-      "repositoryGroups": [
-        "azure-landing-zones"
-      ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
       "membersAreTeamMaintainers": false
     },
     {
@@ -125,6 +83,4 @@
       "membersAreTeamMaintainers": false
     }
   ]
-
 }
-
