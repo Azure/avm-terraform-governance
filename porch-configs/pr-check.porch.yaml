@@ -2,13 +2,6 @@ name: PR Check
 description: |
   This configuration file is used to run checks for Azure Verified Modules during pull requests.
 
-command_groups:
-  - name: avmfix
-    commands:
-      - type: shell
-        name: avmfix
-        command_line: avmfix -folder .
-
 commands:
   - type: shell
     name: Check for uncommitted changes
@@ -207,10 +200,9 @@ commands:
 
             runs_on_condition: always
 
-        # Check mapotf transforms have been applied
-        # We need to run mapotf and avmfix to ensure the diff is the same as the pre-commit hook
+        # Re-run the pre-commit mapotf pipeline so any drift surfaces as a PR check failure
       - type: serial
-        name: check mapotf & avmfix
+        name: check mapotf
         commands:
           - type: copycwdtotemp
             name: Copy to temp
@@ -228,31 +220,6 @@ commands:
             name: mapotf clean
             command_line: mapotf clean-backup --tf-dir .
             runs_on_condition: always
-
-          - type: serial
-            name: avmfix
-            commands:
-              - type: serial
-                name: root module
-                command_group: avmfix
-
-              - type: foreachdirectory
-                name: submodules
-                working_directory: "./modules"
-                depth: 1
-                mode: serial
-                skip_on_not_exist: true
-                working_directory_strategy: "item_relative"
-                command_group: avmfix
-
-              - type: foreachdirectory
-                name: examples
-                working_directory: "./examples"
-                depth: 1
-                mode: serial
-                skip_on_not_exist: true
-                working_directory_strategy: "item_relative"
-                command_group: avmfix
 
             # mapotf
           - type: shell

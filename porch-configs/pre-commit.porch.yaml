@@ -2,13 +2,6 @@ name: Precommit
 description: |
   This configuration file is used to run pre-commit checks for Azure Verified Modules.
 
-command_groups:
-  - name: avmfix
-    commands:
-      - type: shell
-        name: avmfix
-        command_line: avmfix -folder .
-
 commands:
   - type: shell
     name: Disable git autocrlf
@@ -81,31 +74,6 @@ commands:
   - type: shell
     name: mapotf clean
     command_line: mapotf clean-backup --tf-dir .
-
-  - type: serial
-    name: avmfix
-    commands:
-      - type: serial
-        name: root module
-        command_group: avmfix
-
-      - type: foreachdirectory
-        name: submodules
-        working_directory: "./modules"
-        depth: 1
-        mode: serial
-        skip_on_not_exist: true
-        working_directory_strategy: "item_relative"
-        command_group: avmfix
-
-      - type: foreachdirectory
-        name: examples
-        working_directory: "./examples"
-        depth: 1
-        mode: serial
-        skip_on_not_exist: true
-        working_directory_strategy: "item_relative"
-        command_group: avmfix
 
   - type: parallel
     name: Generate docs
