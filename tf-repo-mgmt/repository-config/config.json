@@ -13,6 +13,14 @@
       ]
     },
     {
+      "name": "azure-verified-modules-tier-3",
+      "repositories": []
+    },
+    {
+      "name": "azure-verified-modules-tier-4",
+      "repositories": []
+    },
+    {
       "name": "azure-landing-zones",
       "repositories": [
         "avm-ptn-alz",
@@ -69,21 +77,39 @@
       "environmentApproval": false
     },
     {
-      "name": "avm-module-owners-terraform",
-      "description": "Azure Verified Module Owners.",
+      "name": "azure-verified-modules-tier-3-contributors",
+      "description": "Azure Verified Module Tier 3 Contributors.",
       "repositoryGroups": [
-        "all"
+        "azure-verified-modules-tier-3"
       ],
       "repositoryPermission": "push",
       "environmentApproval": true
     },
     {
-      "name": "avm-module-contributors-terraform",
-      "description": "Azure Verified Module Contributors.",
+      "name": "azure-verified-modules-tier-3-readers",
+      "description": "Azure Verified Module Tier 3 Readers.",
       "repositoryGroups": [
-        "all"
+        "azure-verified-modules-tier-3"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false
+    },
+    {
+      "name": "azure-verified-modules-tier-4-contributors",
+      "description": "Azure Verified Module Tier 4 Contributors.",
+      "repositoryGroups": [
+        "azure-verified-modules-tier-4"
       ],
       "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-tier-4-readers",
+      "description": "Azure Verified Module Tier 4 Readers.",
+      "repositoryGroups": [
+        "azure-verified-modules-tier-4"
+      ],
+      "repositoryPermission": "triage",
       "environmentApproval": false
     },
     {
@@ -112,6 +138,24 @@
       ],
       "repositoryPermission": "maintain",
       "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-tier-4-contributors",
+      "description": "Temporary fallback prior to module tiering implementation.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-tier-4-readers",
+      "description": "Temporary fallback prior to module tiering implementation.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": false
     }
   ]
 }
