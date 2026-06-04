@@ -1,6 +1,18 @@
 {
   "repositoryGroups": [
     {
+      "name": "azure-verified-modules-tier-1",
+      "repositories": [
+        "avm-res-networking-virtualnetwork"
+      ]
+    },
+    {
+      "name": "azure-verified-modules-tier-2",
+      "repositories": [
+        "avm-res-devopsinfrastructure-pool"
+      ]
+    },
+    {
       "name": "azure-landing-zones",
       "repositories": [
         "avm-ptn-alz",
@@ -10,27 +22,51 @@
         "avm-ptn-alz-sub-vending",
         "avm-ptn-alz-application-landing-zone-cicd-bootstrap-github",
         "avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops"
-      ],
-      "protected": true
+      ]
     },
     {
       "name": "azure-migrate",
       "repositories": [
         "avm-ptn-azure-local-migrate"
-      ],
-      "protected": true
+      ]
     }
   ],
   "teamMappings": [
     {
-      "name": "avm-core-team-technical-terraform",
-      "description": "Core team for Azure Verified Modules Terraform Governance",
+      "name": "azure-verified-modules-tier-1-contributors",
+      "description": "Azure Verified Module Tier 1 Contributors.",
       "repositoryGroups": [
-        "all"
+        "azure-verified-modules-tier-1"
       ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": true
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-tier-1-readers",
+      "description": "Azure Verified Module Tier 1 Readers.",
+      "repositoryGroups": [
+        "azure-verified-modules-tier-1"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false
+    },
+    {
+      "name": "azure-verified-modules-tier-2-contributors",
+      "description": "Azure Verified Module Tier 2 Contributors.",
+      "repositoryGroups": [
+        "azure-verified-modules-tier-2"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-tier-2-readers",
+      "description": "Azure Verified Module Tier 2 Readers.",
+      "repositoryGroups": [
+        "azure-verified-modules-tier-2"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false
     },
     {
       "name": "avm-module-owners-terraform",
@@ -39,8 +75,7 @@
         "all"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": true
     },
     {
       "name": "avm-module-contributors-terraform",
@@ -49,8 +84,7 @@
         "all"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": false,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": false
     },
     {
       "name": "azure-landing-zone-contributors",
@@ -59,8 +93,7 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": true
     },
     {
       "name": "azure-landing-zone-readers",
@@ -69,8 +102,7 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "triage",
-      "environmentApproval": false,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": false
     },
     {
       "name": "avm-owners-azure-migrate",
@@ -79,8 +111,7 @@
         "azure-migrate"
       ],
       "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": true
     }
   ]
 }

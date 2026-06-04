@@ -104,7 +104,7 @@ variable "github_labels_source_path" {
 variable "is_protected_repo" {
   type        = bool
   description = "Whether the repository is protected and requires pull request approval."
-  default     = false
+  default     = true
 }
 
 variable "github_job_workflow_ref" {

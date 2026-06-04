@@ -255,7 +255,6 @@ if(!$repositoryCreationModeEnabled){
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
 
-$isProtected = ($repositoryGroups | Where-Object { $_.protected -eq $true }).Length -gt 0
 $repositoryGroupNames = @($repositoryGroups | ForEach-Object { $_.name })
 $repositoryGroupNames += "all"
 
@@ -345,30 +344,6 @@ if(!$repositoryCreationModeEnabled) {
             $moduleMetaData.primaryOwnerGitHubHandle,
             $moduleMetaData.secondaryOwnerGitHubHandle
         )
-    }
-
-    $teamsWithMaintainers = $githubTeams.GetEnumerator() | Where-Object { $_.Value.members_are_team_maintainers -eq $true }
-
-    foreach($teamWithMaintainers in $teamsWithMaintainers) {
-        Write-Host "Checking team: $($teamWithMaintainers.Value.slug) for maintainers."
-        $teamMembers = Invoke-GitHubCliWithRetry `
-            -commands @(
-                @{
-                    Arguments = @("api", "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members")
-                    OutputLog = "team-members.json"
-                }
-            ) `
-            -returnOutputParsedFromJson
-
-        if(!$teamMembers.success) {
-            Write-Warning "Failed to get team members for: $($teamWithMaintainers.Value.slug). Skipping."
-            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-members-fetch-failed" -message "Failed to fetch team members for $($teamWithMaintainers.Value.slug)." -data $null -issueLog $issueLog
-            exit 1
-        }
-
-        foreach($member in $teamMembers.output) {
-            $allowedUsers += $member.login
-        }
     }
 
     Write-Host "Checking repository: $orgAndRepoName for existing users."
@@ -496,7 +471,7 @@ $terraformVariables = @{
     management_group_id = $managementGroupId
     test_subscription_ids = $testSubscriptionIds
     identity_resource_group_name = $identityResourceGroupName
-    is_protected_repo = $isProtected
+    is_protected_repo = $true
     github_teams = $githubTeams
 }
 
