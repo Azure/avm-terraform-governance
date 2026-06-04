@@ -1,6 +1,12 @@
 # avmfix moves blocks out of variables.tf / outputs.tf if they aren't of the canonical type.
-# Mirror that behaviour by addressing every non-variable block whose source file is variables.tf
+# Mirror that behaviour by addressing every non-canonical block whose source file is variables.tf
 # (or vice versa for outputs.tf) and moving it into main.tf.
+#
+# IMPORTANT: variable / output blocks are excluded from BOTH directions. They are relocated to
+# their canonical file by sort_blocks_in_file in sort_variables.mptf.hcl / sort_outputs.mptf.hcl
+# (whose desired_order lists every variable / output regardless of its current file). Allowing
+# move_block to also relocate them would cause a transform-interaction issue with
+# sort_blocks_in_file and leave duplicated unstructured token sequences behind.
 
 data "resource" "for_move" {}
 data "data"     "for_move" {}
@@ -35,27 +41,33 @@ locals {
     local.moved_addrs,
   )
 
-  # Non-variable blocks living in variables.tf → main.tf
-  non_var_in_variables_tf = {
+  # Non-canonical blocks (i.e. not variable or output) living in variables.tf → main.tf.
+  # Output blocks are excluded; sort_outputs.outputs_tf relocates them directly to outputs.tf.
+  non_canonical_in_variables_tf = {
     for x in local.all_addrs : x.addr => x.v
-    if try(x.v.mptf.range.file_name, "") == "variables.tf" && !startswith(x.addr, "variable.")
+    if try(x.v.mptf.range.file_name, "") == "variables.tf"
+       && !startswith(x.addr, "variable.")
+       && !startswith(x.addr, "output.")
   }
 
-  # Non-output blocks living in outputs.tf → main.tf
-  non_output_in_outputs_tf = {
+  # Non-canonical blocks (i.e. not output or variable) living in outputs.tf → main.tf.
+  # Variable blocks are excluded; sort_variables.variables_tf relocates them directly to variables.tf.
+  non_canonical_in_outputs_tf = {
     for x in local.all_addrs : x.addr => x.v
-    if try(x.v.mptf.range.file_name, "") == "outputs.tf" && !startswith(x.addr, "output.")
+    if try(x.v.mptf.range.file_name, "") == "outputs.tf"
+       && !startswith(x.addr, "output.")
+       && !startswith(x.addr, "variable.")
   }
 }
 
 transform "move_block" "out_of_variables_tf" {
-  for_each             = local.non_var_in_variables_tf
+  for_each             = local.non_canonical_in_variables_tf
   target_block_address = each.key
   file_name            = "main.tf"
 }
 
 transform "move_block" "out_of_outputs_tf" {
-  for_each             = local.non_output_in_outputs_tf
+  for_each             = local.non_canonical_in_outputs_tf
   target_block_address = each.key
   file_name            = "main.tf"
 }
