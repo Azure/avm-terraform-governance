@@ -19,9 +19,13 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azapi_resource.example_rg](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
+- [azapi_resource.example_rg_singleton](https://registry.terraform.io/providers/Azure/azapi/latest/docs/resources/resource) (resource)
 - [modtm_telemetry.telemetry](https://registry.terraform.io/providers/Azure/modtm/latest/docs/resources/telemetry) (resource)
+- [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) (resource)
 - [random_uuid.telemetry](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/uuid) (resource)
 - [azapi_client_config.telemetry](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
+- [azapi_client_config.this](https://registry.terraform.io/providers/Azure/azapi/latest/docs/data-sources/client_config) (data source)
 - [modtm_module_source.telemetry](https://registry.terraform.io/providers/Azure/modtm/latest/docs/data-sources/module_source) (data source)
 
 <!-- markdownlint-disable MD013 -->
@@ -38,6 +42,18 @@ Type: `string`
 ## Optional Inputs
 
 The following input variables are optional (have default values):
+
+### <a name="input_create_example_resources"></a> [create\_example\_resources](#input\_create\_example\_resources)
+
+Description: Whether to create the example AVM-shaped resources/data sources in this mock module.
+
+Defaults to false so that any apply path (terraform plan in pr-check, terraform test integration  
+against real Azure) does not provision real resources. Set to true in the unit test (which uses  
+mock\_provider blocks) to exercise the full apply path against mocked providers.
+
+Type: `bool`
+
+Default: `false`
 
 ### <a name="input_enable_telemetry"></a> [enable\_telemetry](#input\_enable\_telemetry)
 
@@ -56,6 +72,14 @@ The following outputs are exported:
 ### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
 
 Description: The ID of the resource created by the module.
+
+### <a name="output_resource_ids"></a> [resource\_ids](#output\_resource\_ids)
+
+Description: The IDs of the example resources created by the module, keyed by example\_keys.
+
+### <a name="output_subscription_id"></a> [subscription\_id](#output\_subscription\_id)
+
+Description: The ID of the subscription the module is deployed to.
 
 ## Modules
 
