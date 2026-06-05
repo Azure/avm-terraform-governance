@@ -1,24 +1,45 @@
 {
+  "codeOwners": {
+    "fileProtectionTeams": [
+      "azure-verified-modules-engineering-owners"
+    ]
+  },
+  "topics": {
+    "default": [
+      "azure-verified-modules",
+      "avm"
+    ]
+  },
   "repositoryGroups": [
     {
       "name": "azure-verified-modules-tier-1",
       "repositories": [
-        "avm-res-networking-virtualnetwork"
+        "avm-ptn-example-repo"
+      ],
+      "codeOwnersTeams": [
+        "azure-verified-modules-engineering-owners"
+      ],
+      "topics": [
+        "avm-tier-1"
       ]
     },
     {
       "name": "azure-verified-modules-tier-2",
       "repositories": [
         "avm-res-devopsinfrastructure-pool"
+      ],
+      "topics": [
+        "avm-tier-2"
       ]
     },
     {
       "name": "azure-verified-modules-tier-3",
-      "repositories": []
-    },
-    {
-      "name": "azure-verified-modules-tier-4",
-      "repositories": []
+      "repositories": [
+        "avm-ptn-monitoring-amba-alz"
+      ],
+      "topics": [
+        "avm-tier-3"
+      ]
     },
     {
       "name": "azure-landing-zones",
@@ -40,78 +61,6 @@
     }
   ],
   "teamMappings": [
-    {
-      "name": "azure-verified-modules-tier-1-contributors",
-      "description": "Azure Verified Module Tier 1 Contributors.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-1"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": true
-    },
-    {
-      "name": "azure-verified-modules-tier-1-readers",
-      "description": "Azure Verified Module Tier 1 Readers.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-1"
-      ],
-      "repositoryPermission": "triage",
-      "environmentApproval": false
-    },
-    {
-      "name": "azure-verified-modules-tier-2-contributors",
-      "description": "Azure Verified Module Tier 2 Contributors.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-2"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": true
-    },
-    {
-      "name": "azure-verified-modules-tier-2-readers",
-      "description": "Azure Verified Module Tier 2 Readers.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-2"
-      ],
-      "repositoryPermission": "triage",
-      "environmentApproval": false
-    },
-    {
-      "name": "azure-verified-modules-tier-3-contributors",
-      "description": "Azure Verified Module Tier 3 Contributors.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-3"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": true
-    },
-    {
-      "name": "azure-verified-modules-tier-3-readers",
-      "description": "Azure Verified Module Tier 3 Readers.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-3"
-      ],
-      "repositoryPermission": "triage",
-      "environmentApproval": false
-    },
-    {
-      "name": "azure-verified-modules-tier-4-contributors",
-      "description": "Azure Verified Module Tier 4 Contributors.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-4"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": true
-    },
-    {
-      "name": "azure-verified-modules-tier-4-readers",
-      "description": "Azure Verified Module Tier 4 Readers.",
-      "repositoryGroups": [
-        "azure-verified-modules-tier-4"
-      ],
-      "repositoryPermission": "triage",
-      "environmentApproval": false
-    },
     {
       "name": "azure-landing-zone-contributors",
       "description": "Contributors of Azure Landing Zone modules.",
@@ -136,12 +85,12 @@
       "repositoryGroups": [
         "azure-migrate"
       ],
-      "repositoryPermission": "maintain",
+      "repositoryPermission": "push",
       "environmentApproval": true
     },
     {
-      "name": "azure-verified-modules-tier-4-contributors",
-      "description": "Temporary fallback prior to module tiering implementation.",
+      "name": "azure-verified-modules-contributors",
+      "description": "Azure Verified Modules Contributors.",
       "repositoryGroups": [
         "all"
       ],
@@ -149,12 +98,21 @@
       "environmentApproval": true
     },
     {
-      "name": "azure-verified-modules-tier-4-readers",
-      "description": "Temporary fallback prior to module tiering implementation.",
+      "name": "azure-verified-modules-readers",
+      "description": "Azure Verified Modules Readers.",
       "repositoryGroups": [
         "all"
       ],
-      "repositoryPermission": "push",
+      "repositoryPermission": "triage",
+      "environmentApproval": false
+    },
+    {
+      "name": "azure-verified-modules-engineering-owners",
+      "description": "AVM engineering owners. Required reviewers for CODEOWNERS changes on all repositories and for all changes on tier 1 modules.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "triage",
       "environmentApproval": false
     }
   ]

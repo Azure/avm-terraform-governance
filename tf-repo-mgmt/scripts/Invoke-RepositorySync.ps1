@@ -267,6 +267,39 @@ foreach($repositoryGroupName in $repositoryGroupNames) {
     }
 }
 
+# Collect the CODEOWNERS default teams from every repository group that contains
+# this repo. These teams become required reviewers for all files in the repo
+# (e.g. tier 1 modules require review from the engineering owners team).
+$codeOwnersDefaultTeams = @()
+foreach($repositoryGroup in $repositoryGroups) {
+    if($repositoryGroup.PSObject.Properties.Name -contains "codeOwnersTeams" -and $repositoryGroup.codeOwnersTeams) {
+        $codeOwnersDefaultTeams += $repositoryGroup.codeOwnersTeams
+    }
+}
+$codeOwnersDefaultTeams = @($codeOwnersDefaultTeams | Select-Object -Unique)
+
+# The teams that protect the CODEOWNERS file itself are global and apply to
+# every repository regardless of tier.
+$codeOwnersFileProtectionTeams = @()
+if($repositoryConfig.PSObject.Properties.Name -contains "codeOwners" -and $repositoryConfig.codeOwners -and $repositoryConfig.codeOwners.fileProtectionTeams) {
+    $codeOwnersFileProtectionTeams = @($repositoryConfig.codeOwners.fileProtectionTeams)
+}
+
+# Collect repository topics: start from the global default topics and add any
+# topics defined on each matching repository group (e.g. `avm-tier-1`).
+# The result is the authoritative topic list for the repository, so any topic
+# set on the repo that is not in this list will be removed by Terraform.
+$repositoryTopics = @()
+if($repositoryConfig.PSObject.Properties.Name -contains "topics" -and $repositoryConfig.topics -and $repositoryConfig.topics.default) {
+    $repositoryTopics += $repositoryConfig.topics.default
+}
+foreach($repositoryGroup in $repositoryGroups) {
+    if($repositoryGroup.PSObject.Properties.Name -contains "topics" -and $repositoryGroup.topics) {
+        $repositoryTopics += $repositoryGroup.topics
+    }
+}
+$repositoryTopics = @($repositoryTopics | Select-Object -Unique)
+
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
 
 if(!$skipCleanup) {
@@ -473,6 +506,9 @@ $terraformVariables = @{
     identity_resource_group_name = $identityResourceGroupName
     is_protected_repo = $true
     github_teams = $githubTeams
+    codeowners_default_teams = $codeOwnersDefaultTeams
+    codeowners_file_protection_teams = $codeOwnersFileProtectionTeams
+    topics = $repositoryTopics
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"

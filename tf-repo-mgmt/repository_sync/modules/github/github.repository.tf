@@ -13,6 +13,8 @@ resource "github_repository" "this" {
   visibility   = "public"
   homepage_url = "https://registry.terraform.io/modules/Azure/${var.module_id}"
 
+  topics = var.topics
+
   template {
     owner                = "Azure"
     repository           = "terraform-azurerm-avm-template"
@@ -29,7 +31,10 @@ resource "github_repository" "this" {
   allow_auto_merge       = true
   delete_branch_on_merge = true
   allow_update_branch    = true
-  vulnerability_alerts   = false
+  # Dependabot alerts (`vulnerability_alerts`) are enabled via the dedicated
+  # `github_repository_vulnerability_alerts` resource in
+  # `github.repository.dependabot.tf` because the inline argument here is
+  # deprecated.
 
   security_and_analysis {
     secret_scanning {
