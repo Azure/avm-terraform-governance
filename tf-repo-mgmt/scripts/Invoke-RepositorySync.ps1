@@ -18,6 +18,7 @@ param(
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
+    [string]$deprecatedFilesConfigFilePath = "./repository-config/deprecated-files.json",
     [string]$managedFilesBaseDir = "../managed-files",
     [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
@@ -382,6 +383,37 @@ foreach($excluded in $excludedManagedFiles) {
 
 Write-Host "Resolved $($managedFiles.Count) managed file(s) for repository '$repoId' (overlay='$managedFilesAdditional', exclusions=$($excludedManagedFiles.Count))."
 
+# Load deprecated-file paths once. Each path is matched against the target
+# repo's default-branch tree later; matching paths are removed before any
+# Terraform runs so that the import bootstrap and plan operate against the
+# already-cleaned repo.
+$deprecatedPaths = @()
+if(!$repositoryCreationModeEnabled -and (Test-Path $deprecatedFilesConfigFilePath)) {
+    $deprecatedPaths = @(Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json)
+    Write-Host "Loaded $($deprecatedPaths.Count) deprecated path(s) from $deprecatedFilesConfigFilePath."
+}
+
+function Get-MatchingDeprecatedPaths {
+    param(
+        [string[]]$candidatePaths,
+        [string[]]$repoFilePaths
+    )
+    $matches = @()
+    foreach($candidate in $candidatePaths) {
+        $hit = $false
+        if($repoFilePaths -contains $candidate) {
+            $hit = $true
+        } else {
+            $prefix = "$candidate/"
+            foreach($p in $repoFilePaths) {
+                if($p.StartsWith($prefix)) { $hit = $true; break }
+            }
+        }
+        if($hit) { $matches += $candidate }
+    }
+    return $matches
+}
+
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
 
 if(!$skipCleanup) {
@@ -414,6 +446,111 @@ $orgAndRepoName = "$orgName/$repoName"
 Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
 Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
+
+# Remove deprecated files from the target repository before any Terraform
+# runs. Fetches the default branch tree, intersects it with the
+# deprecated-paths list loaded from `deprecated-files.json`, and (in apply
+# mode) shallow-clones the repo, `git rm`s the matches, and pushes a single
+# `[skip ci]` commit. In plan mode (`-planOnly $true`) the matches are
+# logged with a `[PLAN]` prefix and no commit is made. Doing the cleanup
+# here means the subsequent import bootstrap and `terraform plan` see the
+# already-cleaned repo, so deprecated files never appear in either.
+if(!$repositoryCreationModeEnabled -and $deprecatedPaths.Count -gt 0) {
+    $deprecatedModeTag = if($planOnly) { "[PLAN]" } else { "[APPLY]" }
+    $deprecatedTreeResult = Invoke-GitHubCliWithRetry `
+        -commands @(
+            @{
+                Arguments = @("api", "repos/$orgAndRepoName")
+                OutputLog = "deprecated-repo-info.json"
+            }
+        ) `
+        -returnOutputParsedFromJson
+
+    if(!$deprecatedTreeResult -or !$deprecatedTreeResult.success -or !$deprecatedTreeResult.output.default_branch) {
+        Write-Warning "$deprecatedModeTag Failed to fetch repo info for $orgAndRepoName (success=$($deprecatedTreeResult.success), default_branch='$($deprecatedTreeResult.output.default_branch)'); skipping deprecated-files cleanup."
+    } else {
+        $deprecatedDefaultBranch = $deprecatedTreeResult.output.default_branch
+        $deprecatedTree = Invoke-GitHubCliWithRetry `
+            -commands @(
+                @{
+                    Arguments = @("api", "repos/$orgAndRepoName/git/trees/$($deprecatedDefaultBranch)?recursive=1")
+                    OutputLog = "deprecated-repo-tree.json"
+                }
+            ) `
+            -returnOutputParsedFromJson
+
+        if(!$deprecatedTree -or !$deprecatedTree.success -or !$deprecatedTree.output.tree) {
+            Write-Warning "$deprecatedModeTag Failed to fetch git tree for $orgAndRepoName (success=$($deprecatedTree.success), tree_count=$($deprecatedTree.output.tree.Count)); skipping deprecated-files cleanup."
+        } else {
+            $deprecatedRepoFiles = @($deprecatedTree.output.tree | Where-Object { $_.type -eq "blob" } | ForEach-Object { $_.path })
+            $deprecatedMatches = @(Get-MatchingDeprecatedPaths -candidatePaths $deprecatedPaths -repoFilePaths $deprecatedRepoFiles)
+
+            if($deprecatedMatches.Count -eq 0) {
+                Write-Host "$deprecatedModeTag No deprecated files present in $orgAndRepoName; nothing to remove."
+            } else {
+                Write-Host "$deprecatedModeTag $orgAndRepoName (default_branch=$deprecatedDefaultBranch) - $($deprecatedMatches.Count) deprecated path(s) to remove:" -ForegroundColor Cyan
+                foreach($m in $deprecatedMatches) {
+                    Write-Host "$deprecatedModeTag   $orgAndRepoName :: $m"
+                }
+
+                if($planOnly) {
+                    Write-Host "$deprecatedModeTag Plan mode is enabled; not deleting deprecated files."
+                } else {
+                    $deprecatedTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("avm-cleanup-" + [System.Guid]::NewGuid().ToString())
+                    $deprecatedCloneUrl = "https://x-access-token:$($env:GH_TOKEN)@github.com/$orgAndRepoName.git"
+                    $deprecatedCommitAuthorName = "azure-verified-modules[bot]"
+                    $deprecatedCommitAuthorEmail = "1049636+azure-verified-modules[bot]@users.noreply.github.com"
+                    $deprecatedCommitMessage = "chore: remove deprecated files [skip ci]"
+
+                    try {
+                        Write-Host "  Cloning $orgAndRepoName into $deprecatedTempDir..." -ForegroundColor DarkGray
+                        git clone --quiet --depth 1 --branch $deprecatedDefaultBranch $deprecatedCloneUrl $deprecatedTempDir
+                        if($LASTEXITCODE -ne 0) { throw "git clone exited $LASTEXITCODE" }
+
+                        Push-Location $deprecatedTempDir
+                        try {
+                            foreach($path in $deprecatedMatches) {
+                                git rm -r -f -- $path | Out-Null
+                                if($LASTEXITCODE -ne 0) {
+                                    Write-Warning "  git rm failed for '$path'; continuing with the rest."
+                                }
+                            }
+
+                            $deprecatedStatus = git status --porcelain
+                            if([string]::IsNullOrWhiteSpace($deprecatedStatus)) {
+                                Write-Warning "  No staged changes after git rm; skipping commit/push."
+                            } else {
+                                git -c "user.name=$deprecatedCommitAuthorName" -c "user.email=$deprecatedCommitAuthorEmail" commit -q -m $deprecatedCommitMessage
+                                if($LASTEXITCODE -ne 0) { throw "git commit exited $LASTEXITCODE" }
+                                git push --quiet origin $deprecatedDefaultBranch
+                                if($LASTEXITCODE -ne 0) { throw "git push exited $LASTEXITCODE" }
+                                Write-Host "  Pushed cleanup commit to origin/$deprecatedDefaultBranch." -ForegroundColor Green
+                            }
+                        } finally {
+                            Pop-Location
+                        }
+                    } catch {
+                        Write-Warning "  Failed to remove deprecated files from $orgAndRepoName : $_"
+                        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "deprecated-files-cleanup-failed" -message "Failed to remove deprecated files from $orgAndRepoName." -data ($deprecatedMatches -join ", ") -issueLog $issueLog
+                    } finally {
+                        if(Test-Path $deprecatedTempDir) {
+                            try {
+                                # Git on Windows often marks .git/objects/pack files as read-only;
+                                # clear that before removing so cleanup actually succeeds.
+                                Get-ChildItem -Path $deprecatedTempDir -Recurse -Force | ForEach-Object {
+                                    try { $_.Attributes = "Normal" } catch { }
+                                }
+                                Remove-Item -Recurse -Force $deprecatedTempDir
+                            } catch {
+                                Write-Warning "  Failed to clean up $deprecatedTempDir : $_"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 $githubTeams = @{}
 
