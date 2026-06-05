@@ -354,7 +354,13 @@ function Add-ManagedFilesFromDir {
     }
     $baseDirAbsolute = (Resolve-Path -Path $baseDir).Path
     $prefixLength = $baseDirAbsolute.Length + 1
-    Get-ChildItem -Path $baseDirAbsolute -Recurse -File | ForEach-Object {
+    # `-Force` is required because PowerShell treats dot-prefixed entries as
+    # hidden on Linux/macOS (the runner OS for sync), and without it
+    # `Get-ChildItem -Recurse` silently skips `.github/`, `.devcontainer/`,
+    # `.vscode/`, `.editorconfig`, `.gitattributes`, `.terraform-docs.yml`,
+    # etc. Windows does not flag dotfiles as hidden, so the bug is invisible
+    # locally.
+    Get-ChildItem -Path $baseDirAbsolute -Recurse -File -Force | ForEach-Object {
         $relativePath = $_.FullName.Substring($prefixLength) -replace '\\', '/'
         $absoluteSource = $_.FullName -replace '\\', '/'
         $map[$relativePath] = $absoluteSource
@@ -673,7 +679,7 @@ if(!$repositoryCreationModeEnabled) {
         -retryOn @()
 
     $stateAddresses = @()
-    if($stateList -and $stateList[0].success) {
+    if($stateList -and $stateList.success) {
         $stateLogPath = Join-Path $terraformModulePath $stateListLog
         if(Test-Path $stateLogPath) {
             $stateAddresses = @(Get-Content -Path $stateLogPath | ForEach-Object { $_.Trim() })
@@ -702,10 +708,10 @@ if(!$repositoryCreationModeEnabled) {
             ) `
             -returnOutputParsedFromJson
 
-        if(!$repoInfo -or !$repoInfo[0].success -or !$repoInfo[0].output.default_branch) {
-            Write-Warning "Failed to fetch repo info for $orgAndRepoName; continuing without import blocks."
+        if(!$repoInfo -or !$repoInfo.success -or !$repoInfo.output.default_branch) {
+            Write-Warning "Failed to fetch repo info for $orgAndRepoName (success=$($repoInfo.success), default_branch='$($repoInfo.output.default_branch)'); continuing without import blocks."
         } else {
-            $defaultBranch = $repoInfo[0].output.default_branch
+            $defaultBranch = $repoInfo.output.default_branch
             $treeResult = Invoke-GitHubCliWithRetry `
                 -commands @(
                     @{
@@ -715,10 +721,10 @@ if(!$repositoryCreationModeEnabled) {
                 ) `
                 -returnOutputParsedFromJson
 
-            if(!$treeResult -or !$treeResult[0].success -or !$treeResult[0].output.tree) {
-                Write-Warning "Failed to fetch git tree for $orgAndRepoName; continuing without import blocks."
+            if(!$treeResult -or !$treeResult.success -or !$treeResult.output.tree) {
+                Write-Warning "Failed to fetch git tree for $orgAndRepoName (success=$($treeResult.success), tree_count=$($treeResult.output.tree.Count)); continuing without import blocks."
             } else {
-                $existingFiles = @($treeResult[0].output.tree | Where-Object { $_.type -eq "blob" } | ForEach-Object { $_.path })
+                $existingFiles = @($treeResult.output.tree | Where-Object { $_.type -eq "blob" } | ForEach-Object { $_.path })
                 $importsToWrite = @($pathsNotInState | Where-Object { $existingFiles -contains $_ })
 
                 if($importsToWrite.Count -eq 0) {
