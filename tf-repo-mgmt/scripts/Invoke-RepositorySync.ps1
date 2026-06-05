@@ -497,15 +497,21 @@ if(!$repositoryCreationModeEnabled -and $deprecatedPaths.Count -gt 0) {
                     Write-Host "$deprecatedModeTag Plan mode is enabled; not deleting deprecated files."
                 } else {
                     $deprecatedTempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("avm-cleanup-" + [System.Guid]::NewGuid().ToString())
-                    $deprecatedCloneUrl = "https://x-access-token:$($env:GH_TOKEN)@github.com/$orgAndRepoName.git"
                     $deprecatedCommitAuthorName = "azure-verified-modules[bot]"
                     $deprecatedCommitAuthorEmail = "1049636+azure-verified-modules[bot]@users.noreply.github.com"
                     $deprecatedCommitMessage = "chore: remove deprecated files [skip ci]"
 
                     try {
+                        # Register gh as git's credential helper so the clone/push
+                        # below authenticate via $env:GH_TOKEN without ever
+                        # embedding the token in a URL (which would leak into
+                        # process listings, git remote config, and reflogs).
+                        gh auth setup-git
+                        if($LASTEXITCODE -ne 0) { throw "gh auth setup-git exited $LASTEXITCODE" }
+
                         Write-Host "  Cloning $orgAndRepoName into $deprecatedTempDir..." -ForegroundColor DarkGray
-                        git clone --quiet --depth 1 --branch $deprecatedDefaultBranch $deprecatedCloneUrl $deprecatedTempDir
-                        if($LASTEXITCODE -ne 0) { throw "git clone exited $LASTEXITCODE" }
+                        gh repo clone $orgAndRepoName $deprecatedTempDir -- --quiet --depth 1 --branch $deprecatedDefaultBranch
+                        if($LASTEXITCODE -ne 0) { throw "gh repo clone exited $LASTEXITCODE" }
 
                         Push-Location $deprecatedTempDir
                         try {
