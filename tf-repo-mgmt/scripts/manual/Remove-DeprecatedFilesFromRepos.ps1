@@ -134,6 +134,20 @@ if ([string]::IsNullOrEmpty($env:GH_TOKEN)) {
   throw "Connect-AsApp.ps1 did not set GH_TOKEN. Cannot continue."
 }
 
+$modeTag = if ($WhatIf) { "[PLAN]" } else { "[APPLY]" }
+Write-Host ""
+if ($WhatIf) {
+  Write-Host "================ PLAN MODE (-WhatIf) ================" -ForegroundColor Yellow
+  Write-Host "No repositories will be cloned or modified." -ForegroundColor Yellow
+  Write-Host "Each match below is prefixed with $modeTag for easy log filtering." -ForegroundColor Yellow
+  Write-Host "=====================================================" -ForegroundColor Yellow
+} else {
+  Write-Host "================ APPLY MODE =========================" -ForegroundColor Red
+  Write-Host "Matching files WILL be deleted and pushed to the default branch." -ForegroundColor Red
+  Write-Host "=====================================================" -ForegroundColor Red
+}
+Write-Host ""
+
 # Load configuration.
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $deprecatedFilesConfig = Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json
@@ -205,9 +219,9 @@ foreach ($repo in $installedRepositories) {
 
   $repositoriesWithMatches++
   Write-Host ""
-  Write-Host "$repoName ($moduleId, overlay='$overlay', default_branch=$defaultBranch):" -ForegroundColor Cyan
+  Write-Host "$modeTag $repoName ($moduleId, overlay='$overlay', default_branch=$defaultBranch) - $($matches.Count) match(es):" -ForegroundColor Cyan
   foreach ($m in $matches) {
-    Write-Host "  - $m"
+    Write-Host "$modeTag   $repoName :: $m"
   }
 
   if ($WhatIf) {
