@@ -147,3 +147,13 @@ repository.
 DESCRIPTION
   default     = []
 }
+
+variable "managed_files_additional" {
+  type        = string
+  description = <<DESCRIPTION
+Name of an additional managed-files overlay set to apply to the repository on
+top of the default `root` set (e.g. `alz`). Empty string means only the
+default `root` set applies.
+DESCRIPTION
+  default     = ""
+}

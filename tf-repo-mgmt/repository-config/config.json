@@ -43,6 +43,7 @@
     },
     {
       "name": "azure-landing-zones",
+      "managedFilesAdditional": "alz",
       "repositories": [
         "avm-ptn-alz",
         "avm-ptn-alz-management",

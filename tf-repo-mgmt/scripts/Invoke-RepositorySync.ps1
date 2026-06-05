@@ -18,6 +18,7 @@ param(
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
+    [string]$deprecatedFilesConfigFilePath = "./repository-config/deprecated-files.json",
     [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
@@ -300,6 +301,37 @@ foreach($repositoryGroup in $repositoryGroups) {
 }
 $repositoryTopics = @($repositoryTopics | Select-Object -Unique)
 
+# Collect the managed-files overlay set declared on any matching repository
+# group (e.g. `alz` for the azure-landing-zones group). At most one distinct
+# value is allowed; conflicting overlays across groups for the same repo are a
+# configuration error.
+$managedFilesAdditionalValues = @()
+foreach($repositoryGroup in $repositoryGroups) {
+    if($repositoryGroup.PSObject.Properties.Name -contains "managedFilesAdditional" -and $repositoryGroup.managedFilesAdditional) {
+        $managedFilesAdditionalValues += $repositoryGroup.managedFilesAdditional
+    }
+}
+$managedFilesAdditionalValues = @($managedFilesAdditionalValues | Select-Object -Unique)
+if($managedFilesAdditionalValues.Count -gt 1) {
+    Write-Error "Repository '$repoId' belongs to multiple repository groups that declare conflicting 'managedFilesAdditional' overlay sets: $($managedFilesAdditionalValues -join ', '). At most one is allowed."
+    exit 1
+}
+$managedFilesAdditional = if($managedFilesAdditionalValues.Count -eq 1) { $managedFilesAdditionalValues[0] } else { "" }
+
+# Build the set of deprecated files for this repository. The root set applies
+# to every repository; the per-overlay set (e.g. `alz`) is added when an
+# overlay is selected. The same JSON file is read by the github Terraform
+# module so both planes use one source of truth.
+$deprecatedFilesConfig = Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json
+$deprecatedFilesForRepo = @()
+if($deprecatedFilesConfig.PSObject.Properties.Name -contains "root" -and $deprecatedFilesConfig.root) {
+    $deprecatedFilesForRepo += @($deprecatedFilesConfig.root)
+}
+if($managedFilesAdditional -ne "" -and $deprecatedFilesConfig.PSObject.Properties.Name -contains $managedFilesAdditional -and $deprecatedFilesConfig.$managedFilesAdditional) {
+    $deprecatedFilesForRepo += @($deprecatedFilesConfig.$managedFilesAdditional)
+}
+$deprecatedFilesForRepo = @($deprecatedFilesForRepo | Select-Object -Unique)
+
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
 
 if(!$skipCleanup) {
@@ -509,6 +541,7 @@ $terraformVariables = @{
     codeowners_default_teams = $codeOwnersDefaultTeams
     codeowners_file_protection_teams = $codeOwnersFileProtectionTeams
     topics = $repositoryTopics
+    managed_files_additional = $managedFilesAdditional
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
@@ -557,6 +590,31 @@ terraform {
         Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
         $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
         exit 1
+    }
+
+    # Import each deprecated file into Terraform state so the next plan can
+    # destroy them via the `removed` block in the github module. Imports are
+    # best-effort: a non-zero exit code means the file is no longer present in
+    # the target repository (or is already in state) which is safe to skip.
+    # The state is empty of these resources after each successful apply, so on
+    # subsequent runs every import is a no-op against an already-cleaned repo.
+    if($deprecatedFilesForRepo.Count -gt 0) {
+        Write-Host "Importing deprecated files for cleanup ($($deprecatedFilesForRepo.Count) candidate(s))..."
+        foreach($deprecatedFile in $deprecatedFilesForRepo) {
+            $importAddress = "module.github.github_repository_file.deprecated_files[`"$deprecatedFile`"]"
+            $importId = "$repoName/$deprecatedFile"
+            $importOutput = & terraform "-chdir=$terraformModulePath" import -input=false -no-color $importAddress $importId 2>&1
+            if($LASTEXITCODE -eq 0) {
+                Write-Host "  Imported '$deprecatedFile' for cleanup."
+            } else {
+                $importOutputText = ($importOutput | Out-String).Trim()
+                if($importOutputText -match "Resource already managed by Terraform") {
+                    Write-Host "  '$deprecatedFile' already in state, will be destroyed by removed block."
+                } else {
+                    Write-Host "  Skipped '$deprecatedFile' (not present in repo or import not applicable)."
+                }
+            }
+        }
     }
 }
 

@@ -8,8 +8,10 @@ locals {
   })
 }
 
-# The CODEOWNERS file is managed dynamically rather than via the managed-files
-# grept policies because the content varies per repository (tier).
+# The CODEOWNERS file is managed by its own resource rather than rolled into
+# `github_repository_file.managed` because its content varies per repository
+# (tier-1 modules require engineering-owners approval on every file, other
+# tiers don't) and is rendered from a template using per-repo variables.
 #
 # The GitHub App used by this provider is configured as a bypass actor on the
 # main branch ruleset, so the commit pushes directly to the default branch
