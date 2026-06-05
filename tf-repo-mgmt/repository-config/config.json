@@ -89,8 +89,8 @@
       "environmentApproval": true
     },
     {
-      "name": "azure-verified-modules-contributors",
-      "description": "Azure Verified Modules Contributors.",
+      "name": "azure-verified-modules-module-contributors",
+      "description": "Azure Verified Modules Module Contributors.",
       "repositoryGroups": [
         "all"
       ],
@@ -98,8 +98,8 @@
       "environmentApproval": true
     },
     {
-      "name": "azure-verified-modules-readers",
-      "description": "Azure Verified Modules Readers.",
+      "name": "azure-verified-modules-module-readers",
+      "description": "Azure Verified Modules Module Readers.",
       "repositoryGroups": [
         "all"
       ],
