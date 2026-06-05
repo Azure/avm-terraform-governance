@@ -28,15 +28,3 @@ resource "github_repository_file" "managed" {
     ]
   }
 }
-
-# Removes deprecated files from target repositories. Instances are imported
-# into state by `Invoke-RepositorySync.ps1` before each `terraform apply`;
-# imports for files that no longer exist on the remote fail silently, so this
-# block is naturally a no-op once cleanup has run against a given repository.
-removed {
-  from = github_repository_file.deprecated_files
-
-  lifecycle {
-    destroy = true
-  }
-}

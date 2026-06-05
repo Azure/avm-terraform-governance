@@ -1,6 +1,4 @@
 terraform {
-  # `removed` blocks with `lifecycle { destroy = true }` require Terraform 1.7+.
-  required_version = ">= 1.7.0"
   required_providers {
     azapi = {
       source  = "Azure/azapi"
