@@ -31,12 +31,16 @@ locals {
   )
 }
 
-# Migrate state from the previous standalone CODEOWNERS resource into the
-# unified managed-files resource. No-op for repos that have never been
-# applied with the standalone resource.
-moved {
-  from = github_repository_file.codeowners[0]
-  to   = github_repository_file.managed[".github/CODEOWNERS"]
+# Drop the previous standalone CODEOWNERS resource from state without
+# destroying the file in the target repo. The `import` block written by
+# Invoke-RepositorySync.ps1 on the same plan then re-adopts the existing
+# `.github/CODEOWNERS` under `github_repository_file.managed`, so no commit
+# is made unless the CODEOWNERS content actually changes.
+removed {
+  from = github_repository_file.codeowners
+  lifecycle {
+    destroy = false
+  }
 }
 
 # Syncs each managed file to the target repository.
