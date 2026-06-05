@@ -44,6 +44,10 @@
     {
       "name": "azure-landing-zones",
       "managedFilesAdditional": "alz",
+      "excludedManagedFiles": [
+        ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
+        ".github/ISSUE_TEMPLATE/avm_question_feedback.yml"
+      ],
       "repositories": [
         "avm-ptn-alz",
         "avm-ptn-alz-management",

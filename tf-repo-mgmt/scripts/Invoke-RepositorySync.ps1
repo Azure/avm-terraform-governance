@@ -19,6 +19,7 @@ param(
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
     [string]$deprecatedFilesConfigFilePath = "./repository-config/deprecated-files.json",
+    [string]$managedFilesBaseDir = "../managed-files",
     [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
@@ -318,6 +319,64 @@ if($managedFilesAdditionalValues.Count -gt 1) {
 }
 $managedFilesAdditional = if($managedFilesAdditionalValues.Count -eq 1) { $managedFilesAdditionalValues[0] } else { "" }
 
+# Collect the set of managed files to exclude from the final map for this
+# repository. Excluded files are pulled in from every matching repository
+# group's `excludedManagedFiles` field and de-duplicated. Use this to suppress
+# files that exist in `managed-files/root/` (or in the overlay) but should not
+# be deployed to repositories in this group (e.g. ALZ repos don't ship the
+# generic AVM module issue templates).
+$excludedManagedFiles = @()
+foreach($repositoryGroup in $repositoryGroups) {
+    if($repositoryGroup.PSObject.Properties.Name -contains "excludedManagedFiles" -and $repositoryGroup.excludedManagedFiles) {
+        $excludedManagedFiles += @($repositoryGroup.excludedManagedFiles)
+    }
+}
+$excludedManagedFiles = @($excludedManagedFiles | Select-Object -Unique)
+
+# Build the managed-files map (target path -> absolute source path) that will
+# be passed to the github Terraform module. Walking the filesystem here keeps
+# Terraform free of `path.module`-relative directory traversal and lets us
+# apply overlay merging + exclusions in one place.
+$managedFilesRootDir = Join-Path $managedFilesBaseDir "root"
+$managedFilesOverlayDir = ""
+if($managedFilesAdditional -ne "") {
+    $managedFilesOverlayDir = Join-Path $managedFilesBaseDir $managedFilesAdditional
+}
+
+function Add-ManagedFilesFromDir {
+    param(
+        [string]$baseDir,
+        [hashtable]$map
+    )
+    if([string]::IsNullOrEmpty($baseDir)) { return }
+    if(-not (Test-Path -Path $baseDir -PathType Container)) {
+        Write-Warning "Managed files directory does not exist: $baseDir"
+        return
+    }
+    $baseDirAbsolute = (Resolve-Path -Path $baseDir).Path
+    $prefixLength = $baseDirAbsolute.Length + 1
+    Get-ChildItem -Path $baseDirAbsolute -Recurse -File | ForEach-Object {
+        $relativePath = $_.FullName.Substring($prefixLength) -replace '\\', '/'
+        $absoluteSource = $_.FullName -replace '\\', '/'
+        $map[$relativePath] = $absoluteSource
+    }
+}
+
+$managedFiles = @{}
+Add-ManagedFilesFromDir -baseDir $managedFilesRootDir -map $managedFiles
+if($managedFilesOverlayDir -ne "") {
+    Add-ManagedFilesFromDir -baseDir $managedFilesOverlayDir -map $managedFiles
+}
+
+foreach($excluded in $excludedManagedFiles) {
+    if($managedFiles.ContainsKey($excluded)) {
+        $managedFiles.Remove($excluded) | Out-Null
+        Write-Host "Excluded managed file from sync: $excluded"
+    }
+}
+
+Write-Host "Resolved $($managedFiles.Count) managed file(s) for repository '$repoId' (overlay='$managedFilesAdditional', exclusions=$($excludedManagedFiles.Count))."
+
 # Build the set of deprecated files for this repository. The root set applies
 # to every repository; the per-overlay set (e.g. `alz`) is added when an
 # overlay is selected. The same JSON file is read by the github Terraform
@@ -541,7 +600,7 @@ $terraformVariables = @{
     codeowners_default_teams = $codeOwnersDefaultTeams
     codeowners_file_protection_teams = $codeOwnersFileProtectionTeams
     topics = $repositoryTopics
-    managed_files_additional = $managedFilesAdditional
+    managed_files = $managedFiles
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"

@@ -168,14 +168,18 @@ DESCRIPTION
   default     = []
 }
 
-variable "managed_files_additional" {
-  type        = string
+variable "managed_files" {
+  type        = map(string)
   description = <<DESCRIPTION
-Name of an additional managed-files overlay set to apply to the repository on
-top of the default `root` set (e.g. `alz` for Azure Landing Zones modules).
-Resolved from the `managedFilesAdditional` field on the matching repository
-group in `repository-config/config.json`. Leave empty to apply only the
-default `root` set.
+Map of managed files to sync to the repository. The key is the target file
+path inside the repository (forward-slash separated, e.g.
+`.github/workflows/pr-check.yml`); the value is the absolute path on disk to
+the source file in this repository.
+
+The map is built by `Invoke-RepositorySync.ps1` from `managed-files/root/`
+(plus the per-group overlay selected by `managedFilesAdditional`, with the
+overlay winning on conflicts) and any `excludedManagedFiles` entries removed.
+Leave empty in repository creation mode.
 DESCRIPTION
-  default     = ""
+  default     = {}
 }
