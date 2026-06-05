@@ -736,9 +736,14 @@ if(!$repositoryCreationModeEnabled) {
                     $importBlocks.Add("# content that actually differs from the managed source. Safe to delete - it")
                     $importBlocks.Add("# is regenerated on every run and only contains entries for files that exist.")
                     foreach($path in $importsToWrite) {
+                        # `github_repository_file` import ID format is
+                        # `<repository>:<file path>:<branch>` (three colon-
+                        # separated parts). The repo name and file path must
+                        # be separated by `:`, not `/`, despite the file
+                        # itself living under `<repository>/<path>` in git.
                         $importBlocks.Add("")
                         $importBlocks.Add("import {")
-                        $importBlocks.Add("  id = `"$($repoName)/$($path):$($defaultBranch)`"")
+                        $importBlocks.Add("  id = `"$($repoName):$($path):$($defaultBranch)`"")
                         $importBlocks.Add("  to = module.github.github_repository_file.managed[`"$($path)`"]")
                         $importBlocks.Add("}")
                     }
