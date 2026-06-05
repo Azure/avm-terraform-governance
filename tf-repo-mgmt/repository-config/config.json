@@ -112,7 +112,7 @@
       "repositoryGroups": [
         "all"
       ],
-      "repositoryPermission": "triage",
+      "repositoryPermission": "push",
       "environmentApproval": false
     }
   ]
