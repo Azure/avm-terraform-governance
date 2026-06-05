@@ -22,6 +22,12 @@
 #   ./scripts/manual/Remove-DeprecatedFilesFromRepos.ps1 `
 #     -client_id <github-app-client-id> `
 #     -private_key_path ./azure-verified-modules.pem
+#
+# To target a single repo (bypasses the skip list):
+#   ./scripts/manual/Remove-DeprecatedFilesFromRepos.ps1 `
+#     -client_id <github-app-client-id> `
+#     -onlyRepo terraform-azurerm-avm-res-storage-storageaccount `
+#     -WhatIf
 
 param(
   [Parameter(Mandatory = $true)]
@@ -30,6 +36,9 @@ param(
   [string]$orgName = "Azure",
   [string]$deprecatedFilesConfigFilePath = (Join-Path $PSScriptRoot "../../repository-config/deprecated-files.json"),
   [string[]]$validProviders = @("azure", "azurerm", "azapi"),
+  # When set, only this one repository is processed. The repos-to-skip list
+  # is bypassed because targeting by name is an explicit opt-in.
+  [string]$onlyRepo = "",
   [string[]]$reposToSkip = @(
     "bicep-registry-modules",
     "terraform-azure-modules",
@@ -134,6 +143,14 @@ while ($incompleteResults) {
 }
 Write-Host "Found $($installedRepositories.Count) installed repositories."
 
+if (-not [string]::IsNullOrEmpty($onlyRepo)) {
+  $installedRepositories = @($installedRepositories | Where-Object { $_.name -eq $onlyRepo })
+  if ($installedRepositories.Count -eq 0) {
+    throw "Repository '$onlyRepo' is not in the GitHub App's installation list."
+  }
+  Write-Host "Filtered to single repository: $onlyRepo (skip list bypassed)."
+}
+
 $repositoriesProcessed = 0
 $repositoriesWithMatches = 0
 $repositoriesUpdated = 0
@@ -144,7 +161,7 @@ $summary = @()
 foreach ($repo in $installedRepositories) {
   $repoName = $repo.name
 
-  if ($reposToSkip -contains $repoName) {
+  if ([string]::IsNullOrEmpty($onlyRepo) -and $reposToSkip -contains $repoName) {
     Write-Host "Skipping $repoName (in skip list)."
     $repositoriesSkipped++
     continue
