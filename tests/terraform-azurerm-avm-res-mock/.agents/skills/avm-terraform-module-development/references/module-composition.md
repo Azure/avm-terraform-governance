@@ -4,7 +4,7 @@ Concise summary of how an AVM Terraform Resource or Pattern Module fits together
 
 ## File layout
 
-The root of every AVM Terraform module looks like this (TFRMNFR2, TFNFR8):
+The root of every AVM Terraform module looks like this (TFNFR39):
 
 ```
 .
@@ -40,13 +40,13 @@ Rules of thumb:
 
 ## Resource modules (`res`)
 
-A resource module deploys one **primary** Azure resource (TFRMFR1). Child resources that have no useful lifecycle outside the primary (e.g. blob services for a storage account, network security rules for an NSG) belong in the same module. Anything you would reasonably manage independently belongs in its own resource module and is consumed via `module "..."`.
+A resource module deploys one **primary** Azure resource (RMFR1). Child resources that have no useful lifecycle outside the primary (e.g. blob services for a storage account, network security rules for an NSG) belong in the same module. Anything you would reasonably manage independently belongs in its own resource module and is consumed via `module "..."`.
 
 Key obligations:
 
 - Implement the resource with the AzAPI provider (TFFR3).
 - Expose standard interfaces where applicable (diagnostic settings, locks, role assignments, private endpoints, managed identities, customer-managed keys, tags) — see [interfaces.md](interfaces.md).
-- Outputs return the full resource object reference, not individual attributes (TFNFR16).
+- Outputs include the required AVM outputs (RMFR7). For Terraform-specific additional outputs, prefer discrete computed attributes over whole resource object outputs (TFFR2).
 - Provide at least a `default` example demonstrating the simplest valid usage.
 
 ## Pattern modules (`ptn`)
@@ -66,10 +66,10 @@ Key obligations:
 
 ## Required providers & versions
 
-`terraform.tf` pins `required_version` and `required_providers` (TFNFR38 / TFNFR39). At minimum:
+`terraform.tf` pins `required_version` and `required_providers` (TFNFR26 / TFNFR27 / TFNFR39). At minimum:
 
-- `azapi` `~> 2.8` (TFFR3)
-- `modtm` `~> 0.3` (SFR3)
-- `random` `~> 3.5` (commonly used)
+- `azapi` within the TFFR3-permitted major range (`>= 2.0, < 3.0`)
+- `modtm` if telemetry is implemented
+- `random` when the module directly uses it
 
 Provider version bounds are enforced by the mapotf `required_provider_versions.mptf.hcl` config in this governance repo.
