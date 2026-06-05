@@ -7,9 +7,8 @@
 # installation repositories, and for each one:
 #
 # 1. Reads the repo's default-branch git tree in one API call.
-# 2. Matches the tree against the candidate deprecated paths (root entries
-#    apply to every repo; the per-overlay entries apply only to repos in a
-#    repository group that declares the matching `managedFilesAdditional`).
+# 2. Matches the tree against the deprecated paths from
+#    `deprecated-files.json` (the list applies to every module repo).
 # 3. If any matches are found, shallow-clones the repo into a temp directory,
 #    `git rm -rf`s the matched paths, commits as the bot, pushes to the default
 #    branch, then deletes the temp directory.
@@ -29,7 +28,6 @@ param(
   [string]$client_id,
   [string]$private_key_path = "azure-verified-modules.pem",
   [string]$orgName = "Azure",
-  [string]$repoConfigFilePath = (Join-Path $PSScriptRoot "../../repository-config/config.json"),
   [string]$deprecatedFilesConfigFilePath = (Join-Path $PSScriptRoot "../../repository-config/deprecated-files.json"),
   [string[]]$validProviders = @("azure", "azurerm", "azapi"),
   [string[]]$reposToSkip = @(
@@ -67,38 +65,6 @@ function Get-ModuleIdFromRepoName {
     }
   }
   return $null
-}
-
-function Get-OverlayForModule {
-  param(
-    [string]$moduleId,
-    [object]$repositoryConfig
-  )
-  foreach ($group in $repositoryConfig.repositoryGroups) {
-    if ($group.repositories -and ($group.repositories -contains $moduleId) -and
-        $group.PSObject.Properties.Name -contains "managedFilesAdditional" -and
-        $group.managedFilesAdditional) {
-      return $group.managedFilesAdditional
-    }
-  }
-  return ""
-}
-
-function Get-DeprecatedPathsForRepo {
-  param(
-    [string]$overlay,
-    [object]$deprecatedFilesConfig
-  )
-  $paths = @()
-  if ($deprecatedFilesConfig.PSObject.Properties.Name -contains "root" -and $deprecatedFilesConfig.root) {
-    $paths += @($deprecatedFilesConfig.root)
-  }
-  if ($overlay -ne "" -and
-      $deprecatedFilesConfig.PSObject.Properties.Name -contains $overlay -and
-      $deprecatedFilesConfig.$overlay) {
-    $paths += @($deprecatedFilesConfig.$overlay)
-  }
-  return @($paths | Select-Object -Unique)
 }
 
 function Get-MatchingDeprecatedPaths {
@@ -149,8 +115,11 @@ if ($WhatIf) {
 Write-Host ""
 
 # Load configuration.
-$repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
-$deprecatedFilesConfig = Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json
+$candidatePaths = @(Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json)
+if ($candidatePaths.Count -eq 0) {
+  throw "deprecated-files.json contains no paths; nothing to do."
+}
+Write-Host "Loaded $($candidatePaths.Count) deprecated path(s) from $deprecatedFilesConfigFilePath."
 
 # Enumerate every repository where the GitHub App is installed (paginated).
 $installedRepositories = @()
@@ -189,11 +158,6 @@ foreach ($repo in $installedRepositories) {
   }
 
   $repositoriesProcessed++
-  $overlay = Get-OverlayForModule -moduleId $moduleId -repositoryConfig $repositoryConfig
-  $candidatePaths = Get-DeprecatedPathsForRepo -overlay $overlay -deprecatedFilesConfig $deprecatedFilesConfig
-  if ($candidatePaths.Count -eq 0) {
-    continue
-  }
 
   $defaultBranch = $repo.default_branch
   if ([string]::IsNullOrEmpty($defaultBranch)) {
@@ -219,7 +183,7 @@ foreach ($repo in $installedRepositories) {
 
   $repositoriesWithMatches++
   Write-Host ""
-  Write-Host "$modeTag $repoName ($moduleId, overlay='$overlay', default_branch=$defaultBranch) - $($matches.Count) match(es):" -ForegroundColor Cyan
+  Write-Host "$modeTag $repoName ($moduleId, default_branch=$defaultBranch) - $($matches.Count) match(es):" -ForegroundColor Cyan
   foreach ($m in $matches) {
     Write-Host "$modeTag   $repoName :: $m"
   }
