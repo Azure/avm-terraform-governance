@@ -31,10 +31,6 @@ resource "github_repository" "this" {
   allow_auto_merge       = true
   delete_branch_on_merge = true
   allow_update_branch    = true
-  # Dependabot alerts (`vulnerability_alerts`) are enabled via the dedicated
-  # `github_repository_vulnerability_alerts` resource in
-  # `github.repository.dependabot.tf` because the inline argument here is
-  # deprecated.
 
   security_and_analysis {
     secret_scanning {
