@@ -63,8 +63,14 @@ resource "github_repository_file" "managed" {
 
   lifecycle {
     ignore_changes = [
+      # GitHub stamps these on the live resource with the values from the
+      # last commit that touched the file, which generally don't match what
+      # we configure. Ignoring them keeps post-import plans clean and
+      # prevents no-op rewrites whose only purpose is to update commit
+      # metadata.
       commit_author,
       commit_email,
+      commit_message,
     ]
   }
 }
