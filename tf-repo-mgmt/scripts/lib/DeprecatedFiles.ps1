@@ -19,7 +19,8 @@ function Get-MatchingDeprecatedPaths {
         [string[]]$candidatePaths,
         [string[]]$repoFilePaths
     )
-    $matches = @()
+
+    $matchedPaths = @()
     foreach ($candidate in $candidatePaths) {
         $hit = $false
         if ($repoFilePaths -contains $candidate) {
@@ -30,9 +31,9 @@ function Get-MatchingDeprecatedPaths {
                 if ($p.StartsWith($prefix)) { $hit = $true; break }
             }
         }
-        if ($hit) { $matches += $candidate }
+        if ($hit) { $matchedPaths += $candidate }
     }
-    return $matches
+    return $matchedPaths
 }
 
 function Remove-DeprecatedRepoFiles {
@@ -56,15 +57,15 @@ function Remove-DeprecatedRepoFiles {
     }
 
     $defaultBranch = $repoTree.DefaultBranch
-    $matches = @(Get-MatchingDeprecatedPaths -candidatePaths $deprecatedPaths -repoFilePaths $repoTree.BlobPaths)
+    $matchedPaths = @(Get-MatchingDeprecatedPaths -candidatePaths $deprecatedPaths -repoFilePaths $repoTree.BlobPaths)
 
-    if ($matches.Count -eq 0) {
+    if ($matchedPaths.Count -eq 0) {
         Write-Host "$modeTag No deprecated files present in $orgAndRepoName; nothing to remove."
         return $result
     }
 
-    Write-Host "$modeTag $orgAndRepoName (default_branch=$defaultBranch) - $($matches.Count) deprecated path(s) to remove:" -ForegroundColor Cyan
-    foreach ($m in $matches) {
+    Write-Host "$modeTag $orgAndRepoName (default_branch=$defaultBranch) - $($matchedPaths.Count) deprecated path(s) to remove:" -ForegroundColor Cyan
+    foreach ($m in $matchedPaths) {
         Write-Host "$modeTag   $orgAndRepoName :: $m"
     }
 
@@ -92,7 +93,7 @@ function Remove-DeprecatedRepoFiles {
 
         Push-Location $tempDir
         try {
-            foreach ($path in $matches) {
+            foreach ($path in $matchedPaths) {
                 git rm -r -f -- $path | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "  git rm failed for '$path'; continuing with the rest."
@@ -108,14 +109,14 @@ function Remove-DeprecatedRepoFiles {
                 git push --quiet origin $defaultBranch
                 if ($LASTEXITCODE -ne 0) { throw "git push exited $LASTEXITCODE" }
                 Write-Host "  Pushed cleanup commit to origin/$defaultBranch." -ForegroundColor Green
-                $result.DeletedPaths = $matches
+                $result.DeletedPaths = $matchedPaths
             }
         } finally {
             Pop-Location
         }
     } catch {
         Write-Warning "  Failed to remove deprecated files from $orgAndRepoName : $_"
-        $result.IssueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "deprecated-files-cleanup-failed" -message "Failed to remove deprecated files from $orgAndRepoName." -data ($matches -join ", ") -issueLog $result.IssueLog
+        $result.IssueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "deprecated-files-cleanup-failed" -message "Failed to remove deprecated files from $orgAndRepoName." -data ($matchedPaths -join ", ") -issueLog $result.IssueLog
     } finally {
         if (Test-Path $tempDir) {
             try {
