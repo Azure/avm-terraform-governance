@@ -37,8 +37,8 @@ resource "azurerm_management_lock" "rg_lock" {
 
   lock_level = "CanNotDelete"
   name       = "${local.resource_group_prefix}-${random_string.suffix.result}-lock"
-  notes      = "Locked by avm-terraform-governance mock module fixture."
   scope      = azurerm_resource_group.this["primary"].id
+  notes      = "Locked by avm-terraform-governance mock module fixture."
 
   depends_on = [
     azurerm_resource_group.this,

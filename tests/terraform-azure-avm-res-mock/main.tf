@@ -27,10 +27,10 @@ locals {
 resource "azapi_resource" "example_rg" {
   for_each = toset(var.create_example_resources ? local.example_keys : [])
 
-  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
-  parent_id = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
   location  = var.location
   name      = "${local.resource_group_prefix}-${random_string.suffix.result}-${each.value}"
+  parent_id = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
+  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
   body = {
     tags = local.default_tags
   }
@@ -49,10 +49,10 @@ resource "azapi_resource" "example_rg" {
 resource "azapi_resource" "example_rg_singleton" {
   count = var.create_example_resources ? 1 : 0
 
-  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
-  parent_id = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
   location  = var.location
   name      = "${local.resource_group_prefix}-${random_string.suffix.result}-singleton"
+  parent_id = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
+  type      = "Microsoft.Resources/resourceGroups@2024-03-01"
   body = {
     tags = local.default_tags
   }
