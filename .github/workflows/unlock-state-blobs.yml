@@ -1,0 +1,185 @@
+---
+name: Unlock State Blobs
+
+# Detect and (optionally) break the blob lease that the Terraform azurerm
+# backend uses to lock the per-repo state file used by the Repository Sync
+# workflow (`tf-repo-mgmt.yml`).
+#
+# Each AVM repo's state is stored as a single blob named `<repoId>.tfstate`
+# in the configured storage account / container. Terraform acquires a blob
+# lease for the duration of a plan/apply. If a sync run is killed (cancelled
+# job, runner crash, network blip during apply) the lease can be left in
+# place, blocking subsequent runs with `Error acquiring the state lock`.
+# This workflow inspects the lease state of those blobs and, when requested,
+# breaks the lease so the next sync run can proceed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: 'Target repositories (comma-separated repoIds, e.g. "avm-res-keyvault-vault,avm-res-storage-storage-account") or "All" to scan every *.tfstate blob.'
+        default: 'All'
+        type: string
+      dry_run:
+        description: 'When true, only report lock state without breaking any leases.'
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  unlock:
+    name: Unlock state blobs
+    runs-on: ubuntu-latest
+    environment: avm
+
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2.3.0
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+
+      - name: Check and unlock state blobs
+        shell: pwsh
+        env:
+          STORAGE_ACCOUNT_NAME: ${{ secrets.STORAGE_ACCOUNT_NAME }}
+          STORAGE_CONTAINER_NAME: ${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}
+          REPOSITORIES: ${{ inputs.repositories }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $account   = $env:STORAGE_ACCOUNT_NAME
+          $container = $env:STORAGE_CONTAINER_NAME
+          $dryRun    = "$env:DRY_RUN".ToLower() -eq "true"
+          $repoFilterRaw = $env:REPOSITORIES
+
+          $repoFilter = @()
+          if ($repoFilterRaw -and $repoFilterRaw.ToLower() -ne 'all') {
+              $repoFilter = $repoFilterRaw -split ',' |
+                  ForEach-Object { $_.Trim() } |
+                  Where-Object   { $_ }
+          }
+
+          Write-Host "Account=$account Container=$container DryRun=$dryRun"
+          if ($repoFilter.Count -gt 0) {
+              Write-Host "Filtering to: $($repoFilter -join ', ')"
+          } else {
+              Write-Host "Scanning all *.tfstate blobs in container."
+          }
+
+          # When the caller supplied an explicit list, look up exactly those
+          # blobs (so missing ones are reported, and we avoid paging through
+          # hundreds of blobs). Otherwise enumerate the container.
+          $targets = @()
+          if ($repoFilter.Count -gt 0) {
+              $targets = @($repoFilter | ForEach-Object { "$_.tfstate" })
+          } else {
+              $listJson = az storage blob list `
+                  --account-name   $account `
+                  --container-name $container `
+                  --auth-mode      login `
+                  --query          "[?ends_with(name, '.tfstate')].name" `
+                  --output         json
+              if ($LASTEXITCODE -ne 0) { throw "az storage blob list failed." }
+              $targets = @($listJson | ConvertFrom-Json)
+          }
+
+          if (-not $targets -or $targets.Count -eq 0) {
+              Write-Host "::warning title=No state blobs found::No matching .tfstate blobs in '$container'."
+              return
+          }
+
+          Write-Host "Found $($targets.Count) target blob(s)."
+
+          $summary    = @()
+          $hadFailure = $false
+
+          foreach ($blobName in $targets) {
+              Write-Host "----- $blobName -----"
+
+              $existsJson = az storage blob exists `
+                  --account-name   $account `
+                  --container-name $container `
+                  --name           $blobName `
+                  --auth-mode      login `
+                  --output         json
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Host "::error title=$blobName::exists-check failed."
+                  $summary    += [pscustomobject]@{ blob = $blobName; lease = 'error'; action = 'exists-check failed' }
+                  $hadFailure  = $true
+                  continue
+              }
+              $exists = ($existsJson | ConvertFrom-Json).exists
+              if (-not $exists) {
+                  Write-Host "::notice title=$blobName missing::Blob not present in '$container'."
+                  $summary += [pscustomobject]@{ blob = $blobName; lease = 'missing'; action = 'none' }
+                  continue
+              }
+
+              $leaseJson = az storage blob show `
+                  --account-name   $account `
+                  --container-name $container `
+                  --name           $blobName `
+                  --auth-mode      login `
+                  --query          "properties.lease" `
+                  --output         json
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Host "::error title=$blobName::az storage blob show failed."
+                  $summary    += [pscustomobject]@{ blob = $blobName; lease = 'error'; action = 'show failed' }
+                  $hadFailure  = $true
+                  continue
+              }
+              $lease       = $leaseJson | ConvertFrom-Json
+              $leaseStatus = $lease.status
+              $leaseState  = $lease.state
+              Write-Host "  lease.status=$leaseStatus  lease.state=$leaseState"
+
+              if ($leaseStatus -ne 'locked') {
+                  $summary += [pscustomobject]@{ blob = $blobName; lease = "$leaseStatus/$leaseState"; action = 'none' }
+                  continue
+              }
+
+              if ($dryRun) {
+                  Write-Host "::warning title=$blobName is LOCKED::Dry run; lease NOT broken (state=$leaseState)."
+                  $summary += [pscustomobject]@{ blob = $blobName; lease = "locked/$leaseState"; action = 'skipped (dry-run)' }
+                  continue
+              }
+
+              Write-Host "  Breaking lease (lease-break-period=0)..."
+              az storage blob lease break `
+                  --account-name   $account `
+                  --container-name $container `
+                  --blob-name      $blobName `
+                  --lease-break-period 0 `
+                  --auth-mode      login | Out-Null
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Host "::error title=$blobName::lease break failed."
+                  $summary    += [pscustomobject]@{ blob = $blobName; lease = "locked/$leaseState"; action = 'break failed' }
+                  $hadFailure  = $true
+                  continue
+              }
+              Write-Host "::notice title=$blobName unlocked::Lease broken successfully."
+              $summary += [pscustomobject]@{ blob = $blobName; lease = "locked/$leaseState"; action = 'lease broken' }
+          }
+
+          Write-Host ""
+          Write-Host "===== Summary ====="
+          $summary | Format-Table -AutoSize | Out-String | Write-Host
+
+          # Render the summary into the GitHub Actions job summary panel.
+          $md = "## State blob lock status`n`n"
+          $md += "Account: ``$account``  Container: ``$container``  DryRun: ``$dryRun```n`n"
+          $md += "| Blob | Lease (before) | Action |`n| --- | --- | --- |`n"
+          foreach ($row in $summary) {
+              $md += "| ``$($row.blob)`` | $($row.lease) | $($row.action) |`n"
+          }
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $md
+
+          if ($hadFailure) {
+              throw "One or more state blobs could not be inspected or unlocked. See annotations and summary above."
+          }
