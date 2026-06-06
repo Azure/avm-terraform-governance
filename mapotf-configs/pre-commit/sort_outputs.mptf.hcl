@@ -8,11 +8,11 @@ locals {
 # AVM spec for outputs: known attrs in this fixed order; unlisted attrs are rare and stay at the end
 # in source order.
 transform "reorder_attributes" "output_attrs" {
-  for_each                   = local.outs
-  target_block_address       = "output.${each.key}"
-  head_attributes            = ["description", "value", "sensitive"]
-  tail_attributes            = ["depends_on"]
-  sort_middle_alphabetically = false
+  for_each                 = local.outs
+  target_block_address     = "output.${each.key}"
+  head_attributes          = ["description", "value", "sensitive"]
+  foot_attributes          = ["depends_on"]
+  sort_body_alphabetically = false
 }
 
 transform "remove_block_element" "drop_output_sensitive_false" {

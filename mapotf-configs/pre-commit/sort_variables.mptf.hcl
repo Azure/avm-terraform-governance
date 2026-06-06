@@ -11,10 +11,10 @@ locals {
 # Anything else (validation, etc.) stays as a nested element handled by mapotf's reorder_attributes
 # nested-block semantics.
 transform "reorder_attributes" "var_attrs" {
-  for_each                   = local.vars
-  target_block_address       = "variable.${each.key}"
-  head_attributes            = ["type", "default", "description", "nullable", "sensitive"]
-  sort_middle_alphabetically = false
+  for_each                 = local.vars
+  target_block_address     = "variable.${each.key}"
+  head_attributes          = ["type", "default", "description", "nullable", "sensitive"]
+  sort_body_alphabetically = false
 }
 
 # Drop redundant nullable = true (the language default).
