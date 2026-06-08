@@ -41,6 +41,10 @@ module "github" {
   module_name                                         = var.module_name
   copilot_agent_firewall_allow_list                   = var.github_copilot_agent_firewall_allow_list
   copilot_agent_firewall_allow_list_variable_name     = var.github_copilot_agent_firewall_allow_list_variable_name
+  codeowners_default_teams                            = var.codeowners_default_teams
+  codeowners_file_protection_teams                    = var.codeowners_file_protection_teams
+  topics                                              = var.topics
+  managed_files                                       = var.managed_files
 }
 
 import {

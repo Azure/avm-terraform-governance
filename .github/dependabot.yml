@@ -1,0 +1,56 @@
+---
+# Dependabot version updates for the avm-terraform-governance repository.
+#
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+
+updates:
+  # GitHub Actions workflows and composite actions under .github/.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore
+      include: scope
+
+  # Terraform providers in the repository_sync root module and its submodules.
+  - package-ecosystem: terraform
+    directories:
+      - "/tf-repo-mgmt/repository_sync"
+      - "/tf-repo-mgmt/repository_sync/modules/**"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - terraform
+    commit-message:
+      prefix: chore
+      include: scope
+
+  # Base images and pinned tool versions in the container/ Dockerfiles.
+  - package-ecosystem: docker
+    directory: "/container"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore
+      include: scope
