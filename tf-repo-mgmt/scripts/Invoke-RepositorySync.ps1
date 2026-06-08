@@ -126,29 +126,6 @@ if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
     $issueLog = $branchProtectionResult.IssueLog
 }
 
-# Sync managed files via a single clone -> branch -> PR -> merge flow.
-# This consolidates deprecated-file removal, managed-file additions, and
-# managed-file updates into one PR per repo per sync run. The PR is opened
-# and immediately merged with `--squash --admin` using the AVM GitHub App's
-# ruleset bypass, so downstream workflows are not retriggered and the merge
-# does not wait on required checks.
-if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
-    $codeownersContent = Get-RenderedCodeownersContent `
-        -ownerSlug $orgName `
-        -defaultTeams $settings.CodeOwnersDefaultTeams `
-        -fileProtectionTeams $settings.CodeOwnersFileProtectionTeams
-
-    $syncResult = Sync-RepoFiles `
-        -orgAndRepoName $orgAndRepoName `
-        -deprecatedPaths $deprecatedPaths `
-        -managedFiles $managedFiles `
-        -codeownersContent $codeownersContent `
-        -repoTree $repoTree `
-        -planOnly $planOnly `
-        -issueLog $issueLog
-    $issueLog = $syncResult.IssueLog
-}
-
 $resolveTeamsResult = Resolve-GitHubTeams `
     -orgName $orgName `
     -orgAndRepoName $orgAndRepoName `
@@ -196,6 +173,8 @@ $terraformVariables = @{
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
 
+$preTerraformIssueCount = $issueLog.Count
+
 $issueLog = Invoke-TerraformInit `
     -terraformModulePath $terraformModulePath `
     -repositoryCreationModeEnabled $repositoryCreationModeEnabled.IsPresent `
@@ -213,6 +192,33 @@ $issueLog = Invoke-TerraformPlanAndApply `
     -planOnly $planOnly `
     -resourceTypesThatCannotBeDestroyed $resourceTypesThatCannotBeDestroyed `
     -issueLog $issueLog
+
+# Sync managed files via a single clone -> branch -> PR -> merge flow.
+# Runs AFTER terraform so that a broken terraform run does not produce a
+# merged commit on the target repo for nothing, and so that any teams,
+# rulesets, or bypass actors that terraform needs to create exist before
+# the bot pushes a CODEOWNERS file that references them. Skipped entirely
+# if terraform reported new issues for this repo.
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+    if($issueLog.Count -gt $preTerraformIssueCount) {
+        Write-Host "Skipping managed-file sync for $orgAndRepoName because terraform reported issues for this run." -ForegroundColor Yellow
+    } else {
+        $codeownersContent = Get-RenderedCodeownersContent `
+            -ownerSlug $orgName `
+            -defaultTeams $settings.CodeOwnersDefaultTeams `
+            -fileProtectionTeams $settings.CodeOwnersFileProtectionTeams
+
+        $syncResult = Sync-RepoFiles `
+            -orgAndRepoName $orgAndRepoName `
+            -deprecatedPaths $deprecatedPaths `
+            -managedFiles $managedFiles `
+            -codeownersContent $codeownersContent `
+            -repoTree $repoTree `
+            -planOnly $planOnly `
+            -issueLog $issueLog
+        $issueLog = $syncResult.IssueLog
+    }
+}
 
 if($issueLog.Count -eq 0) {
     Write-Host "No issues found for $repoId"
