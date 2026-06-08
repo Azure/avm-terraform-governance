@@ -9,7 +9,7 @@ terraform {
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "~> 2.53"
+      version = "~> 3.8"
     }
     github = {
       source  = "integrations/github"
