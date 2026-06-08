@@ -27,6 +27,7 @@ function Get-RepositoryDefaultBranchTree {
             Success       = $false
             DefaultBranch = $null
             BlobPaths     = @()
+            Blobs         = @{}
         }
     }
 
@@ -47,14 +48,22 @@ function Get-RepositoryDefaultBranchTree {
             Success       = $false
             DefaultBranch = $defaultBranch
             BlobPaths     = @()
+            Blobs         = @{}
         }
     }
 
-    $blobPaths = @($treeResult.output.tree | Where-Object { $_.type -eq "blob" } | ForEach-Object { $_.path })
+    $blobEntries = @($treeResult.output.tree | Where-Object { $_.type -eq "blob" })
+    $blobPaths = @($blobEntries | ForEach-Object { $_.path })
+    # `Blobs` lets the managed-files sync detect updates by comparing each
+    # source file's locally-computed git blob SHA to the SHA already on the
+    # default branch, so we only open a PR for files that actually differ.
+    $blobs = @{}
+    foreach ($entry in $blobEntries) { $blobs[$entry.path] = $entry.sha }
 
     return @{
         Success       = $true
         DefaultBranch = $defaultBranch
         BlobPaths     = $blobPaths
+        Blobs         = $blobs
     }
 }
