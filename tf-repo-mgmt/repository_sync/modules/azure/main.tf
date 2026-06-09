@@ -25,10 +25,10 @@ resource "azapi_resource" "identity_federated_credentials" {
       audiences = ["api://AzureADTokenExchange"]
       issuer    = "https://token.actions.githubusercontent.com"
       # OIDC subject layout matches the `include_claim_keys` order configured in
-      # modules/github/github.actions_oidc.tf. The `context` claim expands to
-      # `environment:<name>` when the job runs in an environment, which is why
-      # the env name appears with a `context:environment:` prefix here.
-      subject = "repository_owner_id:${var.github_organization_id}:repository_id:${var.github_repository_id}:context:environment:${each.value}:job_workflow_ref:${var.github_job_workflow_ref}"
+      # modules/github/github.actions_oidc.tf. The `context` claim is not
+      # included literally in `sub`; it expands to its value, which is
+      # `environment:<name>` when the job references an environment.
+      subject = "repository_owner_id:${var.github_organization_id}:repository_id:${var.github_repository_id}:environment:${each.value}:job_workflow_ref:${var.github_job_workflow_ref}"
     }
   }
 }
