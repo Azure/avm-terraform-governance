@@ -1,7 +1,15 @@
-# Builds the managed-files map (target path -> absolute source path) that is
-# passed to the Terraform github module. Walking the filesystem here keeps
-# Terraform free of `path.module`-relative directory traversal and lets us
-# apply overlay merging + exclusions in one place.
+# Builds the managed-files map
+# (target path -> @{ Source = absolute source path; Mode = git index mode })
+# that is passed to Sync-RepoFiles. Walking the filesystem here keeps the
+# rest of the sync free of directory traversal and lets us apply overlay
+# merging + exclusions in one place.
+#
+# `Mode` is the git tree-entry mode ("100644" or "100755") read from this
+# governance repo's own git index, so the executable bit recorded here is
+# the single source of truth for every downstream AVM repo. To flip a
+# managed file's executable bit, run `git update-index --chmod=+x` (or
+# `-x`) on it in this repo and commit; the next sync will propagate that
+# mode to every target repo.
 
 function Add-ManagedFilesFromDir {
     param(
@@ -15,6 +23,26 @@ function Add-ManagedFilesFromDir {
     }
     $baseDirAbsolute = (Resolve-Path -Path $baseDir).Path
     $prefixLength = $baseDirAbsolute.Length + 1
+
+    # Look up tree-entry modes (`100644` / `100755`) from this repo's own
+    # git index once per managed dir. The runner's filesystem permission
+    # bits are unreliable as a source of truth: on Windows the executable
+    # bit is meaningless to git, and on Linux a fresh checkout can lose
+    # the +x bit if `core.filemode` is misconfigured. Reading the index
+    # avoids both problems.
+    $modeMap = @{}
+    $lsFilesOutput = & git -C $baseDirAbsolute ls-files --stage -- . 2>$null
+    if ($LASTEXITCODE -eq 0 -and $lsFilesOutput) {
+        foreach ($line in @($lsFilesOutput)) {
+            # Format: <mode> SP <sha> SP <stage>\t<path-relative-to-cwd>
+            if ($line -match '^(\d{6})\s+[0-9a-f]+\s+\d+\t(.+)$') {
+                $modeMap[($matches[2] -replace '\\', '/')] = $matches[1]
+            }
+        }
+    } else {
+        Write-Warning "Failed to read git index modes from '$baseDirAbsolute' (exit=$LASTEXITCODE); managed files from this directory will default to mode 100644."
+    }
+
     # `-Force` is required because PowerShell treats dot-prefixed entries as
     # hidden on Linux/macOS (the runner OS for sync), and without it
     # `Get-ChildItem -Recurse` silently skips `.github/`, `.devcontainer/`,
@@ -24,7 +52,12 @@ function Add-ManagedFilesFromDir {
     Get-ChildItem -Path $baseDirAbsolute -Recurse -File -Force | ForEach-Object {
         $relativePath = $_.FullName.Substring($prefixLength) -replace '\\', '/'
         $absoluteSource = $_.FullName -replace '\\', '/'
-        $map[$relativePath] = $absoluteSource
+        $mode = $modeMap[$relativePath]
+        if (-not $mode) { $mode = "100644" }
+        $map[$relativePath] = @{
+            Source = $absoluteSource
+            Mode   = $mode
+        }
     }
 }
 

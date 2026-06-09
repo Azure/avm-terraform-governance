@@ -118,7 +118,9 @@ function Get-RenderedCodeownersContent {
 
 # Build the desired managed-file set as `{ path -> @{ Bytes; Sha } }`.
 # `Bytes` is the raw file content (no encoding round-trip, so SHA matches
-# git's hash-object exactly); `Sha` is the precomputed git blob SHA.
+# git's hash-object exactly); `Sha` is the precomputed git blob SHA;
+# `Mode` is the git tree-entry mode ("100644" / "100755") that should be
+# stamped on the index entry in every target repo.
 function Get-DesiredManagedFiles {
     param(
         [hashtable]$managedFiles,
@@ -129,7 +131,10 @@ function Get-DesiredManagedFiles {
     $desired = @{}
 
     foreach ($targetPath in $managedFiles.Keys) {
-        $sourcePath = $managedFiles[$targetPath]
+        $entry = $managedFiles[$targetPath]
+        $sourcePath = $entry.Source
+        $mode = $entry.Mode
+        if (-not $mode) { $mode = "100644" }
         if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
             Write-Warning "Managed file source missing on disk: $sourcePath (target=$targetPath)"
             continue
@@ -138,6 +143,7 @@ function Get-DesiredManagedFiles {
         $desired[$targetPath] = @{
             Bytes = $bytes
             Sha   = Get-GitBlobSha -Bytes $bytes
+            Mode  = $mode
         }
     }
 
@@ -149,6 +155,7 @@ function Get-DesiredManagedFiles {
         $desired[$codeownersPath] = @{
             Bytes = $codeownersBytes
             Sha   = Get-GitBlobSha -Bytes $codeownersBytes
+            Mode  = "100644"
         }
     }
 
@@ -202,18 +209,31 @@ function Sync-RepoFiles {
     }
 
     $existingBlobs = @{}
+    $existingModes = @{}
     if ($repoTree.Blobs) {
         foreach ($k in $repoTree.Blobs.Keys) { $existingBlobs[$k] = $repoTree.Blobs[$k] }
+    }
+    if ($repoTree.Modes) {
+        foreach ($k in $repoTree.Modes.Keys) { $existingModes[$k] = $repoTree.Modes[$k] }
     }
 
     $toAdd = @()
     $toUpdate = @()
     foreach ($targetPath in ($desired.Keys | Sort-Object)) {
         $desiredSha = $desired[$targetPath].Sha
+        $desiredMode = $desired[$targetPath].Mode
         if (-not $existingBlobs.ContainsKey($targetPath)) {
             $toAdd += $targetPath
-        } elseif ($existingBlobs[$targetPath] -ne $desiredSha) {
-            $toUpdate += $targetPath
+        } else {
+            $existingSha = $existingBlobs[$targetPath]
+            $existingMode = $existingModes[$targetPath]
+            if (-not $existingMode) { $existingMode = "100644" }
+            # Update on either content drift OR executable-bit drift, so
+            # flipping +x in this governance repo's index is enough to
+            # propagate the mode change to every target on the next sync.
+            if ($existingSha -ne $desiredSha -or $existingMode -ne $desiredMode) {
+                $toUpdate += $targetPath
+            }
         }
     }
 
@@ -287,6 +307,17 @@ function Sync-RepoFiles {
                 git add -- $path | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Write-Warning "  git add failed for '$path'; continuing with the rest."
+                    continue
+                }
+                # Stamp the executable bit on the index entry explicitly so
+                # the tree-entry mode in the target matches this repo's
+                # index, independent of the runner's `core.filemode` and
+                # the on-disk perms `WriteAllBytes` produced. Both
+                # `--chmod=+x` and `--chmod=-x` are idempotent.
+                $chmodFlag = if ($desired[$path].Mode -eq "100755") { "+x" } else { "-x" }
+                git update-index --chmod=$chmodFlag -- $path | Out-Null
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Warning "  git update-index --chmod=$chmodFlag failed for '$path'; continuing with the rest."
                 }
             }
 
