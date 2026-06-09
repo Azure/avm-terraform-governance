@@ -48,6 +48,7 @@ $libDir = Join-Path $PSScriptRoot "lib"
 . (Join-Path $libDir "RepoTree.ps1")
 . (Join-Path $libDir "RepoFilesSync.ps1")
 . (Join-Path $libDir "BranchProtection.ps1")
+. (Join-Path $libDir "CodeQlDefaultSetup.ps1")
 . (Join-Path $libDir "TeamsAndUsers.ps1")
 . (Join-Path $libDir "TerraformOperations.ps1")
 
@@ -124,6 +125,22 @@ if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
         -planOnly $planOnly `
         -issueLog $issueLog
     $issueLog = $branchProtectionResult.IssueLog
+}
+
+# Disable GitHub's CodeQL "default setup" so the only CodeQL workflow on
+# the repo is the advanced-setup `.github/workflows/codeql.yml` we ship
+# via managed files. Default setup spawns a dynamic
+# `dynamic/github-code-scanning/codeql` workflow that (a) duplicates the
+# `/language:actions` SARIF category our managed workflow already covers
+# and (b) cannot satisfy the customized OIDC subject template because its
+# dynamic jobs do not attach to a deployment environment, so it fails on
+# every push. The PATCH is idempotent (no-op if already off).
+if(!$repositoryCreationModeEnabled) {
+    $codeQlDefaultSetupResult = Disable-CodeQlDefaultSetup `
+        -orgAndRepoName $orgAndRepoName `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $codeQlDefaultSetupResult.IssueLog
 }
 
 $resolveTeamsResult = Resolve-GitHubTeams `
