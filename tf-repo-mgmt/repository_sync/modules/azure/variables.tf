@@ -20,7 +20,7 @@ variable "github_repository_name" {
 
 variable "github_repository_environment_names" {
   type        = set(string)
-  description = "Names of the GitHub environments to create federated identity credentials for. The OIDC subject claim includes the environment name, so one credential is created per environment."
+  description = "Names of the GitHub environments to create federated identity credentials for. The OIDC subject claim uses the `context` claim, which expands to `environment:<name>` for env-gated jobs, so one credential is created per environment."
 }
 
 variable "location" {

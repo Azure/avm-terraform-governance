@@ -147,13 +147,3 @@ repository.
 DESCRIPTION
   default     = []
 }
-
-variable "managed_files" {
-  type        = map(string)
-  description = <<DESCRIPTION
-Map of managed files to sync to the repository. The key is the target file
-path inside the repository; the value is the absolute path on disk to the
-source file.
-DESCRIPTION
-  default     = {}
-}

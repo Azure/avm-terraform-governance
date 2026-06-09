@@ -46,7 +46,9 @@ $libDir = Join-Path $PSScriptRoot "lib"
 . (Join-Path $libDir "ManagedFiles.ps1")
 . (Join-Path $libDir "RepositoryConfig.ps1")
 . (Join-Path $libDir "RepoTree.ps1")
-. (Join-Path $libDir "DeprecatedFiles.ps1")
+. (Join-Path $libDir "RepoFilesSync.ps1")
+. (Join-Path $libDir "BranchProtection.ps1")
+. (Join-Path $libDir "CodeQlDefaultSetup.ps1")
 . (Join-Path $libDir "TeamsAndUsers.ps1")
 . (Join-Path $libDir "TerraformOperations.ps1")
 
@@ -103,33 +105,42 @@ Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
 Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
-# Fetch the default-branch tree once per repo. The deprecated-files cleanup
-# and the managed-files import bootstrap both need to know what files exist
-# on the default branch; sharing the result halves the GitHub REST traffic
-# and removes a class of race conditions where the default branch could
-# change between the two reads.
+# Fetch the default-branch tree once per repo. The repo-file sync uses the
+# cached blob SHAs to detect which managed files need creating/updating and
+# which deprecated paths are actually present, all without making any
+# additional GitHub REST calls per file.
 $repoTree = $null
 $needRepoTree = (!$repositoryCreationModeEnabled) -and (($deprecatedPaths.Count -gt 0) -or ($managedFiles.Keys.Count -gt 0))
 if($needRepoTree) {
     $repoTree = Get-RepositoryDefaultBranchTree -orgAndRepoName $orgAndRepoName
 }
 
-# Remove deprecated files from the target repository before any Terraform
-# runs. In plan mode the matches are logged with a `[PLAN]` prefix and no
-# commit is made; in apply mode a single `[skip ci]` commit is pushed.
-# Paths actually deleted come back as `DeletedPaths` so the import bootstrap
-# can exclude them from the cached tree (the tree was fetched before the
-# delete and so still lists them).
-$deletedDeprecatedPaths = @()
-if(!$repositoryCreationModeEnabled -and $deprecatedPaths.Count -gt 0) {
-    $cleanupResult = Remove-DeprecatedRepoFiles `
+# Remove any legacy classic branch-protection rule from the target repo
+# before anything else - every AVM repo must be governed exclusively by
+# the rulesets defined in modules/github/github.rulesets.tf.
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+    $branchProtectionResult = Remove-LegacyBranchProtection `
         -orgAndRepoName $orgAndRepoName `
-        -deprecatedPaths $deprecatedPaths `
-        -repoTree $repoTree `
+        -defaultBranch $repoTree.DefaultBranch `
         -planOnly $planOnly `
         -issueLog $issueLog
-    $issueLog = $cleanupResult.IssueLog
-    $deletedDeprecatedPaths = $cleanupResult.DeletedPaths
+    $issueLog = $branchProtectionResult.IssueLog
+}
+
+# Disable GitHub's CodeQL "default setup" so the only CodeQL workflow on
+# the repo is the advanced-setup `.github/workflows/codeql.yml` we ship
+# via managed files. Default setup spawns a dynamic
+# `dynamic/github-code-scanning/codeql` workflow that (a) duplicates the
+# `/language:actions` SARIF category our managed workflow already covers
+# and (b) cannot satisfy the customized OIDC subject template because its
+# dynamic jobs do not attach to a deployment environment, so it fails on
+# every push. The PATCH is idempotent (no-op if already off).
+if(!$repositoryCreationModeEnabled) {
+    $codeQlDefaultSetupResult = Disable-CodeQlDefaultSetup `
+        -orgAndRepoName $orgAndRepoName `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $codeQlDefaultSetupResult.IssueLog
 }
 
 $resolveTeamsResult = Resolve-GitHubTeams `
@@ -175,10 +186,11 @@ $terraformVariables = @{
     codeowners_default_teams = $settings.CodeOwnersDefaultTeams
     codeowners_file_protection_teams = $settings.CodeOwnersFileProtectionTeams
     topics = $settings.Topics
-    managed_files = $managedFiles
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
+
+$preTerraformIssueCount = $issueLog.Count
 
 $issueLog = Invoke-TerraformInit `
     -terraformModulePath $terraformModulePath `
@@ -190,16 +202,6 @@ $issueLog = Invoke-TerraformInit `
     -stateContainerName $stateContainerName `
     -issueLog $issueLog
 
-if(!$repositoryCreationModeEnabled) {
-    New-ImportBootstrap `
-        -terraformModulePath $terraformModulePath `
-        -managedFiles $managedFiles `
-        -repoName $repoName `
-        -orgAndRepoName $orgAndRepoName `
-        -repoTree $repoTree `
-        -pathsRecentlyDeleted $deletedDeprecatedPaths
-}
-
 $issueLog = Invoke-TerraformPlanAndApply `
     -terraformModulePath $terraformModulePath `
     -repoId $repoId `
@@ -207,6 +209,33 @@ $issueLog = Invoke-TerraformPlanAndApply `
     -planOnly $planOnly `
     -resourceTypesThatCannotBeDestroyed $resourceTypesThatCannotBeDestroyed `
     -issueLog $issueLog
+
+# Sync managed files via a single clone -> branch -> PR -> merge flow.
+# Runs AFTER terraform so that a broken terraform run does not produce a
+# merged commit on the target repo for nothing, and so that any teams,
+# rulesets, or bypass actors that terraform needs to create exist before
+# the bot pushes a CODEOWNERS file that references them. Skipped entirely
+# if terraform reported new issues for this repo.
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+    if($issueLog.Count -gt $preTerraformIssueCount) {
+        Write-Host "Skipping managed-file sync for $orgAndRepoName because terraform reported issues for this run." -ForegroundColor Yellow
+    } else {
+        $codeownersContent = Get-RenderedCodeownersContent `
+            -ownerSlug $orgName `
+            -defaultTeams $settings.CodeOwnersDefaultTeams `
+            -fileProtectionTeams $settings.CodeOwnersFileProtectionTeams
+
+        $syncResult = Sync-RepoFiles `
+            -orgAndRepoName $orgAndRepoName `
+            -deprecatedPaths $deprecatedPaths `
+            -managedFiles $managedFiles `
+            -codeownersContent $codeownersContent `
+            -repoTree $repoTree `
+            -planOnly $planOnly `
+            -issueLog $issueLog
+        $issueLog = $syncResult.IssueLog
+    }
+}
 
 if($issueLog.Count -eq 0) {
     Write-Host "No issues found for $repoId"

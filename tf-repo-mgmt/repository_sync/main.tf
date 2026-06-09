@@ -44,7 +44,6 @@ module "github" {
   codeowners_default_teams                            = var.codeowners_default_teams
   codeowners_file_protection_teams                    = var.codeowners_file_protection_teams
   topics                                              = var.topics
-  managed_files                                       = var.managed_files
 }
 
 import {
