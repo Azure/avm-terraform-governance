@@ -48,6 +48,7 @@ $libDir = Join-Path $PSScriptRoot "lib"
 . (Join-Path $libDir "RepoTree.ps1")
 . (Join-Path $libDir "RepoFilesSync.ps1")
 . (Join-Path $libDir "BranchProtection.ps1")
+. (Join-Path $libDir "UnmanagedRulesets.ps1")
 . (Join-Path $libDir "CodeQlDefaultSetup.ps1")
 . (Join-Path $libDir "TeamsAndUsers.ps1")
 . (Join-Path $libDir "TerraformOperations.ps1")
@@ -125,6 +126,21 @@ if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
         -planOnly $planOnly `
         -issueLog $issueLog
     $issueLog = $branchProtectionResult.IssueLog
+}
+
+# Remove any repository-level rulesets that were not created by our
+# Terraform automation. modules/github/github.rulesets.tf owns the three
+# rulesets every AVM repo must have; anything else at the repo scope was
+# added out-of-band and silently shadows / weakens those policies.
+# Org-level rulesets are NOT enumerated (includes_parents=false) and are
+# additionally filtered out by source_type, so the org-wide governance
+# ruleset is never at risk.
+if(!$repositoryCreationModeEnabled) {
+    $unmanagedRulesetsResult = Remove-UnmanagedRulesets `
+        -orgAndRepoName $orgAndRepoName `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $unmanagedRulesetsResult.IssueLog
 }
 
 # Disable GitHub's CodeQL "default setup" so the only CodeQL workflow on
