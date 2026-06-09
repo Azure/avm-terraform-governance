@@ -60,13 +60,17 @@ function Remove-UnmanagedRulesets {
 
     # `includes_parents=false` restricts the response to rulesets defined
     # ON the repository itself, so org/enterprise rulesets are never even
-    # enumerated here. `--paginate` covers the unlikely case of >30
-    # repo-level rulesets without us having to walk pages manually.
+    # enumerated here. `per_page=100` is the GitHub maximum and is far
+    # more than realistic AVM repos will ever have (they ship with 3),
+    # so a single, non-paginated call is sufficient. We deliberately do
+    # NOT use `gh api --paginate` because it concatenates per-page JSON
+    # arrays back-to-back (e.g. `[..][..]`) which `ConvertFrom-Json`
+    # cannot parse, and any client-side merge of that shape is fragile.
     $listEndpoint = "repos/$orgAndRepoName/rulesets?includes_parents=false&per_page=100"
 
     $stderrFile = [System.IO.Path]::GetTempFileName()
     try {
-        $listOutput = gh api --paginate $listEndpoint 2>$stderrFile
+        $listOutput = gh api $listEndpoint 2>$stderrFile
         $exit = $LASTEXITCODE
         $stderr = ""
         if (Test-Path $stderrFile) { $stderr = (Get-Content -Path $stderrFile -Raw) }
@@ -78,19 +82,12 @@ function Remove-UnmanagedRulesets {
         $rulesets = @()
         if (-not [string]::IsNullOrWhiteSpace($listOutput)) {
             try {
-                # `gh api --paginate` concatenates JSON arrays for each page
-                # by emitting them back-to-back; `ConvertFrom-Json` on the
-                # whole blob does NOT handle that. The simplest robust
-                # parse is to wrap each top-level JSON array in a single
-                # outer array via a regex on the joining `][`, then merge.
+                # `gh api` (no --paginate) returns a single JSON array.
+                # `@(...)` coerces a 1-element result back to an array
+                # because `ConvertFrom-Json` unwraps single-element arrays
+                # to a scalar PSCustomObject by default.
                 $joined = ($listOutput -join "`n").Trim()
-                if ($joined.StartsWith("[")) {
-                    $wrapped = "[" + ($joined -replace "\]\s*\[", ",") + "]"
-                    # `$wrapped` is now a single JSON array of objects.
-                    # ConvertFrom-Json returns a single object for a 1-elem
-                    # array, so coerce to array with `@(...)`.
-                    $rulesets = @($wrapped | ConvertFrom-Json)
-                }
+                $rulesets = @($joined | ConvertFrom-Json)
             } catch {
                 throw "Failed to parse rulesets response for $orgAndRepoName : $_"
             }
@@ -163,7 +160,7 @@ function Remove-UnmanagedRulesets {
             -orgAndRepoName $orgAndRepoName `
             -type "unmanaged-rulesets-cleanup-failed" `
             -message "Failed to check or remove unmanaged repository ruleset(s) on $orgAndRepoName." `
-            -data $null `
+            -data "$_" `
             -issueLog $result.IssueLog
     } finally {
         Remove-Item -Path $stderrFile -Force -ErrorAction SilentlyContinue
