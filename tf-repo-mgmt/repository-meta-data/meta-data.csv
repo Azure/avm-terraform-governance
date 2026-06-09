@@ -185,6 +185,7 @@ avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Dat
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
 avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
 avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,,false
+avm-res-purview-account,Microsoft.Purview,Purview,Terraform Azure Verified Resource Module for Purview Account,,SriHarshaTripuramallu,Tripuramallu Sri Harsha,,,false
 avm-res-recoveryservices-vault,Microsoft.RecoveryServices,vaults,Recovery Services Vault,,elsalvos,Cesar Abrego,,,false
 avm-res-redhatopenshift-openshiftcluster,Microsoft.RedHatOpenShift,openShiftClusters,OpenShift Cluster,,ljtill,Lyon Till,,,false
 avm-res-relay-namespace,Microsoft.Relay,namespaces,Relay Namespace,,sujaypillai,Sujay Pillai,,,false
