@@ -1,6 +1,5 @@
 ARG GOLANG_IMAGE_TAG=1.24
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/oss/go/microsoft/golang:${GOLANG_IMAGE_TAG} AS builder
-ARG AVMFIX_VERSION=v0.6.0
 ARG CONFTEST_VERSION=0.62.0
 ARG GREPT_VERSION=60c71b2d8554c7ec562168a1ffd46a695a73322d
 ARG HCLEDIT_VERSION=0.2.17
@@ -43,12 +42,6 @@ RUN mkdir /src && \
   cd hclgrep && \
   git checkout main && \
   go build ${GOBUILDARGS} -o /go/bin/hclgrep . && \
-  cd /src && \
-  echo "Build avmfix" && \
-  git clone https://github.com/lonegunmanb/avmfix && \
-  cd avmfix && \
-  git checkout ${AVMFIX_VERSION} && \
-  go build ${GOBUILDARGS} -o /go/bin/avmfix . && \
   cd /src && \
   echo "Build grept" && \
   git clone https://github.com/Azure/grept && \

@@ -4,14 +4,12 @@
 # lists per resource/data type, then drives `reorder_attributes.body_attributes` so every body is
 # emitted as `required (alphabetical) → optional (alphabetical) → anything-else`.
 #
-# This mirrors what avmfix used to do via its embedded `terraform init -backend=false` and
-# provider schema fetch. mapotf v0.1.3 also runs `terraform init` + `terraform providers schema`
-# under the hood, so this introduces the same hidden cost avmfix did — no net change.
+# Note: mapotf runs `terraform init` + `terraform providers schema` under the hood to populate
+# `data "provider_schema"`, so this transform implies a one-time provider download per run.
 #
-# azapi special handling: avmfix's `azapiResourceSchemaPostProcessor` promotes certain
-# attributes that are technically optional in the provider schema but are far more important
-# than `body` and friends (`name`, `parent_id`, `location`, ...). Replicated here by manually
-# splicing those names into the required-list slot.
+# azapi special handling: a handful of attributes are technically optional in the provider schema
+# but are far more important than `body` and friends (`name`, `parent_id`, `location`, ...). They
+# are promoted into the required-list slot here so they appear at the top of the body.
 #
 # Naming: all locals/data identifiers are namespaced with `attrs_` to avoid colliding with the
 # `meta_` prefix used in order_resource_meta.mptf.hcl. mapotf identifiers share a global
@@ -45,7 +43,6 @@ data "data"     "for_attrs" {}
 locals {
   # Promoted azapi attributes — technically optional in the schema, but treated as required-tier
   # for ordering. They describe WHAT the resource is, not HOW it behaves.
-  # See lonegunmanb/avmfix:pkg/schema.go::azapiResourceSchemaPostProcessor.
   attrs_azapi_promoted = ["action", "location", "method", "name", "parent_id", "query_parameters", "resource_id"]
 
   # ---- Resource address → type maps, split by provider source ----

@@ -1,6 +1,6 @@
-# avmfix moves blocks out of variables.tf / outputs.tf if they aren't of the canonical type.
-# Mirror that behaviour by addressing every non-canonical block whose source file is variables.tf
-# (or vice versa for outputs.tf) and moving it into main.tf.
+# Move stray blocks out of variables.tf / outputs.tf so each file contains only its canonical
+# block kind. Any non-canonical block whose source file is variables.tf (or vice versa for
+# outputs.tf) is relocated to main.tf.
 #
 # IMPORTANT: variable / output blocks are excluded from BOTH directions. They are relocated to
 # their canonical file by sort_blocks_in_file in sort_variables.mptf.hcl / sort_outputs.mptf.hcl
