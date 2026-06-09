@@ -40,6 +40,11 @@ if($moduleDisplayName -eq "") {
   return
 }
 
+if($moduleDisplayName.Length -ge 250) {
+  Write-Error "Module display name must be under 250 characters (was $($moduleDisplayName.Length)). Keep it short, like 'Azure Image Builder' or 'BCDR VM Replication'." -Category InvalidArgument
+  return
+}
+
 if($moduleName.StartsWith("avm-res")) {
   if($resourceProviderNamespace -eq "") {
     Write-Error "Resource provider namespace must be provided for resource modules." -Category InvalidArgument
