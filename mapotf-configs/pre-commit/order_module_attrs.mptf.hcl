@@ -8,6 +8,10 @@
 #          `data "module_source"` which loads the target module with
 #          `terraform-config-inspect`. Local sources (`./`, `../`, absolute paths)
 #          and registry/git/http sources are both supported by mapotf >= v0.1.4.
+#          Each group is wrapped in `sort()` to match avmfix's `SortByName()`
+#          (lonegunmanb/avmfix pkg/module_block.go) — mapotf v0.1.4 returns
+#          `required_variables` / `optional_variables` in source-declaration
+#          order, not alphabetical.
 #   foot : depends_on
 #
 # Modules whose `source` cannot be inspected (e.g. computed from a variable) are
@@ -31,7 +35,7 @@ transform "reorder_attributes" "module_full" {
   for_each                 = try(data.module_source.for_order, {})
   target_block_address     = "module.${each.key}"
   head_attributes          = ["source", "version", "providers", "count", "for_each"]
-  body_attributes          = concat(each.value.required_variables, each.value.optional_variables)
+  body_attributes          = concat(sort(each.value.required_variables), sort(each.value.optional_variables))
   foot_attributes          = ["depends_on"]
   sort_body_alphabetically = false
 }
