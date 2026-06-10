@@ -19,14 +19,14 @@ transform "reorder_attributes" "var_attrs" {
 
 # Drop redundant nullable = true (the language default).
 transform "remove_block_element" "drop_nullable_true" {
-  for_each             = { for n, v in local.vars : n => v if try(v.nullable, "") == "true" }
+  for_each             = { for n, v in local.vars : n => v if try(v.nullable, null) == true }
   target_block_address = "variable.${each.key}"
   paths                = ["nullable"]
 }
 
 # Drop redundant sensitive = false (the language default).
 transform "remove_block_element" "drop_sensitive_false" {
-  for_each             = { for n, v in local.vars : n => v if try(v.sensitive, "") == "false" }
+  for_each             = { for n, v in local.vars : n => v if try(v.sensitive, null) == false }
   target_block_address = "variable.${each.key}"
   paths                = ["sensitive"]
 }

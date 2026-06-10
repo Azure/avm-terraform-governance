@@ -16,7 +16,7 @@ transform "reorder_attributes" "output_attrs" {
 }
 
 transform "remove_block_element" "drop_output_sensitive_false" {
-  for_each             = { for n, v in local.outs : n => v if try(v.sensitive, "") == "false" }
+  for_each             = { for n, v in local.outs : n => v if try(v.sensitive, null) == false }
   target_block_address = "output.${each.key}"
   paths                = ["sensitive"]
 }

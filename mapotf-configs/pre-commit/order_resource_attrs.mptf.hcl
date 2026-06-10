@@ -26,9 +26,7 @@ data "provider_schema" "azurerm" {
 }
 
 data "provider_schema" "azapi" {
-  # Lowercase namespace required: mapotf v0.1.3 looks up the schema by literal `registry.terraform.io/<provider_source>`,
-  # but Terraform CLI normalises namespaces to lowercase. Filed upstream as the case-sensitivity quirk.
-  provider_source  = "azure/azapi"
+  provider_source  = "Azure/azapi"
   provider_version = "~> 2.4"
 }
 
