@@ -115,3 +115,35 @@ variable "copilot_agent_firewall_allow_list" {
   type        = list(string)
   description = "List of domains to allow for GitHub Copilot Agent firewall rules."
 }
+
+variable "codeowners_default_teams" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub team slugs (relative to `github_repository_owner`) that should
+be required reviewers for all files in the repository via the CODEOWNERS file.
+
+Leave empty to omit the default `*` rule from the CODEOWNERS file. This means
+that PRs do not require approval from any specific team, only the CODEOWNERS
+file itself remains protected (see `codeowners_file_protection_teams`).
+DESCRIPTION
+  default     = []
+}
+
+variable "codeowners_file_protection_teams" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub team slugs (relative to `github_repository_owner`) that should
+be required reviewers for changes to the `.github/CODEOWNERS` file itself.
+DESCRIPTION
+  default     = []
+}
+
+variable "topics" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub repository topics to apply to the repository. The list is set
+authoritatively, so any topics not in this list will be removed from the
+repository.
+DESCRIPTION
+  default     = []
+}

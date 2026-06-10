@@ -25,7 +25,7 @@ avm-ptn-azure-ipam,,,IPAM,IP Address Management,pagyP,Paul Paginton,,,false
 avm-ptn-azure-local-migrate,,,Azure Local Azure Migrate Project,saifaldinali,Saif Al-Din Ali,seswar,SathishKumar Eswaran,,false
 avm-ptn-azureimagebuilder,,,Azure Image Builder,,ethanjenkins1,Ethan Jenkins MSFT,,,false
 avm-ptn-azuremonitorwindowsagent,,,Azure Monitor Windows Agent,,xhy8759,Hangyu Xu,,,false
-avm-ptn-bcdr-vm-replication,,,Azure Site Recovery VM Replication,,FreddyAyala,Freddy Ayala,,,false
+avm-ptn-bcdr-vm-replication,,,BCDR VM Replication,,ns-github-design,Nasreen Sarah,,,false
 avm-ptn-cicd-agents-and-runners,,,CI CD Agents and Runners,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-cicd-bootstrap,,,CI CD bootstrap,,luke-taylor,Luke Taylor,,,false
 avm-ptn-cloudshell-vnet,,,Cloud Shell with vNET Integration,"CloudShell VNet, Cloud Shell VNET, Cloud Shell in Virtual Network",travishankins,Travis Hankins,,,false
@@ -71,7 +71,7 @@ avm-res-azurestackhci-virtualmachineinstance,Microsoft.AzureStackHCI,virtualMach
 avm-res-batch-batchaccount,Microsoft.Batch,batchAccounts,Batch Account,,ethanjenkins1,Ethan Jenkins,,,false
 avm-res-botservice-botservice,Microsoft.BotService,botServices,Bot Service,,salujamanish,Manish Saluja,,,false
 avm-res-cache-redis,Microsoft.Cache,Redis,Redis Cache,,jchancellor-ms,Jon Chancellor,,,false
-avm-res-cache-redis-enterprise,Microsoft.Cache,redisEnterprise,Redis Cached Enterprise,,Ankur1106,Ankur Sharma (HK),,,false
+avm-res-cache-redisenterprise,Microsoft.Cache,redisEnterprise,Redis Cached Enterprise,,Ankur1106,Ankur Sharma (HK),,,false
 avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Venkataramanan,didayal-msft,Divyadeep Dayal,false
 avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,,false
 avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,,false
@@ -185,6 +185,7 @@ avm-res-oracledatabase-autonomous,Oracle.Database,autonomousDatabases,Oracle Dat
 avm-res-oracledatabase-cloudexadatainfrastructure,Oracle.Database,cloudExadataInfrastructures,Oracle Exadata Infrastructure,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
 avm-res-oracledatabase-cloudvmcluster,Oracle.Database,cloudvmclusters,Oracle VM cluster,,sihbher,Gerardo Reyes,terrymandin,Terry Mandin,false
 avm-res-portal-dashboard,Microsoft.Portal,dashboards,Azure Portal Dashboard,,VeronicaSea,Veronica Xu,,,false
+avm-res-purview-account,Microsoft.Purview,Purview,Terraform Azure Verified Resource Module for Purview Account,,SriHarshaTripuramallu,Tripuramallu Sri Harsha,,,false
 avm-res-recoveryservices-vault,Microsoft.RecoveryServices,vaults,Recovery Services Vault,,elsalvos,Cesar Abrego,,,false
 avm-res-redhatopenshift-openshiftcluster,Microsoft.RedHatOpenShift,openShiftClusters,OpenShift Cluster,,ljtill,Lyon Till,,,false
 avm-res-relay-namespace,Microsoft.Relay,namespaces,Relay Namespace,,sujaypillai,Sujay Pillai,,,false

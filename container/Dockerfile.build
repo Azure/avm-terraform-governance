@@ -1,7 +1,6 @@
 ARG GOLANG_IMAGE_TAG=1.24
 FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/oss/go/microsoft/golang:${GOLANG_IMAGE_TAG} AS builder
 ARG CONFTEST_VERSION=0.62.0
-ARG GREPT_VERSION=60c71b2d8554c7ec562168a1ffd46a695a73322d
 ARG HCLEDIT_VERSION=0.2.17
 ARG HCLMERGE_VERSION=2dff14bd831a6f696d6572f03a5a61a11e4e3d66
 ARG MAPOTF_VERSION=1a50a9033189df84e72f32c94fe88ab4ff70a0a9
@@ -42,12 +41,6 @@ RUN mkdir /src && \
   cd hclgrep && \
   git checkout main && \
   go build ${GOBUILDARGS} -o /go/bin/hclgrep . && \
-  cd /src && \
-  echo "Build grept" && \
-  git clone https://github.com/Azure/grept && \
-  cd grept && \
-  git checkout ${GREPT_VERSION} && \
-  go build ${GOBUILDARGS} -o /go/bin/grept . && \
   cd /src && \
   echo "Build hclmerge" && \
   git clone https://github.com/lonegunmanb/hclmerge && \

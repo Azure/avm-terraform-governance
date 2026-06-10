@@ -1,7 +1,53 @@
 {
+  "codeOwners": {
+    "fileProtectionTeams": [
+      "azure-verified-modules-engineering-owners"
+    ]
+  },
+  "topics": {
+    "default": [
+      "azure-verified-modules",
+      "avm"
+    ]
+  },
   "repositoryGroups": [
     {
+      "name": "azure-verified-modules-tier-1",
+      "repositories": [
+        "avm-ptn-example-repo"
+      ],
+      "codeOwnersTeams": [
+        "azure-verified-modules-engineering-owners"
+      ],
+      "topics": [
+        "avm-tier-1"
+      ]
+    },
+    {
+      "name": "azure-verified-modules-tier-2",
+      "repositories": [
+        "avm-res-devopsinfrastructure-pool"
+      ],
+      "topics": [
+        "avm-tier-2"
+      ]
+    },
+    {
+      "name": "azure-verified-modules-tier-3",
+      "repositories": [
+        "avm-ptn-monitoring-amba-alz"
+      ],
+      "topics": [
+        "avm-tier-3"
+      ]
+    },
+    {
       "name": "azure-landing-zones",
+      "managedFilesAdditional": "alz",
+      "excludedManagedFiles": [
+        ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
+        ".github/ISSUE_TEMPLATE/avm_question_feedback.yml"
+      ],
       "repositories": [
         "avm-ptn-alz",
         "avm-ptn-alz-management",
@@ -10,48 +56,16 @@
         "avm-ptn-alz-sub-vending",
         "avm-ptn-alz-application-landing-zone-cicd-bootstrap-github",
         "avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops"
-      ],
-      "protected": true
+      ]
     },
     {
       "name": "azure-migrate",
       "repositories": [
         "avm-ptn-azure-local-migrate"
-      ],
-      "protected": true
+      ]
     }
   ],
   "teamMappings": [
-    {
-      "name": "avm-core-team-technical-terraform",
-      "description": "Core team for Azure Verified Modules Terraform Governance",
-      "repositoryGroups": [
-        "all"
-      ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": true
-    },
-    {
-      "name": "avm-module-owners-terraform",
-      "description": "Azure Verified Module Owners.",
-      "repositoryGroups": [
-        "all"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
-    },
-    {
-      "name": "avm-module-contributors-terraform",
-      "description": "Azure Verified Module Contributors.",
-      "repositoryGroups": [
-        "all"
-      ],
-      "repositoryPermission": "push",
-      "environmentApproval": false,
-      "membersAreTeamMaintainers": false
-    },
     {
       "name": "azure-landing-zone-contributors",
       "description": "Contributors of Azure Landing Zone modules.",
@@ -59,8 +73,7 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "push",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": true
     },
     {
       "name": "azure-landing-zone-readers",
@@ -69,8 +82,7 @@
         "azure-landing-zones"
       ],
       "repositoryPermission": "triage",
-      "environmentApproval": false,
-      "membersAreTeamMaintainers": false
+      "environmentApproval": false
     },
     {
       "name": "avm-owners-azure-migrate",
@@ -78,9 +90,35 @@
       "repositoryGroups": [
         "azure-migrate"
       ],
-      "repositoryPermission": "maintain",
-      "environmentApproval": true,
-      "membersAreTeamMaintainers": false
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-module-contributors",
+      "description": "Azure Verified Modules Module Contributors.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": true
+    },
+    {
+      "name": "azure-verified-modules-module-readers",
+      "description": "Azure Verified Modules Module Readers.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "triage",
+      "environmentApproval": false
+    },
+    {
+      "name": "azure-verified-modules-engineering-owners",
+      "description": "AVM engineering owners. Required reviewers for CODEOWNERS changes on all repositories and for all changes on tier 1 modules.",
+      "repositoryGroups": [
+        "all"
+      ],
+      "repositoryPermission": "push",
+      "environmentApproval": false
     }
   ]
 }

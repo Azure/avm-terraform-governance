@@ -18,6 +18,8 @@ param(
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
+    [string]$deprecatedFilesConfigFilePath = "./repository-config/deprecated-files.json",
+    [string]$managedFilesBaseDir = "../managed-files",
     [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
     [string[]]$resourceTypesThatCannotBeDestroyed = @(
@@ -35,202 +37,21 @@ param(
 
 Write-Host "Running repo sync script"
 
-function Add-IssueToLog {
-    param(
-        [string]$orgAndRepoName,
-        [string]$type,
-        [string]$message,
-        [object]$data,
-        [array]$issueLog,
-        [ValidateSet("warning", "error")]
-        [string]$severity = "error",
-        [string]$issueLogFile="issue.log"
-    )
-
-    $issueLogItem = @{
-        orgAndRepoName = $orgAndRepoName
-        type = $type
-        severity = $severity
-        message = $message
-        data = $data
-    }
-
-    $issueLog += $issueLogItem
-
-    $issueLogItemJson = ConvertTo-Json $issueLogItem -Depth 100
-    Add-Content -Path $issueLogFile -Value $issueLogItemJson
-
-    return $issueLog
-}
-
-function Invoke-TerraformWithRetry {
-  param(
-    [hashtable[]]$commands,
-    [string]$workingDirectory,
-    [string]$outputLog = "output.log",
-    [string]$errorLog = "error.log",
-    [int]$maxRetries = 50,
-    [int]$retryDelayIncremental = 10,
-    [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers", "Error: Failed to install provider", "Error: Failed to query available provider packages", "403 API rate limit"),
-    [switch]$printOutput,
-    [switch]$printOutputOnError,
-    [switch]$returnOutputParsedFromJson
-  )
-
-  foreach($command in $commands) {
-    $command.Arguments = @("-chdir=$workingDirectory") + $command.Arguments
-  }
-
-  return Invoke-CommandWithRetry `
-    -parentCommand "terraform" `
-    -commands $commands `
-    -outputLog $outputLog `
-    -errorLog $errorLog `
-    -maxRetries $maxRetries `
-    -retryDelayIncremental $retryDelayIncremental `
-    -retryOn $retryOn `
-    -printOutput:$printOutput.IsPresent `
-    -printOutputOnError:$printOutputOnError.IsPresent `
-    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
-}
-
-function Invoke-GitHubCliWithRetry {
-  param(
-    [hashtable[]]$commands,
-    [string]$outputLog = "output.log",
-    [string]$errorLog = "error.log",
-    [int]$maxRetries = 50,
-    [int]$retryDelayIncremental = 10,
-    [string[]]$retryOn = @("API rate limit exceeded"),
-    [switch]$printOutput,
-    [switch]$printOutputOnError,
-    [switch]$returnOutputParsedFromJson
-  )
-
-  return Invoke-CommandWithRetry `
-    -parentCommand "gh" `
-    -commands $commands `
-    -outputLog $outputLog `
-    -errorLog $errorLog `
-    -maxRetries $maxRetries `
-    -retryDelayIncremental $retryDelayIncremental `
-    -retryOn $retryOn `
-    -printOutput:$printOutput.IsPresent `
-    -printOutputOnError:$printOutputOnError.IsPresent `
-    -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
-}
-
-function Invoke-CommandWithRetry {
-  param(
-    $parentCommand,
-    [hashtable[]]$commands,
-    [string]$outputLog = "output.log",
-    [string]$errorLog = "error.log",
-    [int]$maxRetries = 10,
-    [int]$retryDelayIncremental = 10,
-    [string[]]$retryOn = @("API rate limit exceeded"),
-    [switch]$printOutput,
-    [switch]$printOutputOnError,
-    [switch]$returnOutputParsedFromJson
-  )
-
-  $retryCount = 0
-  $shouldRetry = $true
-
-  $returnOutputs = @()
-
-  while ($shouldRetry -and $retryCount -le $maxRetries) {
-    $shouldRetry = $false
-
-    foreach ($command in $commands) {
-      $arguments = $command.Arguments
-
-      $localLogPath = $outputLog
-      if($command.OutputLog) {
-        $localLogPath = $command.OutputLog
-      }
-
-      Write-Host "Running $parentCommand with arguments: $($arguments -join ' ')"
-      $process = Start-Process `
-        -FilePath $parentCommand `
-        -ArgumentList $arguments `
-        -RedirectStandardOutput $localLogPath `
-        -RedirectStandardError $errorLog `
-        -PassThru `
-        -NoNewWindow `
-        -Wait
-
-      if ($process.ExitCode -ne 0) {
-        Write-Host "$parentCommand failed with exit code $($process.ExitCode)."
-
-        if($retryOn -contains "*") {
-          $shouldRetry = $true
-        } else {
-          $errorOutput = Get-Content -Path $errorLog
-          foreach($line in $errorOutput) {
-            foreach($retryError in $retryOn) {
-              if ($line -like "*$retryError*") {
-                Write-Host "Retrying $parentCommand due to error: $line"
-                $shouldRetry = $true
-              }
-            }
-          }
-        }
-
-        if ($shouldRetry) {
-          Write-Host "Retrying $parentCommand due to error:"
-          Get-Content -Path $errorLog | Write-Host
-          $retryCount++
-          break
-        } else {
-          Write-Host "$parentCommand failed with exit code $($process.ExitCode). Check the logs for details."
-          if($printOutputOnError) {
-            Write-Host "Output Log:"
-            Get-Content -Path $localLogPath | Write-Host
-          }
-          Write-Host "Error Log:"
-          Get-Content -Path $errorLog | Write-Host
-          $returnOutputs += @{
-            success = $false
-          }
-          return $returnOutputs
-        }
-      } else {
-        if($printOutput) {
-          Write-Host "Output Log:"
-          Get-Content -Path $localLogPath | Write-Host
-        }
-        if($returnOutputParsedFromJson) {
-          $outputContent = Get-Content -Path $localLogPath -Raw
-          $parsedOutput = $outputContent | ConvertFrom-Json
-          $returnOutputs += @{
-            success = $true
-            output = $parsedOutput
-          }
-        } else {
-            $returnOutputs += @{
-                success = $true
-            }
-        }
-      }
-    }
-    if ($shouldRetry) {
-        if ($retryCount -gt $maxRetries) {
-            Write-Host "Max retries reached. Exiting."
-            $returnOutputs = @( @{
-                success = $false
-            })
-            return $returnOutputs
-        }
-        Write-Host "Retrying $parentCommand commands (attempt $retryCount of $maxRetries)..."
-        $retryDelay = $retryDelayIncremental * $retryCount
-        Write-Host "Waiting for $retryDelay seconds before retrying..."
-        Start-Sleep -Seconds $retryDelay
-    }
-  }
-
-  return $returnOutputs
-}
+# Dot-source the cmdlet libs. `$PSScriptRoot` makes this resolution
+# independent of the caller's working directory (the workflow runs from
+# `tf-repo-mgmt/` but local debug runs can be from anywhere).
+$libDir = Join-Path $PSScriptRoot "lib"
+. (Join-Path $libDir "Logging.ps1")
+. (Join-Path $libDir "RetryHelpers.ps1")
+. (Join-Path $libDir "ManagedFiles.ps1")
+. (Join-Path $libDir "RepositoryConfig.ps1")
+. (Join-Path $libDir "RepoTree.ps1")
+. (Join-Path $libDir "RepoFilesSync.ps1")
+. (Join-Path $libDir "BranchProtection.ps1")
+. (Join-Path $libDir "UnmanagedRulesets.ps1")
+. (Join-Path $libDir "CodeQlDefaultSetup.ps1")
+. (Join-Path $libDir "TeamsAndUsers.ps1")
+. (Join-Path $libDir "TerraformOperations.ps1")
 
 $env:ARM_USE_AZUREAD = "true"
 
@@ -253,39 +74,27 @@ if(!$repositoryCreationModeEnabled){
 }
 
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
-$repositoryGroups = $repositoryConfig.repositoryGroups | Where-Object { $_.repositories -contains $repoId }
+$settings = Resolve-RepositorySettings -repositoryConfig $repositoryConfig -repoId $repoId
+$managedFiles = Build-ManagedFilesMap `
+    -baseDir $managedFilesBaseDir `
+    -overlay $settings.ManagedFilesAdditional `
+    -excluded $settings.ExcludedManagedFiles `
+    -repoId $repoId
 
-$isProtected = ($repositoryGroups | Where-Object { $_.protected -eq $true }).Length -gt 0
-$repositoryGroupNames = @($repositoryGroups | ForEach-Object { $_.name })
-$repositoryGroupNames += "all"
-
-$teams = @()
-
-foreach($repositoryGroupName in $repositoryGroupNames) {
-    $teamMappings = $repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
-    if($teamMappings.Count -gt 0) {
-        $teams += $teamMappings
-    }
+# Load deprecated-file paths once. Each path is matched against the target
+# repo's default-branch tree later; matching paths are removed before any
+# Terraform runs so that the import bootstrap and plan operate against the
+# already-cleaned repo.
+$deprecatedPaths = @()
+if(!$repositoryCreationModeEnabled -and (Test-Path $deprecatedFilesConfigFilePath)) {
+    $deprecatedPaths = @(Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json)
+    Write-Host "Loaded $($deprecatedPaths.Count) deprecated path(s) from $deprecatedFilesConfigFilePath."
 }
 
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
 
 if(!$skipCleanup) {
-    if(Test-Path "$terraformModulePath/.terraform") {
-        Remove-Item "$terraformModulePath/.terraform" -Recurse -Force
-    }
-
-    if(Test-Path "$terraformModulePath/terraform.tfvars.json") {
-        Remove-Item "$terraformModulePath/terraform.tfvars.json" -Force
-    }
-
-    if(Test-Path "$terraformModulePath/terraform.tfstate") {
-        Remove-Item "$terraformModulePath/terraform.tfstate" -Force
-    }
-
-    if(Test-Path "$terraformModulePath/.terraform.lock.hcl") {
-        Remove-Item "$terraformModulePath/.terraform.lock.hcl" -Force
-    }
+    Clear-TerraformWorkspace -terraformModulePath $terraformModulePath
 }
 
 $repoSplit = $repoUrl.Split("/")
@@ -297,191 +106,83 @@ Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
 Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
-$githubTeams = @{}
-
-foreach($team in $teams) {
-    $teamExists = $false
-    $teamName = $team.name
-
-    $existingTeam = Invoke-GitHubCliWithRetry `
-        -commands @(
-            @{
-                Arguments = @("api", "orgs/$orgName/teams/$($teamName)")
-                OutputLog = "team-exists.json"
-            }
-        ) `
-        -returnOutputParsedFromJson
-
-    if(!$existingTeam.success) {
-        Write-Warning "Failed to check if team exists: $($teamName)."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-check-failed" -message "Failed to check if team $teamName exists." -data $null -issueLog $issueLog
-        exit 1
-    }
-
-    $teamExists = $existingTeam.output.slug -and $existingTeam.output.slug -eq $teamName
-
-    if(!$teamExists) {
-        Write-Warning "Team does not exist: $($teamName)"
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-missing" -message "Team $teamName does not exist." -data $teamName -issueLog $issueLog
-    } else {
-        Write-Host "Team exists: $($teamName)"
-        $githubTeams[$teamName] = @{
-            slug        = $teamName
-            description = $teamDescription
-            repository_access_permission = $team.repositoryPermission
-            environment_approval = $team.environmentApproval
-            members_are_team_maintainers = $team.membersAreTeamMaintainers
-        }
-    }
+# Fetch the default-branch tree once per repo. The repo-file sync uses the
+# cached blob SHAs to detect which managed files need creating/updating and
+# which deprecated paths are actually present, all without making any
+# additional GitHub REST calls per file.
+$repoTree = $null
+$needRepoTree = (!$repositoryCreationModeEnabled) -and (($deprecatedPaths.Count -gt 0) -or ($managedFiles.Keys.Count -gt 0))
+if($needRepoTree) {
+    $repoTree = Get-RepositoryDefaultBranchTree -orgAndRepoName $orgAndRepoName
 }
+
+# Remove any legacy classic branch-protection rule from the target repo
+# before anything else - every AVM repo must be governed exclusively by
+# the rulesets defined in modules/github/github.rulesets.tf.
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+    $branchProtectionResult = Remove-LegacyBranchProtection `
+        -orgAndRepoName $orgAndRepoName `
+        -defaultBranch $repoTree.DefaultBranch `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $branchProtectionResult.IssueLog
+}
+
+# Remove any repository-level rulesets that were not created by our
+# Terraform automation. modules/github/github.rulesets.tf owns the three
+# rulesets every AVM repo must have; anything else at the repo scope was
+# added out-of-band and silently shadows / weakens those policies.
+# Org-level rulesets are NOT enumerated (includes_parents=false) and are
+# additionally filtered out by source_type, so the org-wide governance
+# ruleset is never at risk.
+if(!$repositoryCreationModeEnabled) {
+    $unmanagedRulesetsResult = Remove-UnmanagedRulesets `
+        -orgAndRepoName $orgAndRepoName `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $unmanagedRulesetsResult.IssueLog
+}
+
+# Disable GitHub's CodeQL "default setup" so the only CodeQL workflow on
+# the repo is the advanced-setup `.github/workflows/codeql.yml` we ship
+# via managed files. Default setup spawns a dynamic
+# `dynamic/github-code-scanning/codeql` workflow that (a) duplicates the
+# `/language:actions` SARIF category our managed workflow already covers
+# and (b) cannot satisfy the customized OIDC subject template because its
+# dynamic jobs do not attach to a deployment environment, so it fails on
+# every push. The PATCH is idempotent (no-op if already off).
+if(!$repositoryCreationModeEnabled) {
+    $codeQlDefaultSetupResult = Disable-CodeQlDefaultSetup `
+        -orgAndRepoName $orgAndRepoName `
+        -planOnly $planOnly `
+        -issueLog $issueLog
+    $issueLog = $codeQlDefaultSetupResult.IssueLog
+}
+
+$resolveTeamsResult = Resolve-GitHubTeams `
+    -orgName $orgName `
+    -orgAndRepoName $orgAndRepoName `
+    -teams $settings.Teams `
+    -issueLog $issueLog
+$githubTeams = $resolveTeamsResult.GithubTeams
+$issueLog = $resolveTeamsResult.IssueLog
 
 if(!$repositoryCreationModeEnabled) {
     Write-Host "Checking repository: $orgAndRepoName for existing teams and users."
+    $issueLog = Remove-DirectCollaborators `
+        -orgAndRepoName $orgAndRepoName `
+        -moduleMetaData $moduleMetaData `
+        -planOnly $planOnly `
+        -forceUserRemoval $forceUserRemoval.IsPresent `
+        -issueLog $issueLog
 
-    $allowedUsers = @()
-
-    if($moduleMetaData) {
-        $allowedUsers = @(
-            $moduleMetaData.primaryOwnerGitHubHandle,
-            $moduleMetaData.secondaryOwnerGitHubHandle
-        )
-    }
-
-    $teamsWithMaintainers = $githubTeams.GetEnumerator() | Where-Object { $_.Value.members_are_team_maintainers -eq $true }
-
-    foreach($teamWithMaintainers in $teamsWithMaintainers) {
-        Write-Host "Checking team: $($teamWithMaintainers.Value.slug) for maintainers."
-        $teamMembers = Invoke-GitHubCliWithRetry `
-            -commands @(
-                @{
-                    Arguments = @("api", "orgs/$orgName/teams/$($teamWithMaintainers.Value.slug)/members")
-                    OutputLog = "team-members.json"
-                }
-            ) `
-            -returnOutputParsedFromJson
-
-        if(!$teamMembers.success) {
-            Write-Warning "Failed to get team members for: $($teamWithMaintainers.Value.slug). Skipping."
-            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-members-fetch-failed" -message "Failed to fetch team members for $($teamWithMaintainers.Value.slug)." -data $null -issueLog $issueLog
-            exit 1
-        }
-
-        foreach($member in $teamMembers.output) {
-            $allowedUsers += $member.login
-        }
-    }
-
-    Write-Host "Checking repository: $orgAndRepoName for existing users."
-    $repoUsers = Invoke-GitHubCliWithRetry `
-        -commands @(
-            @{
-                Arguments = @("api", "repos/$orgAndRepoName/collaborators?affiliation=direct")
-                OutputLog = "repo-users.json"
-            }
-        ) `
-        -returnOutputParsedFromJson
-
-    if(!$repoUsers.success) {
-        Write-Warning "Failed to get repository users for: $orgAndRepoName. Skipping."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "repo-users-fetch-failed" -message "Failed to fetch repository users for $orgAndRepoName." -data $null -issueLog $issueLog
-        exit 1
-    }
-
-    Write-Host "Found $($repoUsers.output.Count) users in repository: $orgAndRepoName"
-    foreach($user in $repoUsers.output) {
-        $userLogin = $user.login
-
-        if($allowedUsers -contains $userLogin -and $user.role_name -eq "admin") {
-            Write-Warning "User has direct access to $orgAndRepoName, but is an owner or AVM core team member and has admin access. They are likely JIT elevated, so skipping the error: $($userLogin)"
-            if($forceUserRemoval) {
-                Write-Warning "Force user removal is enabled, removing access now: $($userLogin) - role: $($user.role_name)"
-                if($planOnly) {
-                    Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
-                } else {
-                    $result = Invoke-GitHubCliWithRetry `
-                        -commands @(
-                            @{
-                                Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
-                                OutputLog = "remove-user.json"
-                            }
-                        ) `
-                        -printOutputOnError
-
-                    if(!$result.success) {
-                        Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
-                        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
-                        exit 1
-                    }
-                }
-            }
-        } else {
-            Write-Warning "User has direct access to $orgAndRepoName, but AVM repos cannot have direct user access outside of JIT, removing access now: $($userLogin) - role: $($user.role_name)"
-            if($planOnly) {
-                Write-Host "Would run command: gh api 'repos/$orgAndRepoName/collaborators/$($userLogin)' -X DELETE"
-            } else {
-                $result = Invoke-GitHubCliWithRetry `
-                    -commands @(
-                        @{
-                            Arguments = @("api", "repos/$orgAndRepoName/collaborators/$($userLogin)", "-X", "DELETE")
-                            OutputLog = "remove-user.json"
-                        }
-                    ) `
-                    -printOutputOnError
-
-                if(!$result.success) {
-                    Write-Warning "Failed to remove user: $($userLogin) from repository: $orgAndRepoName. Exiting."
-                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "user-removal-failed" -message "Failed to remove user $($userLogin) from repository $orgAndRepoName." -data $null -issueLog $issueLog
-                    exit 1
-                }
-            }
-        }
-    }
-
-    $repoTeams = Invoke-GitHubCliWithRetry `
-        -commands @(
-            @{
-                Arguments = @("api", "repos/$orgAndRepoName/teams", "--paginate")
-                OutputLog = "repo-teams.json"
-            }
-        ) `
-        -returnOutputParsedFromJson
-
-    if(!$repoTeams.success) {
-        Write-Warning "Failed to get repository teams for: $orgAndRepoName. Skipping."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "repo-teams-fetch-failed" -message "Failed to fetch repository teams for $orgAndRepoName." -data $null -issueLog $issueLog
-        exit 1
-    }
-
-    Write-Host "Found $($repoTeams.output.Count) teams in repository: $orgAndRepoName"
-    foreach($team in $repoTeams.output) {
-        $teamName = $team.name
-        if($extraTeamsToIgnore -contains $teamName) {
-            Write-Host "Skipping team: $($teamName) as it is in the ignore list."
-            continue
-        }
-        if(!$githubTeams.ContainsKey($teamName)) {
-            Write-Warning "Team exists in repository but not in config, will be removed: $($teamName)"
-            $teamSlug = $team.slug
-            if($planOnly) {
-                Write-Host "Would run command: gh api 'orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName' -X DELETE"
-            } else {
-                $result = Invoke-GitHubCliWithRetry `
-                    -commands @(
-                        @{
-                            Arguments = @("api", "orgs/$orgName/teams/$($teamSlug)/repos/$orgAndRepoName", "-X", "DELETE")
-                            OutputLog = "remove-team.json"
-                        }
-                    ) `
-                    -printOutputOnError
-
-                if(!$result.success) {
-                    Write-Warning "Failed to remove team: $($teamName) from repository: $orgAndRepoName. Exiting."
-                    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "team-removal-failed" -message "Failed to remove team $($teamName) from repository $orgAndRepoName." -data $null -issueLog $issueLog
-                    exit 1
-                }
-            }
-        }
-    }
+    $issueLog = Remove-UnmanagedRepositoryTeams `
+        -orgName $orgName `
+        -orgAndRepoName $orgAndRepoName `
+        -githubTeams $githubTeams `
+        -extraTeamsToIgnore $extraTeamsToIgnore `
+        -planOnly $planOnly `
+        -issueLog $issueLog
 }
 
 Write-Host "Using test subscription IDs:"
@@ -496,145 +197,61 @@ $terraformVariables = @{
     management_group_id = $managementGroupId
     test_subscription_ids = $testSubscriptionIds
     identity_resource_group_name = $identityResourceGroupName
-    is_protected_repo = $isProtected
+    is_protected_repo = $true
     github_teams = $githubTeams
+    codeowners_default_teams = $settings.CodeOwnersDefaultTeams
+    codeowners_file_protection_teams = $settings.CodeOwnersFileProtectionTeams
+    topics = $settings.Topics
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
 
-if($repositoryCreationModeEnabled) {
-    Set-Content -Path "$terraformModulePath/backend_override.tf" -Value @"
-terraform {
-    backend "local" {}
-}
-"@
+$preTerraformIssueCount = $issueLog.Count
 
-    $result = Invoke-TerraformWithRetry `
-    -commands @(
-      @{
-        Arguments = @( "init")
-        OutputLog = "init.log"
-      }
-    ) `
-    -workingDirectory $terraformModulePath `
-    -printOutput
+$issueLog = Invoke-TerraformInit `
+    -terraformModulePath $terraformModulePath `
+    -repositoryCreationModeEnabled $repositoryCreationModeEnabled.IsPresent `
+    -repoId $repoId `
+    -orgAndRepoName $orgAndRepoName `
+    -stateResourceGroupName $stateResourceGroupName `
+    -stateStorageAccountName $stateStorageAccountName `
+    -stateContainerName $stateContainerName `
+    -issueLog $issueLog
 
-    if(!$result.success) {
-        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
-        exit 1
-    }
+$issueLog = Invoke-TerraformPlanAndApply `
+    -terraformModulePath $terraformModulePath `
+    -repoId $repoId `
+    -orgAndRepoName $orgAndRepoName `
+    -planOnly $planOnly `
+    -resourceTypesThatCannotBeDestroyed $resourceTypesThatCannotBeDestroyed `
+    -issueLog $issueLog
 
-} else {
-    $result = Invoke-TerraformWithRetry `
-    -commands @(
-      @{
-        Arguments = @(
-            "init",
-            "-backend-config=`"resource_group_name=$stateResourceGroupName`"",
-            "-backend-config=`"storage_account_name=$stateStorageAccountName`"",
-            "-backend-config=`"container_name=$stateContainerName`"",
-            "-backend-config=`"key=$($repoId).tfstate`""
-        )
-        OutputLog = "init.log"
-      }
-    ) `
-    -workingDirectory $terraformModulePath `
-    -printOutput
-
-    if(!$result.success) {
-        Write-Warning "Terraform init failed for $orgAndRepoName. Exiting."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "init-failed" -message "Terraform init failed for $orgAndRepoName." -data $null -issueLog $issueLog
-        exit 1
-    }
-}
-
-$result = Invoke-TerraformWithRetry `
--commands @(
-    @{
-        Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
-        OutputLog = "plan.log"
-    }
-) `
--workingDirectory $terraformModulePath `
--printOutput
-
-if(!$result.success) {
-    Write-Warning "Terraform plan failed for $orgAndRepoName. Exiting."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Terraform plan failed for $orgAndRepoName." -data $null -issueLog $issueLog
-    exit 1
-}
-
-$plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
-
-if(!$plan -or !$plan.resource_changes) {
-    Write-Warning "Failed to parse Terraform plan for $orgAndRepoName. Exiting."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-parse-failed" -message "Failed to parse Terraform plan for $orgAndRepoName." -data $null -issueLog $issueLog
-    exit 1
-}
-
-$hasDestroy = $false
-foreach($resource in $plan.resource_changes) {
-    if($resource.change.actions -contains "delete") {
-        if($resourceTypesThatCannotBeDestroyed -contains $resource.type) {
-            Write-Warning "Planning to destroy: $($resource.address). Resource type: $($resource.type) cannot be destroyed, so skipping the apply."
-            $hasDestroy = $true
-        } else {
-            Write-Host "Planning to destroy: $($resource.address). Resource type: $($resource.type) can be destroyed, so allowing the apply to continue."
-        }
-    }
-}
-
-if($hasDestroy) {
-    Write-Warning "Skipping: $orgAndRepoName as it has at least one destroy actions."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-includes-destroy" -message "Plan includes destroy for $orgAndRepoName." -data $plan -issueLog $issueLog
-}
-
-if(!$planOnly -and $plan.errored) {
-    Write-Warning "Skipping: Plan failed for $orgAndRepoName."
-    $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "plan-failed" -message "Plan failed for $orgAndRepoName." -data $plan -issueLog $issueLog
-}
-
-if(!$hasDestroy -and !$planOnly -and !$plan.errored) {
-
-    Write-Host "Applying plan for $orgAndRepoName"
-    $result = Invoke-TerraformWithRetry `
-        -commands @(
-            @{
-                Arguments = @("apply", "$($repoId).tfplan")
-                OutputLog = "apply.log"
-            }
-        ) `
-        -workingDirectory $terraformModulePath `
-        -printOutput `
-        -maxRetries 0
-
-    if(!$result.success) {
-        Write-Warning "Terraform apply first attempt failed for $orgAndRepoName. Entering plan apply retry loop..."
-        $result = Invoke-TerraformWithRetry `
-        -commands @(
-            @{
-                Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
-                OutputLog = "plan.log"
-            },
-            @{
-                Arguments = @("apply", "$($repoId).tfplan")
-                OutputLog = "apply.log"
-            }
-        ) `
-        -workingDirectory $terraformModulePath `
-        -printOutput
-    }
-
-    if(!$result.success) {
-        Write-Warning "Terraform apply failed for $orgAndRepoName. Exiting."
-        $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "apply-failed" -message "Terraform apply failed for $orgAndRepoName." -data $null -issueLog $issueLog
-        exit 1
+# Sync managed files via a single clone -> branch -> PR -> merge flow.
+# Runs AFTER terraform so that a broken terraform run does not produce a
+# merged commit on the target repo for nothing, and so that any teams,
+# rulesets, or bypass actors that terraform needs to create exist before
+# the bot pushes a CODEOWNERS file that references them. Skipped entirely
+# if terraform reported new issues for this repo.
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+    if($issueLog.Count -gt $preTerraformIssueCount) {
+        Write-Host "Skipping managed-file sync for $orgAndRepoName because terraform reported issues for this run." -ForegroundColor Yellow
     } else {
-        Write-Host "Terraform apply succeeded for $orgAndRepoName"
+        $codeownersContent = Get-RenderedCodeownersContent `
+            -ownerSlug $orgName `
+            -defaultTeams $settings.CodeOwnersDefaultTeams `
+            -fileProtectionTeams $settings.CodeOwnersFileProtectionTeams
+
+        $syncResult = Sync-RepoFiles `
+            -orgAndRepoName $orgAndRepoName `
+            -deprecatedPaths $deprecatedPaths `
+            -managedFiles $managedFiles `
+            -codeownersContent $codeownersContent `
+            -repoTree $repoTree `
+            -planOnly $planOnly `
+            -issueLog $issueLog
+        $issueLog = $syncResult.IssueLog
     }
 }
-
 
 if($issueLog.Count -eq 0) {
     Write-Host "No issues found for $repoId"
@@ -643,3 +260,4 @@ if($issueLog.Count -eq 0) {
     $issueLogJson = ConvertTo-Json $issueLog -Depth 100
     $issueLogJson | Out-File "$outputDirectory/issue.log.json"
 }
+

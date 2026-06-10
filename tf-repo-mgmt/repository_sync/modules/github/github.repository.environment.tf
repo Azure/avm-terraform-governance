@@ -26,8 +26,9 @@ resource "github_repository_environment" "approval" {
 }
 
 # This environment is used for jobs that do not require approval (or auth).
-# Due to the OIDC subject claim refs mandating that environment is included,
-# all jobs must be run in an environment whether they need authentication or not.
+# It is also referenced by `github.actions_oidc.tf` via the `context` claim
+# (which expands to `environment:<name>`) so that jobs running in this
+# environment still get an OIDC token under the customized subject template.
 resource "github_repository_environment" "no_approval" {
   environment = var.github_repository_no_approval_environment_name
   repository  = github_repository.this.name

@@ -104,7 +104,7 @@ variable "github_labels_source_path" {
 variable "is_protected_repo" {
   type        = bool
   description = "Whether the repository is protected and requires pull request approval."
-  default     = false
+  default     = true
 }
 
 variable "github_job_workflow_ref" {
@@ -133,4 +133,37 @@ variable "github_copilot_agent_firewall_allow_list" {
     "registry.opentofu.org",
     "registry.terraform.io",
   ]
+}
+
+variable "codeowners_default_teams" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub team slugs (relative to `github_repository_owner`) that should
+be required reviewers for all files in the repository via the CODEOWNERS file.
+Tier 1 modules should set this to the engineering owners team; other tiers
+should leave it empty.
+DESCRIPTION
+  default     = []
+}
+
+variable "codeowners_file_protection_teams" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub team slugs (relative to `github_repository_owner`) that should
+be required reviewers for changes to the `.github/CODEOWNERS` file itself.
+Defaults to the engineering owners team so the CODEOWNERS file is protected
+on every repository.
+DESCRIPTION
+  default     = ["azure-verified-modules-engineering-owners"]
+}
+
+variable "topics" {
+  type        = list(string)
+  description = <<DESCRIPTION
+List of GitHub repository topics to apply to the repository. The list is set
+authoritatively, so any topics not in this list will be removed from the
+repository. The caller is expected to merge the global default topics with
+any tier-specific topics before passing them in.
+DESCRIPTION
+  default     = []
 }

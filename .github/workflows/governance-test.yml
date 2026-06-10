@@ -10,7 +10,6 @@ on:
       - .github/workflows/managed-pr-check.yml
       - container/**
       - porch-configs/**
-      - grept-policies/**
       - managed-files/**
       - mapotf-configs/**
       - Makefile
@@ -51,7 +50,7 @@ jobs:
     environment: avm
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1.1.8
         id: readenv
@@ -60,7 +59,7 @@ jobs:
 
       - name: Create GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
@@ -68,7 +67,7 @@ jobs:
       # This step uses [docker/metadata-action](https://github.com/docker/metadata-action#about) to extract tags and labels that will be applied to the specified image. The `id` "meta" allows the output of this step to be referenced in a subsequent step. The `images` value provides the base name for the tags and labels.
       - name: Extract metadata (tags, labels)
         id: meta
-        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: |
             avm
@@ -76,7 +75,7 @@ jobs:
             type=raw,value=test
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
         with:
           version: latest
 
@@ -91,7 +90,7 @@ jobs:
       # It uses the `tags` and `labels` parameters to tag and label the image with the output from the "meta" step.
       - name: Build image
         id: push
-        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: ./container
           push: false
@@ -168,14 +167,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 1
           ref: ${{ github.head_ref }} # Checkout the branch of the PR, not the default sha
 
       - name: Create GitHub App Token
         id: app-token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
@@ -195,7 +194,6 @@ jobs:
         run: |
           REF=$(git rev-parse HEAD)
           echo "AVM_MAKEFILE_REF=${REF}" >> $GITHUB_ENV
-          echo "AVM_MANAGED_FILES_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
           echo "AVM_MPTF_URL=git::https://github.com/Azure/avm-terraform-governance.git//mapotf-configs/pre-commit?ref=${REF}" >> $GITHUB_ENV
           echo "AVM_PORCH_REF=${REF}" >> $GITHUB_ENV
           echo "AVM_TFLINT_CONFIG_URL=https://raw.githubusercontent.com/Azure/avm-terraform-governance/${REF}/tflint-configs" >> $GITHUB_ENV
