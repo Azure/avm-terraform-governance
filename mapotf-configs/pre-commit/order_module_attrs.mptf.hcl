@@ -1,6 +1,9 @@
 # Order every module call.
 #
-#   head : meta-arguments (for_each / count / source / version / providers)
+#   head : meta-arguments (source / version / providers / count / for_each)
+#          — order matches avmfix's `headMetaArgPriorities` (lonegunmanb/avmfix
+#          pkg/argument.go): tier "" (source, version, providers) first in
+#          authored order, then count (priority "1"), then for_each (priority "2").
 #   body : required inputs (alpha) → optional inputs (alpha) — discovered via
 #          `data "module_source"` which loads the target module with
 #          `terraform-config-inspect`. Local sources (`./`, `../`, absolute paths)
@@ -27,7 +30,7 @@ transform "reorder_attributes" "module_full" {
   # least once). `try(..., {})` makes the transform a no-op in that case.
   for_each                 = try(data.module_source.for_order, {})
   target_block_address     = "module.${each.key}"
-  head_attributes          = ["for_each", "count", "source", "version", "providers"]
+  head_attributes          = ["source", "version", "providers", "count", "for_each"]
   body_attributes          = concat(each.value.required_variables, each.value.optional_variables)
   foot_attributes          = ["depends_on"]
   sort_body_alphabetically = false

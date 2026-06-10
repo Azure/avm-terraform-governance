@@ -97,6 +97,19 @@ locals {
       ])
     )
   }
+
+  attrs_azapi_data_body_by_type = {
+    for t in keys(try(data.provider_schema.azapi.data_sources_required_attributes, {})) : t => concat(
+      sort(distinct(concat(
+        try(data.provider_schema.azapi.data_sources_required_attributes[t], []),
+        [for a in local.attrs_azapi_promoted : a if contains(try(data.provider_schema.azapi.data_sources_optional_attributes[t], []), a)]
+      ))),
+      sort([
+        for a in try(data.provider_schema.azapi.data_sources_optional_attributes[t], []) :
+        a if !contains(local.attrs_azapi_promoted, a)
+      ])
+    )
+  }
 }
 
 # ---- Resource body ordering ----
@@ -149,13 +162,10 @@ transform "reorder_attributes" "azurerm_data_body" {
 }
 
 transform "reorder_attributes" "azapi_data_body" {
-  for_each             = local.attrs_azapi_data_addrs
-  target_block_address = each.key
-  head_attributes      = ["for_each", "count", "provider"]
-  body_attributes = concat(
-    try(data.provider_schema.azapi.data_sources_required_attributes[each.value], []),
-    try(data.provider_schema.azapi.data_sources_optional_attributes[each.value], []),
-  )
+  for_each                 = local.attrs_azapi_data_addrs
+  target_block_address     = each.key
+  head_attributes          = ["for_each", "count", "provider"]
+  body_attributes          = try(local.attrs_azapi_data_body_by_type[each.value], [])
   foot_attributes          = ["lifecycle", "depends_on"]
   sort_body_alphabetically = false
 }

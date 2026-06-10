@@ -1,18 +1,38 @@
 data "output" "for_sort" {}
 
 locals {
-  outs         = data.output.for_sort.result
-  ordered_outs = sort(keys(local.outs))
+  outs = data.output.for_sort.result
+
+  # Each output's target file: stay in its current file if that file already
+  # matches `*outputs*.tf`; otherwise route to `outputs.tf`. Mirrors avmfix's
+  # `outputsFileRegex` (lonegunmanb/avmfix pkg/hcl_file.go) which preserves
+  # multi-file output layouts while consolidating strays.
+  outs_with_tf = {
+    for n, v in local.outs : n => {
+      v = v
+      target_file = (
+        length(regexall("outputs.*\\.tf$", try(v.mptf.range.file_name, ""))) > 0
+        ? v.mptf.range.file_name
+        : "outputs.tf"
+      )
+    }
+  }
+
+  out_target_files = distinct([for n, vf in local.outs_with_tf : vf.target_file])
+
+  # Per-target-file ordered list (pure alphabetical, matches avmfix `SortByName()`).
+  ordered_outs_by_file = {
+    for f in local.out_target_files : f => sort([for n, vf in local.outs_with_tf : n if vf.target_file == f])
+  }
 }
 
-# AVM spec for outputs: known attrs in this fixed order; unlisted attrs are rare and stay at the end
-# in source order.
+# Sort every output's body alphabetically — matches avmfix's `b.Attributes.SortByName()`
+# (lonegunmanb/avmfix pkg/outputs.go). No fixed head/foot list: all known output attrs
+# (`description`, `sensitive`, `value`, `depends_on`, `precondition`) sort by name.
 transform "reorder_attributes" "output_attrs" {
   for_each                 = local.outs
   target_block_address     = "output.${each.key}"
-  head_attributes          = ["description", "value", "sensitive"]
-  foot_attributes          = ["depends_on"]
-  sort_body_alphabetically = false
+  sort_body_alphabetically = true
 }
 
 transform "remove_block_element" "drop_output_sensitive_false" {
@@ -21,7 +41,10 @@ transform "remove_block_element" "drop_output_sensitive_false" {
   paths                = ["sensitive"]
 }
 
-transform "sort_blocks_in_file" "outputs_tf" {
-  file_name     = "outputs.tf"
-  desired_order = [for n in local.ordered_outs : "output.${n}"]
+# Per-file sort. One transform per file that currently holds at least one output
+# (canonical `*outputs*.tf` files preserve their split; strays land in `outputs.tf`).
+transform "sort_blocks_in_file" "outs_per_file" {
+  for_each      = local.ordered_outs_by_file
+  file_name     = each.key
+  desired_order = [for n in each.value : "output.${n}"]
 }

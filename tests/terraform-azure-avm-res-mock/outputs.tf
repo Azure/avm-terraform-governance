@@ -10,6 +10,6 @@ output "resource_ids" {
 
 output "subscription_id" {
   description = "The ID of the subscription the module is deployed to."
-  value       = data.azapi_client_config.this.subscription_id
   sensitive   = true
+  value       = data.azapi_client_config.this.subscription_id
 }

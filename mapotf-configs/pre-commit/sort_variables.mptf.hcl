@@ -1,10 +1,34 @@
 data "variable" "for_sort" {}
 
 locals {
-  vars           = data.variable.for_sort.result
-  required_names = sort([for n, v in local.vars : n if !contains(keys(v), "default")])
-  optional_names = sort([for n, v in local.vars : n if contains(keys(v), "default")])
-  ordered_vars   = concat(local.required_names, local.optional_names)
+  vars = data.variable.for_sort.result
+
+  # Each variable's target file: stay in its current file if that file already
+  # matches the canonical `*variables*.tf` pattern; otherwise route to
+  # `variables.tf`. Mirrors avmfix's `variablesFileRegex` (lonegunmanb/avmfix
+  # pkg/hcl_file.go) which preserves multi-file layouts like
+  # `variables.diagnostics.tf`, `variables.share.tf`, etc. while still
+  # consolidating stray variables that live in `main.tf` or similar.
+  vars_with_tf = {
+    for n, v in local.vars : n => {
+      v = v
+      target_file = (
+        length(regexall("variables.*\\.tf$", try(v.mptf.range.file_name, ""))) > 0
+        ? v.mptf.range.file_name
+        : "variables.tf"
+      )
+    }
+  }
+
+  var_target_files = distinct([for n, vf in local.vars_with_tf : vf.target_file])
+
+  # Per-target-file ordered list: required (no `default`) alpha, then optional alpha.
+  ordered_vars_by_file = {
+    for f in local.var_target_files : f => concat(
+      sort([for n, vf in local.vars_with_tf : n if vf.target_file == f && !contains(keys(vf.v), "default")]),
+      sort([for n, vf in local.vars_with_tf : n if vf.target_file == f && contains(keys(vf.v), "default")]),
+    )
+  }
 }
 
 # Re-order attributes inside every variable block: type, default, description, nullable, sensitive.
@@ -31,10 +55,11 @@ transform "remove_block_element" "drop_sensitive_false" {
   paths                = ["sensitive"]
 }
 
-# Consolidate + order every variable block into variables.tf.
-# Blocks already in variables.tf that are not variable.* are not touched here
-# (move_misplaced_blocks.mptf.hcl handles that side of the contract).
-transform "sort_blocks_in_file" "variables_tf" {
-  file_name     = "variables.tf"
-  desired_order = [for n in local.ordered_vars : "variable.${n}"]
+# Per-file sort. One transform per file that currently holds at least one variable
+# (canonical `*variables*.tf` files preserve their split; strays land in `variables.tf`).
+# Within each file: required-alpha then optional-alpha.
+transform "sort_blocks_in_file" "vars_per_file" {
+  for_each      = local.ordered_vars_by_file
+  file_name     = each.key
+  desired_order = [for n in each.value : "variable.${n}"]
 }

@@ -1,12 +1,14 @@
-# Move stray blocks out of variables.tf / outputs.tf so each file contains only its canonical
-# block kind. Any non-canonical block whose source file is variables.tf (or vice versa for
-# outputs.tf) is relocated to main.tf.
+# Move stray non-canonical blocks out of variables.tf / outputs.tf so each file contains only
+# its canonical block kind. Any non-canonical block whose source file is variables.tf (or vice
+# versa for outputs.tf) is relocated to main.tf.
 #
 # IMPORTANT: variable / output blocks are excluded from BOTH directions. They are relocated to
-# their canonical file by sort_blocks_in_file in sort_variables.mptf.hcl / sort_outputs.mptf.hcl
-# (whose desired_order lists every variable / output regardless of its current file). Allowing
-# move_block to also relocate them would cause a transform-interaction issue with
-# sort_blocks_in_file and leave duplicated unstructured token sequences behind.
+# their canonical file by sort_blocks_in_file in sort_variables.mptf.hcl / sort_outputs.mptf.hcl.
+# Those transforms use per-file `for_each` keyed by `mptf.range.file_name` to preserve canonical
+# multi-file layouts (e.g. `variables.diagnostics.tf`, `variables.share.tf`) while still
+# consolidating strays from non-canonical files into the default `variables.tf` / `outputs.tf`.
+# Allowing move_block to also relocate variables/outputs would cause a transform-interaction
+# issue with sort_blocks_in_file and leave duplicated unstructured token sequences behind.
 
 data "resource" "for_move" {}
 data "data"     "for_move" {}
