@@ -84,7 +84,7 @@ For the full `retry` and `timeouts` variable schemas, the resource-side wiring (
    }
    ```
 
-4. Implement supporting child resources (private endpoints, diagnostic settings, role assignments, locks) as separate `azapi_resource` blocks driven by the same input maps — never collapse them into the parent `body` (TFFR7).
+4. Implement supporting child resources (private endpoints, diagnostic settings, role assignments, locks) as separate `azapi_resource` blocks driven by the same input maps — never collapse them into the parent `body` (TFRMNFR1).
 
 ## When NOT to expose an interface
 
