@@ -34,6 +34,9 @@ defaults:
 
 jobs:
   generate-matrix:
+    # Ignore repository_dispatch events that target other workflows (e.g. fork-pr-handoff).
+    # Without this guard, any `gh api repos/.../dispatches` call would also trigger a repo sync.
+    if: github.event_name != 'repository_dispatch' || github.event.action != 'fork-pr-handoff'
     name: Generate Matrix
     runs-on: ubuntu-latest
     environment: avm

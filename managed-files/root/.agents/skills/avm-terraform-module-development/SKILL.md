@@ -184,6 +184,43 @@ When creating the PR, include:
 - The issue number(s) the PR closes.
 - Any relevant context for reviewers.
 
+## Handling fork PRs
+
+End-to-end tests cannot run on PRs from forks — GitHub does not expose secrets to fork-triggered workflows, so `pr-check.yml` short-circuits with a warning. The standard flow when a fork PR is ready to land:
+
+1. Review the fork PR normally (read the diff, request changes via review comments). Iterate with the contributor on their fork until the change is ready.
+2. **Hand the PR off to a release branch** in the upstream module repo. The handoff workflow (in `Azure/avm-terraform-governance`):
+   - Creates an `e2e/pr-<N>` branch from `main` in the module repo.
+   - Retargets the fork PR's base from `main` to `e2e/pr-<N>`.
+   - Squash-merges the fork PR into `e2e/pr-<N>`, preserving the original author and emitting `Co-authored-by:` trailers for every commit author.
+   - Closes the fork PR (auto-closed by the squash-merge) and comments on it with a link to the new PR.
+   - Opens a release-branch PR (`e2e/pr-<N>` → `main`) on which `pr-check.yml` runs with full credentials.
+3. **From the handoff onward, the module owners own the change.** Any further work — review fixes, conflict resolution, lint fixes — happens on the release-branch PR, **not** the original fork PR. The fork PR is closed and will not receive further commits.
+4. Squash-merge the release-branch PR as usual. The `Co-authored-by:` trailers in the PR body keep crediting the original contributor on the final commit.
+
+### Trigger the handoff
+
+Two equivalent options.
+
+**From the governance Actions UI:** run the `Fork PR Handoff` workflow in `Azure/avm-terraform-governance`, supplying `target_repo` (e.g. `Azure/terraform-azurerm-avm-res-storage-storageaccount`) and `pr_number`.
+
+**From the agent or a local shell** using `gh`:
+
+```pwsh
+'{"event_type":"fork-pr-handoff","client_payload":{"target_repo":"Azure/<this-module-repo>","pr_number":<fork-pr-number>}}' |
+  gh api repos/Azure/avm-terraform-governance/dispatches --method POST --input -
+```
+
+For polling and richer error handling, the governance repo also exposes [`tf-repo-mgmt/scripts/Invoke-ForkPrHandoff.ps1`](https://github.com/Azure/avm-terraform-governance/blob/main/tf-repo-mgmt/scripts/Invoke-ForkPrHandoff.ps1).
+
+### Pre-flight checks the workflow enforces
+
+The handoff workflow refuses to proceed when:
+
+- The fork PR is not open, or is not from a fork, or is in draft.
+- The fork PR has merge conflicts against `main` — ask the contributor to rebase their fork first.
+- An `e2e/pr-<N>` branch already exists — delete it first if a re-handoff is genuinely needed.
+
 ## Common mistakes to avoid
 
 - **Citing a spec from memory.** AVM specs change. Always fetch the current text via `llms.txt`. Several spec IDs are easy to mix up (e.g. `TFFR4` is `response_export_values`, `TFFR5` is `replace_triggers_refs`, `TFFR6` is `resource_types`, `TFFR7` is `retry`/`timeouts`).
