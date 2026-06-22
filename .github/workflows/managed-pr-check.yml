@@ -64,7 +64,7 @@ jobs:
         uses: docker/setup-docker-action@0234bb73ccb40f0c430b795634f9247e2b5c2d23 #v5.2.0
 
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Run AVM PR Check
         run: |
@@ -102,7 +102,7 @@ jobs:
         uses: docker/setup-docker-action@0234bb73ccb40f0c430b795634f9247e2b5c2d23 #v5.2.0
 
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Run Terraform unit tests
         run: |
@@ -134,7 +134,7 @@ jobs:
         uses: docker/setup-docker-action@0234bb73ccb40f0c430b795634f9247e2b5c2d23 #v5.2.0
 
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Run Terraform integration tests
         run: |
@@ -168,7 +168,7 @@ jobs:
       examples: ${{ steps.getexamples.outputs.examples }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
       - name: Build example matrix and assign subscriptions
         id: getexamples
         run: |
@@ -207,7 +207,7 @@ jobs:
       setup_exists: ${{ steps.check-setup.outputs.setup_exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
       - name: Check if examples/setup.sh exists
         id: check-setup
         run: |
@@ -226,7 +226,7 @@ jobs:
     needs: [ checksetup, subscriptions ]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Run global setup script
         run: |
@@ -262,7 +262,7 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-docker-action@0234bb73ccb40f0c430b795634f9247e2b5c2d23 #v5.2.0
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Deploy and validate example
         shell: bash
@@ -301,7 +301,7 @@ jobs:
       teardown_exists: ${{ steps.check-teardown.outputs.teardown_exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
       - name: Check if examples/teardown.sh exists
         id: check-teardown
         run: |
@@ -320,7 +320,7 @@ jobs:
     needs: [checkteardown, subscriptions]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
       - name: Run global teardown script
         run: |
