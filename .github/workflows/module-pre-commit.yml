@@ -28,6 +28,10 @@ on:
           - patch
           - minor
           - major
+      release_dry_run:
+        description: "When true, the release step computes and logs the next version without creating a release (only used when release is true)."
+        default: false
+        type: boolean
 
 permissions:
   id-token: write
@@ -193,11 +197,13 @@ jobs:
           . ./tf-repo-mgmt/scripts/lib/ModuleRelease.ps1
 
           # The pre-commit PR was squash-merged to main above, so main HEAD now
-          # carries the change. Release for real (no dry-run) with the requested
-          # bump. Publish-ModuleRelease still skips repos that have never been
+          # carries the change. Honour the release_dry_run input: when true the
+          # next version is computed and logged but no release is created.
+          # Publish-ModuleRelease still skips repos that have never been
           # released and repos with no new commits since the latest tag.
+          $dryRun = [System.Convert]::ToBoolean('${{ inputs.release_dry_run }}')
           Publish-ModuleRelease `
             -RepoFullName "${{ matrix.repoFullName }}" `
             -Bump "${{ inputs.bump }}" `
-            -DryRun $false `
+            -DryRun $dryRun `
             -TargetBranch "main" | Out-Null
