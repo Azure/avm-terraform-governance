@@ -16,6 +16,18 @@ on:
         description: "Whether to run in first run mode"
         default: false
         type: boolean
+      release:
+        description: "When true, create a patch/minor/major release for each repository this run actually updates and merges."
+        default: false
+        type: boolean
+      bump:
+        description: "Semantic version part to increment when releasing updated repositories (only used when release is true)."
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
   id-token: write
@@ -138,6 +150,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { ./avm pre-commit }
 
       - name: Commit, push, create PR and merge changes
+        id: precommit-pr
         if: steps.check.outputs.continue
         shell: pwsh
         env:
@@ -149,7 +162,7 @@ jobs:
           # credentials, so the push reuses those (no gh auth setup-git).
           # -Merge is non-fatal here (no -MergeMustSucceed) to preserve the
           # previous continue-on-error behaviour.
-          Submit-AvmBotPullRequest `
+          $result = Submit-AvmBotPullRequest `
             -OrgAndRepoName "${{ matrix.repoFullName }}" `
             -BaseBranch "main" `
             -BranchName "pre-commit-${{ github.run_id }}" `
@@ -162,4 +175,29 @@ jobs:
             -StageAll `
             -Merge `
             -CloseOlderWithTitlePrefix "chore: pre-commit updates" `
-            -SkipGitAuthSetup | Out-Null
+            -SkipGitAuthSetup
+
+          # Surface whether this run changed the repo and merged the PR so the
+          # optional release step only tags main when the change actually landed.
+          $changed = if ($result.Changed) { 'true' } else { 'false' }
+          $merged = if ($result.Merged) { 'true' } else { 'false' }
+          "changed=$changed" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "merged=$merged" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Release updated module
+        if: steps.check.outputs.continue && inputs.release && steps.precommit-pr.outputs.merged == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          . ./tf-repo-mgmt/scripts/lib/ModuleRelease.ps1
+
+          # The pre-commit PR was squash-merged to main above, so main HEAD now
+          # carries the change. Release for real (no dry-run) with the requested
+          # bump. Publish-ModuleRelease still skips repos that have never been
+          # released and repos with no new commits since the latest tag.
+          Publish-ModuleRelease `
+            -RepoFullName "${{ matrix.repoFullName }}" `
+            -Bump "${{ inputs.bump }}" `
+            -DryRun $false `
+            -TargetBranch "main" | Out-Null
