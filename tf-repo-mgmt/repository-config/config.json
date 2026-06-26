@@ -12,6 +12,17 @@
   },
   "repositoryGroups": [
     {
+      "name": "canary",
+      "managedFilesAdditional": "canary",
+      "repositories": [
+        "avm-ptn-example-repo",
+        "avm-res-devopsinfrastructure-pool"
+      ],
+      "topics": [
+        "canary"
+      ]
+    },
+    {
       "name": "azure-verified-modules-tier-1",
       "repositories": [
         "avm-ptn-example-repo"
