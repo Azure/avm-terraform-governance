@@ -68,107 +68,98 @@ jobs:
 
       - name: Get GitHub App User ID
         id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          $userId = gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id
+          "user-id=$userId" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Check for recent PR activity
         id: check
-        run: |
-          # Check if there are any open PRs
-          PR_COUNT=$(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq 'length')
-          if [[ "$PR_COUNT" -eq 0 ]]; then
-            echo "No open PRs found, proceeding with pre-commit run."
-            echo "continue=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          INACTIVE_DAYS=${{ inputs.inactive_days != '' && inputs.inactive_days || env.ACTIVITY_DAYS_AGO }}
-
-          echo "Found $PR_COUNT open PR(s), checking for recent activity (checking last $INACTIVE_DAYS days)..."
-          # Read PR numbers into an array
-          readarray -t NOS < <(gh pr list --repo ${{ matrix.repoFullName }} --base main --json number | jq -r '.[].number')
-          for N in "${NOS[@]}"; do
-            LAST_COMMIT=$(gh pr view $N --json commits | jq -r '[.commits[].authoredDate] | sort | last')
-            if [ -n "$LAST_COMMIT" ]; then
-              LAST_COMMIT_EPOCH=$(date -d "$LAST_COMMIT" +%s)
-              DAYS_AGO_EPOCH=$(date -d "$INACTIVE_DAYS days ago" +%s)
-              if [[ "$LAST_COMMIT_EPOCH" -gt "$DAYS_AGO_EPOCH" ]]; then
-                echo "Skipping repository ${{ matrix.repoId }} as PR #$N has activity within the last $INACTIVE_DAYS days (last commit: $LAST_COMMIT)."
-                exit 0
-              fi
-            fi
-          done
-          echo "No recent PR activity found, proceeding with pre-commit run."
-          echo "continue=true" >> $GITHUB_OUTPUT
+        shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ matrix.repoFullName }}
+          INACTIVE_DAYS: ${{ inputs.inactive_days != '' && inputs.inactive_days || env.ACTIVITY_DAYS_AGO }}
+        run: |
+          $repo = "${{ matrix.repoFullName }}"
 
-      - name: Checkout repository
+          # No open PRs at all => nothing could be in-flight, so proceed.
+          $openPrs = @(gh pr list --repo $repo --base main --json number | ConvertFrom-Json)
+          if ($openPrs.Count -eq 0) {
+            Write-Host "No open PRs found, proceeding with pre-commit run."
+            "continue=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+
+          $inactiveDays = [int]$env:INACTIVE_DAYS
+          Write-Host "Found $($openPrs.Count) open PR(s), checking for recent activity (last $inactiveDays days)..."
+          $threshold = (Get-Date).ToUniversalTime().AddDays(-$inactiveDays)
+
+          foreach ($pr in $openPrs) {
+            $commits = (gh pr view $pr.number --json commits | ConvertFrom-Json).commits
+            $lastCommit = $commits.authoredDate | Sort-Object | Select-Object -Last 1
+            if ($lastCommit) {
+              $lastCommitDate = [System.DateTimeOffset]::Parse($lastCommit).UtcDateTime
+              if ($lastCommitDate -gt $threshold) {
+                Write-Host "Skipping repository ${{ matrix.repoId }} as PR #$($pr.number) has activity within the last $inactiveDays days (last commit: $lastCommit)."
+                exit 0
+              }
+            }
+          }
+
+          Write-Host "No recent PR activity found, proceeding with pre-commit run."
+          "continue=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Checkout governance repository
+        if: steps.check.outputs.continue
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Checkout target repository
         if: steps.check.outputs.continue
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: ${{ matrix.repoFullName }}
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
+          path: _target
 
       - name: Run pre-commit
         if: steps.check.outputs.continue
-        run: |
-          chmod a+x ./avm
-          ./avm pre-commit || ./avm pre-commit
-        shell: bash
+        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Set-Location _target
+          chmod a+x ./avm
+          # The avm wrapper occasionally needs a second pass to converge.
+          ./avm pre-commit
+          if ($LASTEXITCODE -ne 0) { ./avm pre-commit }
 
       - name: Commit, push, create PR and merge changes
         if: steps.check.outputs.continue
-        id: changes
-        run: |
-          # Check if there are ANY changes (including untracked files)
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No changes detected"
-            exit 0
-          fi
-
-          # Configure git with the GitHub App identity
-          git config --global user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
-          git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
-
-          # Add and commit changes
-          git checkout -b pre-commit-${{ github.run_id }}
-          git add .
-          git commit -m "chore: pre-commit updates"
-          git push --set-upstream origin pre-commit-${{ github.run_id }}
-
-          # Create a PR and merge it
-          PRURL=$(gh pr create --base main --head pre-commit-${{ github.run_id }} --title "chore: pre-commit updates" --body "This PR contains pre-commit updates.")
-          echo "pr_url=$PRURL" >> $GITHUB_OUTPUT
-        shell: bash
+        shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-
-      - name: merge PR
-        if: steps.check.outputs.continue && steps.changes.outputs.pr_url != ''
         run: |
-          gh pr merge $PRURL --squash --admin --delete-branch
-        shell: bash
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          . ./tf-repo-mgmt/scripts/lib/GitHubPullRequest.ps1
 
-      - name: Close older pre-commit PRs
-        if: steps.check.outputs.continue && steps.changes.outputs.pr_url != ''
-        run: |
-          # Close older pre-commit PRs
-          gh pr list --state open --base main --json url,title --jq '.[] | select(.title | startswith("chore: pre-commit updates")) | .url' | while read -r pr_url; do
-            if [[ "$pr_url" != "${{ steps.changes.outputs.pr_url }}" ]]; then
-              echo "Closing older pre-commit PR $pr_url"
-              gh pr close $pr_url --delete-branch
-            fi
-          done
-        shell: bash
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          # The target repo was checked out at _target with persisted
+          # credentials, so the push reuses those (no gh auth setup-git).
+          # -Merge is non-fatal here (no -MergeMustSucceed) to preserve the
+          # previous continue-on-error behaviour.
+          Submit-AvmBotPullRequest `
+            -OrgAndRepoName "${{ matrix.repoFullName }}" `
+            -BaseBranch "main" `
+            -BranchName "pre-commit-${{ github.run_id }}" `
+            -CommitMessage "chore: pre-commit updates" `
+            -PrTitle "chore: pre-commit updates" `
+            -PrBody "This PR contains pre-commit updates." `
+            -WorkingDirectory "_target" `
+            -BotName "${{ steps.app-token.outputs.app-slug }}[bot]" `
+            -BotEmail "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com" `
+            -StageAll `
+            -Merge `
+            -CloseOlderWithTitlePrefix "chore: pre-commit updates" `
+            -SkipGitAuthSetup | Out-Null

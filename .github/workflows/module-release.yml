@@ -68,56 +68,19 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ matrix.repoName }}
 
+      - name: Checkout governance repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
       - name: Create release if there are new commits
         run: |
-          set -euo pipefail
-          FULL="${{ matrix.repoFullName }}"
-          BUMP="${{ inputs.bump }}"
-          DRY="${{ inputs.dry_run }}"
+          . ./tf-repo-mgmt/scripts/lib/ModuleRelease.ps1
 
-          # Resolve the latest published release. Modules that have never been
-          # released are intentionally skipped - this workflow only patches
-          # modules that already have a release on the Terraform Registry.
-          LATEST=$(gh release view --repo "$FULL" --json tagName -q .tagName 2>/dev/null || true)
-          if [ -z "$LATEST" ]; then
-            echo "::notice title=$FULL::No existing release found - skipping (this workflow only patches already-released modules)."
-            echo "- :fast_forward: \`$FULL\` skipped (no existing release)" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          $dryRun = [System.Convert]::ToBoolean('${{ inputs.dry_run }}')
 
-          # Skip when the default branch has no commits beyond the latest tag.
-          AHEAD=$(gh api "repos/$FULL/compare/$LATEST...main" -q .ahead_by)
-          if [ "$AHEAD" -eq 0 ]; then
-            echo "::notice title=$FULL::No new commits since $LATEST - skipping."
-            echo "- :fast_forward: \`$FULL\` skipped (no new commits since \`$LATEST\`)" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          # Compute the next semantic version, preserving any leading "v".
-          case "$LATEST" in
-            v*) PREFIX="v"; VER="${LATEST#v}" ;;
-            *)  PREFIX="";  VER="$LATEST" ;;
-          esac
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$VER"
-          case "$BUMP" in
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH + 1)) ;;
-            *) echo "::error title=$FULL::Unknown bump '$BUMP'"; exit 1 ;;
-          esac
-          NEXT="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
-
-          if [ "$DRY" = "true" ]; then
-            echo "::notice title=$FULL::[dry-run] would release $NEXT (was $LATEST, $AHEAD new commit(s))."
-            echo "- :test_tube: \`$FULL\` dry-run -> would release \`$NEXT\` (was \`$LATEST\`, $AHEAD new commit(s))" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          # Creating the release tags the default branch HEAD; the Terraform
-          # Registry auto-publishes the new version from the tag.
-          gh release create "$NEXT" --repo "$FULL" --target main --title "$NEXT" --generate-notes
-          echo "::notice title=$FULL::Released $NEXT (was $LATEST, $AHEAD new commit(s))."
-          echo "- :rocket: \`$FULL\` released \`$NEXT\` (was \`$LATEST\`, $AHEAD new commit(s))" >> "$GITHUB_STEP_SUMMARY"
-        shell: bash
+          Publish-ModuleRelease `
+            -RepoFullName '${{ matrix.repoFullName }}' `
+            -Bump '${{ inputs.bump }}' `
+            -DryRun $dryRun | Out-Null
+        shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
