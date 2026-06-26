@@ -34,6 +34,7 @@ resource "azapi_resource" "example_rg" {
   body = {
     tags = local.default_tags
   }
+
   lifecycle {
     ignore_changes = [
       body.tags,
@@ -51,6 +52,7 @@ resource "azapi_resource" "example_rg_singleton" {
   body = {
     tags = local.default_tags
   }
+
   depends_on = [
     azapi_resource.example_rg,
   ]
