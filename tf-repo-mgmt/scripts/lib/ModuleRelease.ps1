@@ -5,6 +5,13 @@
 # new version whenever a tag is created, so "releasing" here is simply
 # creating a GitHub release (which tags the target branch HEAD).
 
+# Self-sufficient when dot-sourced standalone (for example by module-pre-commit
+# and module-release, which load only this file): pull in the retry helpers if
+# Invoke-WithRetry is not already available.
+if (-not (Get-Command Invoke-WithRetry -ErrorAction SilentlyContinue)) {
+    . (Join-Path $PSScriptRoot "RetryHelpers.ps1")
+}
+
 # Compute the next semantic version from a current tag, preserving any
 # leading "v" (e.g. "v1.2.3" -> "v1.2.4", "1.2.3" -> "1.3.0").
 #
@@ -93,10 +100,20 @@ function Publish-ModuleRelease {
     }
 
     # Resolve the latest published release. `gh release view` exits non-zero
-    # when the repository has no releases at all; stderr is suppressed so the
-    # only signal is the empty tag name plus the exit code.
-    $latest = gh release view --repo $RepoFullName --json tagName -q .tagName 2>$null
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($latest)) {
+    # when the repository has no releases at all; that is an expected "never
+    # released" signal (not a transient failure), so we return empty and only
+    # retry genuine transient API errors.
+    $latest = Invoke-WithRetry -OperationName "gh release view ($RepoFullName)" -ScriptBlock {
+        $cap = Invoke-NativeCapture { gh release view --repo $RepoFullName --json tagName -q .tagName }
+        if ($cap.Code -ne 0) {
+            if ($cap.All -match '(?i)release not found|no release|not found|HTTP 404') {
+                return ""
+            }
+            throw "gh release view exited $($cap.Code) : $($cap.All)"
+        }
+        $cap.StdOut.Trim()
+    }
+    if ([string]::IsNullOrWhiteSpace($latest)) {
         Write-Host "::notice title=$RepoFullName::No existing release found - skipping (this workflow only patches already-released modules)."
         Add-ModuleReleaseStepSummary -Line "- :fast_forward: ``$RepoFullName`` skipped (no existing release)"
         $result.Action = "skipped-no-release"
@@ -106,9 +123,12 @@ function Publish-ModuleRelease {
     $result.LatestVersion = $latest
 
     # Skip when the target branch has no commits beyond the latest tag.
-    $ahead = gh api "repos/$RepoFullName/compare/$latest...$TargetBranch" -q .ahead_by
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to compare $latest...$TargetBranch for $RepoFullName (gh api exited $LASTEXITCODE)."
+    $ahead = Invoke-WithRetry -OperationName "gh api compare $latest...$TargetBranch ($RepoFullName)" -ScriptBlock {
+        $cap = Invoke-NativeCapture { gh api "repos/$RepoFullName/compare/$latest...$TargetBranch" -q .ahead_by }
+        if ($cap.Code -ne 0) {
+            throw "gh api compare exited $($cap.Code) : $($cap.All)"
+        }
+        $cap.StdOut.Trim()
     }
     $aheadBy = 0
     if (-not [int]::TryParse(("$ahead").Trim(), [ref]$aheadBy)) {
@@ -134,11 +154,20 @@ function Publish-ModuleRelease {
     }
 
     # Creating the release tags the target branch HEAD; the Terraform Registry
-    # auto-publishes the new version from the tag.
-    gh release create $next --repo $RepoFullName --target $TargetBranch --title $next --generate-notes
-    if ($LASTEXITCODE -ne 0) {
-        throw "gh release create $next failed for $RepoFullName (exit $LASTEXITCODE)."
-    }
+    # auto-publishes the new version from the tag. Retry transient failures; if
+    # a prior attempt actually created the release before a transient error was
+    # reported, the "already exists" response is treated as success so we don't
+    # surface a false failure.
+    Invoke-WithRetry -OperationName "gh release create $next ($RepoFullName)" -ScriptBlock {
+        $cap = Invoke-NativeCapture { gh release create $next --repo $RepoFullName --target $TargetBranch --title $next --generate-notes }
+        if ($cap.Code -ne 0) {
+            if ($cap.All -match '(?i)already exists|already_exists') {
+                Write-Host "Release $next already exists for $RepoFullName; treating as success."
+                return
+            }
+            throw "gh release create $next exited $($cap.Code) : $($cap.All)"
+        }
+    } | Out-Null
 
     Write-Host "::notice title=$RepoFullName::Released $next (was $latest, $aheadBy new commit(s))."
     Add-ModuleReleaseStepSummary -Line "- :rocket: ``$RepoFullName`` released ``$next`` (was ``$latest``, $aheadBy new commit(s))"

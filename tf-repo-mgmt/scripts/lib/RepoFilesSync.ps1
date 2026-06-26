@@ -28,6 +28,12 @@
 #     UpdatedPaths = managed paths whose contents changed
 #   }
 
+# Self-sufficient when dot-sourced standalone: load the retry helpers if
+# Invoke-WithRetry is not already in scope.
+if (-not (Get-Command Invoke-WithRetry -ErrorAction SilentlyContinue)) {
+    . (Join-Path $PSScriptRoot "RetryHelpers.ps1")
+}
+
 function Get-MatchingDeprecatedPaths {
     param(
         [string[]]$candidatePaths,
@@ -276,12 +282,21 @@ function Sync-RepoFiles {
         # authenticate via $env:GH_TOKEN without ever embedding the token
         # in a URL (which would leak into process listings, git remote
         # config, and reflogs).
-        gh auth setup-git
-        if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git exited $LASTEXITCODE" }
+        Invoke-WithRetry -OperationName "gh auth setup-git ($orgAndRepoName)" -ScriptBlock {
+            $cap = Invoke-NativeCapture { gh auth setup-git }
+            if ($cap.Code -ne 0) { throw "gh auth setup-git exited $($cap.Code) : $($cap.All)" }
+        } | Out-Null
 
         Write-Host "  Cloning $orgAndRepoName into $tempDir..." -ForegroundColor DarkGray
-        gh repo clone $orgAndRepoName $tempDir -- --quiet --depth 1 --branch $defaultBranch
-        if ($LASTEXITCODE -ne 0) { throw "gh repo clone exited $LASTEXITCODE" }
+        Invoke-WithRetry -OperationName "gh repo clone $orgAndRepoName" -ScriptBlock {
+            # Clear any partial clone from a prior attempt so a retry is not
+            # blocked by "destination path already exists".
+            if (Test-Path -LiteralPath $tempDir) {
+                Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            $cap = Invoke-NativeCapture { gh repo clone $orgAndRepoName $tempDir -- --quiet --depth 1 --branch $defaultBranch }
+            if ($cap.Code -ne 0) { throw "gh repo clone exited $($cap.Code) : $($cap.All)" }
+        } | Out-Null
 
         Push-Location $tempDir
         try {

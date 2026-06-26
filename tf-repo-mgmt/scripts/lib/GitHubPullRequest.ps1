@@ -15,6 +15,13 @@
 #     (for example the pre-commit backfill) pass -StageAll and the helper
 #     runs `git add -A`.
 
+# Self-sufficient when dot-sourced standalone (for example by
+# module-pre-commit, which loads only this file): pull in the retry helpers if
+# Invoke-WithRetry is not already available.
+if (-not (Get-Command Invoke-WithRetry -ErrorAction SilentlyContinue)) {
+    . (Join-Path $PSScriptRoot "RetryHelpers.ps1")
+}
+
 $avmBotName = "azure-verified-modules[bot]"
 $avmBotEmail = "1049636+azure-verified-modules[bot]@users.noreply.github.com"
 
@@ -55,8 +62,10 @@ function Submit-AvmBotPullRequest {
         # $env:GH_TOKEN without ever embedding the token in a URL (which would
         # leak into process listings, git remote config, and reflogs).
         if (-not $SkipGitAuthSetup) {
-            gh auth setup-git
-            if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git exited $LASTEXITCODE" }
+            Invoke-WithRetry -OperationName "gh auth setup-git" -ScriptBlock {
+                $cap = Invoke-NativeCapture { gh auth setup-git }
+                if ($cap.Code -ne 0) { throw "gh auth setup-git exited $($cap.Code) : $($cap.All)" }
+            } | Out-Null
         }
 
         # `git status --porcelain` reports untracked files too, so this guard
@@ -78,22 +87,46 @@ function Submit-AvmBotPullRequest {
         git -c "user.name=$BotName" -c "user.email=$BotEmail" commit -q -m $CommitMessage
         if ($LASTEXITCODE -ne 0) { throw "git commit exited $LASTEXITCODE" }
 
-        git push --quiet --set-upstream origin $BranchName
-        if ($LASTEXITCODE -ne 0) { throw "git push exited $LASTEXITCODE" }
+        # `git push` is idempotent: a retry after a partially-completed push
+        # reports "Everything up-to-date" and exits 0. The captured stderr is
+        # included in the thrown message so transport errors (RPC failed, host
+        # resolution, 5xx) are recognised as retryable.
+        Invoke-WithRetry -OperationName "git push $BranchName ($OrgAndRepoName)" -ScriptBlock {
+            $cap = Invoke-NativeCapture { git push --quiet --set-upstream origin $BranchName }
+            if ($cap.Code -ne 0) { throw "git push exited $($cap.Code) : $($cap.All)" }
+        } | Out-Null
 
         Write-Host "  Pushed branch $BranchName; opening PR..." -ForegroundColor DarkGray
-        $prCreateOutput = gh pr create `
-            --repo $OrgAndRepoName `
-            --base $BaseBranch `
-            --head $BranchName `
-            --title $PrTitle `
-            --body $PrBody
-        if ($LASTEXITCODE -ne 0) { throw "gh pr create exited $LASTEXITCODE" }
-
-        # `gh pr create` normally writes a single line (the PR URL) to stdout,
-        # but defend against future status lines by taking the last non-empty
-        # line.
-        $prUrl = (@($prCreateOutput) | Where-Object { $_ -and $_.ToString().Trim() -ne "" } | Select-Object -Last 1).ToString().Trim()
+        # If a transient error is reported after the PR was actually created,
+        # a naive retry of `gh pr create` fails with "already exists". That case
+        # is recovered by querying the existing PR's URL so the operation reads
+        # as success.
+        $prUrl = Invoke-WithRetry -OperationName "gh pr create $BranchName ($OrgAndRepoName)" -ScriptBlock {
+            $cap = Invoke-NativeCapture {
+                gh pr create `
+                    --repo $OrgAndRepoName `
+                    --base $BaseBranch `
+                    --head $BranchName `
+                    --title $PrTitle `
+                    --body $PrBody
+            }
+            if ($cap.Code -ne 0) {
+                if ($cap.All -match '(?i)already exists') {
+                    $viewCap = Invoke-NativeCapture { gh pr view $BranchName --repo $OrgAndRepoName --json url -q .url }
+                    if ($viewCap.Code -ne 0) { throw "gh pr view (after already-exists) exited $($viewCap.Code) : $($viewCap.All)" }
+                    $recovered = $viewCap.StdOut.Trim()
+                    if ([string]::IsNullOrWhiteSpace($recovered)) { throw "gh pr view returned no URL for existing PR on $BranchName" }
+                    return $recovered
+                }
+                throw "gh pr create exited $($cap.Code) : $($cap.All)"
+            }
+            # `gh pr create` writes the new PR's URL to stdout. Select the line
+            # that looks like a PR URL so any informational stdout lines are
+            # ignored.
+            $created = (@($cap.StdOut -split "`n") | Where-Object { $_ -match '^\s*https?://' } | Select-Object -Last 1)
+            if (-not $created) { throw "gh pr create returned no URL on stdout: $($cap.All)" }
+            $created.Trim()
+        }
         if ([string]::IsNullOrWhiteSpace($prUrl)) { throw "gh pr create returned no URL on stdout" }
         Write-Host "  Opened PR: $prUrl" -ForegroundColor DarkGray
 
@@ -109,33 +142,70 @@ function Submit-AvmBotPullRequest {
             if ($MergeSubject) {
                 $mergeArgs += @("--subject", $MergeSubject, "--body", "")
             }
-            gh pr merge $prUrl @mergeArgs
-            if ($LASTEXITCODE -ne 0) {
-                if ($MergeMustSucceed) {
-                    throw "gh pr merge exited $LASTEXITCODE"
-                }
-                Write-Warning "  Failed to merge PR for $OrgAndRepoName; leaving it open."
-            }
-            else {
+            try {
+                # On retry after a merge that actually succeeded server-side, the
+                # PR is no longer open, so "already merged" / "not in the open
+                # state" responses are absorbed as success. All other non-zero
+                # exits (including transient API errors) throw to drive a retry.
+                Invoke-WithRetry -OperationName "gh pr merge ($OrgAndRepoName)" -ScriptBlock {
+                    $cap = Invoke-NativeCapture { gh pr merge $prUrl @mergeArgs }
+                    if ($cap.Code -ne 0) {
+                        if ($cap.All -match '(?i)already merged|has already been merged|not in the open state') {
+                            Write-Host "  PR for $OrgAndRepoName already merged; treating as success." -ForegroundColor Green
+                            return
+                        }
+                        throw "gh pr merge exited $($cap.Code) : $($cap.All)"
+                    }
+                } | Out-Null
                 $result.Merged = $true
                 Write-Host "  Merged PR for $OrgAndRepoName." -ForegroundColor Green
+            }
+            catch {
+                if ($MergeMustSucceed) {
+                    throw
+                }
+                Write-Warning "  Failed to merge PR for $OrgAndRepoName; leaving it open. $($_.Exception.Message)"
             }
         }
 
         # Close any older open bot PRs (same title prefix) so only the latest
         # backfill PR remains. The just-opened PR is excluded; when it was
-        # merged above it is no longer open anyway.
+        # merged above it is no longer open anyway. This cleanup is best-effort:
+        # transient errors are retried, but a persistent failure only warns
+        # rather than failing the whole sync.
         if ($CloseOlderWithTitlePrefix) {
-            $openPrsJson = gh pr list --repo $OrgAndRepoName --state open --base $BaseBranch --json number,url,title
-            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($openPrsJson)) {
+            $openPrsJson = $null
+            try {
+                $openPrsJson = Invoke-WithRetry -OperationName "gh pr list ($OrgAndRepoName)" -ScriptBlock {
+                    $cap = Invoke-NativeCapture { gh pr list --repo $OrgAndRepoName --state open --base $BaseBranch --json number,url,title }
+                    if ($cap.Code -ne 0) { throw "gh pr list exited $($cap.Code) : $($cap.All)" }
+                    $cap.StdOut
+                }
+            }
+            catch {
+                Write-Warning "  Failed to list open PRs for $OrgAndRepoName; skipping cleanup. $($_.Exception.Message)"
+            }
+            if (-not [string]::IsNullOrWhiteSpace($openPrsJson)) {
                 $openPrs = $openPrsJson | ConvertFrom-Json
                 foreach ($openPr in $openPrs) {
                     if ($openPr.url -eq $prUrl) { continue }
                     if (-not $openPr.title.StartsWith($CloseOlderWithTitlePrefix)) { continue }
                     Write-Host "  Closing superseded PR $($openPr.url)..." -ForegroundColor DarkGray
-                    gh pr close $openPr.number --repo $OrgAndRepoName --delete-branch
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Warning "  Failed to close superseded PR $($openPr.url)."
+                    try {
+                        # A retry after a successful close finds the PR already
+                        # closed; that signal is absorbed as success.
+                        Invoke-WithRetry -OperationName "gh pr close $($openPr.number) ($OrgAndRepoName)" -ScriptBlock {
+                            $cap = Invoke-NativeCapture { gh pr close $openPr.number --repo $OrgAndRepoName --delete-branch }
+                            if ($cap.Code -ne 0) {
+                                if ($cap.All -match '(?i)already closed|not in the open state|Not Found|HTTP 404') {
+                                    return
+                                }
+                                throw "gh pr close exited $($cap.Code) : $($cap.All)"
+                            }
+                        } | Out-Null
+                    }
+                    catch {
+                        Write-Warning "  Failed to close superseded PR $($openPr.url). $($_.Exception.Message)"
                     }
                 }
             }
