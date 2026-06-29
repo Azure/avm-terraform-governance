@@ -23,7 +23,7 @@
         "avm-res-documentdb-mongocluster",
         "avm-res-compute-disk",
         "avm-res-dbformysql-flexibleserver",
-        "avm-res-azurestackhci-virtualmachineinstance"
+        "avm-res-cdn-profile"
       ],
       "topics": [
         "canary"
