@@ -28,6 +28,12 @@
 #     UpdatedPaths = managed paths whose contents changed
 #   }
 
+# Self-sufficient when dot-sourced standalone: load the retry helpers if
+# Invoke-WithRetry is not already in scope.
+if (-not (Get-Command Invoke-WithRetry -ErrorAction SilentlyContinue)) {
+    . (Join-Path $PSScriptRoot "RetryHelpers.ps1")
+}
+
 function Get-MatchingDeprecatedPaths {
     param(
         [string[]]$candidatePaths,
@@ -265,8 +271,6 @@ function Sync-RepoFiles {
     }
 
     $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("avm-sync-" + [System.Guid]::NewGuid().ToString())
-    $commitAuthorName = "azure-verified-modules[bot]"
-    $commitAuthorEmail = "1049636+azure-verified-modules[bot]@users.noreply.github.com"
     $timestamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss")
     $branchName = "avm-bot/managed-files-sync-$timestamp"
     $prTitle = "chore: sync managed files [skip ci]"
@@ -278,18 +282,24 @@ function Sync-RepoFiles {
         # authenticate via $env:GH_TOKEN without ever embedding the token
         # in a URL (which would leak into process listings, git remote
         # config, and reflogs).
-        gh auth setup-git
-        if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git exited $LASTEXITCODE" }
+        Invoke-WithRetry -OperationName "gh auth setup-git ($orgAndRepoName)" -ScriptBlock {
+            $cap = Invoke-NativeCapture { gh auth setup-git }
+            if ($cap.Code -ne 0) { throw "gh auth setup-git exited $($cap.Code) : $($cap.All)" }
+        } | Out-Null
 
         Write-Host "  Cloning $orgAndRepoName into $tempDir..." -ForegroundColor DarkGray
-        gh repo clone $orgAndRepoName $tempDir -- --quiet --depth 1 --branch $defaultBranch
-        if ($LASTEXITCODE -ne 0) { throw "gh repo clone exited $LASTEXITCODE" }
+        Invoke-WithRetry -OperationName "gh repo clone $orgAndRepoName" -ScriptBlock {
+            # Clear any partial clone from a prior attempt so a retry is not
+            # blocked by "destination path already exists".
+            if (Test-Path -LiteralPath $tempDir) {
+                Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            $cap = Invoke-NativeCapture { gh repo clone $orgAndRepoName $tempDir -- --quiet --depth 1 --branch $defaultBranch }
+            if ($cap.Code -ne 0) { throw "gh repo clone exited $($cap.Code) : $($cap.All)" }
+        } | Out-Null
 
         Push-Location $tempDir
         try {
-            git checkout -q -b $branchName
-            if ($LASTEXITCODE -ne 0) { throw "git checkout -b $branchName exited $LASTEXITCODE" }
-
             foreach ($path in $toRemove) {
                 git rm -r -f -- $path | Out-Null
                 if ($LASTEXITCODE -ne 0) {
@@ -321,47 +331,21 @@ function Sync-RepoFiles {
                 }
             }
 
-            $status = git status --porcelain
-            if ([string]::IsNullOrWhiteSpace($status)) {
+            $pr = Submit-AvmBotPullRequest `
+                -OrgAndRepoName $orgAndRepoName `
+                -BaseBranch $defaultBranch `
+                -BranchName $branchName `
+                -CommitMessage $commitMessage `
+                -PrTitle $prTitle `
+                -PrBody $prBody `
+                -MergeSubject $commitMessage `
+                -Merge `
+                -MergeMustSucceed `
+                -SkipGitAuthSetup
+            if (-not $pr.Changed) {
                 Write-Warning "  No staged changes after applying mutations; skipping commit/PR."
                 return $result
             }
-
-            git -c "user.name=$commitAuthorName" -c "user.email=$commitAuthorEmail" commit -q -m $commitMessage
-            if ($LASTEXITCODE -ne 0) { throw "git commit exited $LASTEXITCODE" }
-
-            git push --quiet --set-upstream origin $branchName
-            if ($LASTEXITCODE -ne 0) { throw "git push exited $LASTEXITCODE" }
-
-            Write-Host "  Pushed sync branch $branchName; opening PR..." -ForegroundColor DarkGray
-            $prCreateOutput = gh pr create `
-                --repo $orgAndRepoName `
-                --base $defaultBranch `
-                --head $branchName `
-                --title $prTitle `
-                --body $prBody
-            if ($LASTEXITCODE -ne 0) { throw "gh pr create exited $LASTEXITCODE" }
-            # `gh pr create` normally writes a single line (the PR URL) to
-            # stdout, but defend against future status lines by taking the
-            # last non-empty line.
-            $prUrl = (@($prCreateOutput) | Where-Object { $_ -and $_.ToString().Trim() -ne "" } | Select-Object -Last 1).ToString().Trim()
-            if ([string]::IsNullOrWhiteSpace($prUrl)) { throw "gh pr create returned no URL on stdout" }
-            Write-Host "  Opened PR: $prUrl" -ForegroundColor DarkGray
-
-            # `--admin` lets the AVM GitHub App use its ruleset bypass to
-            # merge immediately without waiting for required checks; the
-            # commit subject is forced so the squashed commit on default
-            # also carries `[skip ci]` and does not retrigger downstream
-            # workflows.
-            gh pr merge $prUrl `
-                --repo $orgAndRepoName `
-                --squash `
-                --admin `
-                --delete-branch `
-                --subject $commitMessage `
-                --body ""
-            if ($LASTEXITCODE -ne 0) { throw "gh pr merge exited $LASTEXITCODE" }
-            Write-Host "  Merged PR for $orgAndRepoName." -ForegroundColor Green
 
             $result.RemovedPaths = $toRemove
             $result.AddedPaths = $toAdd

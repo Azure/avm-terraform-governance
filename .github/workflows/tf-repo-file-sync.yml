@@ -1,8 +1,7 @@
 ---
-name: Repository Sync
+name: Repository File Sync
 
 on:
-  repository_dispatch:
   workflow_dispatch:
     inputs:
       repositories:
@@ -17,15 +16,10 @@ on:
         description: 'Whether to only plan the changes'
         default: true
         type: boolean
-      force_user_removal:
-        description: 'Force removal of users with direct access, even if they are JIT elevated.'
-        default: false
-        type: boolean
   schedule:
-    - cron: '33 */4 * * 1-5'
+    - cron: '13 */4 * * 1-5'
 
 permissions:
-  id-token: write
   contents: read
 
 defaults:
@@ -49,12 +43,12 @@ jobs:
         uses: ./.github/actions/avm-repos
         id: matrix
         with:
-          repositories: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories, 'All') }}
-          repositoriesToSkip: ${{ case(github.event_name == 'workflow_dispatch', inputs.repositories_to_skip, 'terraform-azurerm-avm-template') }}
+          repositories: ${{ github.event_name == 'workflow_dispatch' && inputs.repositories || 'All' }}
+          repositoriesToSkip: ${{ github.event_name == 'workflow_dispatch' && inputs.repositories_to_skip || 'terraform-azurerm-avm-template' }}
           clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
           privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
 
-  run-sync:
+  run-file-sync:
     name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
     runs-on: ubuntu-latest
     environment: avm
@@ -68,12 +62,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          terraform_version: latest
-          terraform_wrapper: false
-
       - name: Create GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -82,64 +70,29 @@ jobs:
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Download Labels CSV File
-        run: |
-          ./scripts/Get-AvmLabels.ps1
-        shell: pwsh
-
-      - name: Run Sync for ${{ matrix.repoId }}
+      - name: Run File Sync for ${{ matrix.repoId }}
         run: |
 
           $triggerType = "${{ github.event_name }}"
 
           $planOnly = $false
-          $forceUserRemoval = $false
 
           if($triggerType -eq "workflow_dispatch") {
             $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
-            $forceUserRemoval = "${{ inputs.force_user_removal }}".ToLower() -eq "true"
           }
 
-          Write-Output "Token: $env:GH_TOKEN"
-          Write-Output "Repositories: $repositories"
+          Write-Output "Repositories: ${{ inputs.repositories }}"
           Write-Output "Plan Only: $planOnly"
-          Write-Output "Force User Removal: $forceUserRemoval"
 
-          $testSubscriptionIds = $env:TEST_SUBSCRIPTION_IDS | ConvertFrom-Json
-
-          $repoMetaDataJson = $env:REPO_META_DATA_JSON
-          $repoMetaData = $null
-          if ($repoMetaDataJson -and $repoMetaDataJson -ne 'null') {
-            $repoMetaData = $repoMetaDataJson | ConvertFrom-Json
-          }
-
-          Write-Host "Authenticating gh cli"
-          gh auth login -h "GitHub.com"
-          Write-Host "Running repo sync"
-          ./scripts/Invoke-RepositoryConfigSync.ps1 `
+          ./scripts/Invoke-RepositoryFileSync.ps1 `
             -planOnly $planOnly `
-            -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
-            -testSubscriptionIds $testSubscriptionIds `
-            -stateStorageAccountName "${{ secrets.STORAGE_ACCOUNT_NAME }}" `
-            -stateResourceGroupName "${{ secrets.STORAGE_ACCOUNT_RESOURCE_GROUP_NAME }}" `
-            -stateContainerName "${{ secrets.STORAGE_ACCOUNT_CONTAINER_NAME }}" `
-            -identityResourceGroupName "${{ secrets.IDENTITY_RESOURCE_GROUP_NAME }}" `
             -repoId "${{ matrix.repoId }}" `
             -repoUrl "${{ matrix.repoUrl }}" `
-            -repoMetaData $repoMetaData `
-            -outputDirectory "${{ github.workspace }}" `
-            -forceUserRemoval:$forceUserRemoval
+            -outputDirectory "${{ github.workspace }}"
 
         shell: pwsh
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-          ARM_USE_AZUREAD: true
-          ARM_USE_OIDC: true
-          TEST_SUBSCRIPTION_IDS: ${{ secrets.TEST_SUBSCRIPTION_IDS }}
-          REPO_META_DATA_JSON: ${{ toJson(matrix.repoMetaData) }}
 
       - name: Upload Issue Logs Json
         if: always() && hashFiles('issue.log.json') != ''
