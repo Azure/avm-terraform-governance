@@ -13,7 +13,6 @@
   "repositoryGroups": [
     {
       "name": "canary",
-      "managedFilesAdditional": "canary",
       "repositories": [
         "avm-ptn-example-repo",
         "avm-res-devopsinfrastructure-pool",
