@@ -6,7 +6,8 @@
 module "test" {
   source = "../../"
 
-  location = "westus3"
+  location                 = "westus3"
+  create_example_resources = var.create_example_resources
 }
 ```
 
@@ -28,11 +29,23 @@ No required inputs.
 
 ## Optional Inputs
 
-No optional inputs.
+The following input variables are optional (have default values):
+
+### <a name="input_create_example_resources"></a> [create\_example\_resources](#input\_create\_example\_resources)
+
+Description: Whether to create the example resources in the wrapped module.
+
+Type: `bool`
+
+Default: `false`
 
 ## Outputs
 
-No outputs.
+The following outputs are exported:
+
+### <a name="output_resource_id"></a> [resource\_id](#output\_resource\_id)
+
+Description: The ID of the resource created by the wrapped module.
 
 ## Modules
 
