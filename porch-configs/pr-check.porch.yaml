@@ -54,10 +54,10 @@ commands:
           - type: shell
             name: clean terraform
             command_line: |
-              echo $(pwd) && \
-              find . -type d -name .terraform | xargs -n1 rm -rf && \
-              find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-              find . -type f -name *.tfstate* | xargs -n1 rm -f
+              echo "$(pwd)"
+              find . -type d -name '.terraform' -prune -exec rm -rf {} +
+              find . -type f -name '.terraform.lock.hcl' -exec rm -f {} +
+              find . -type f -name '*.tfstate*' -exec rm -f {} +
 
           # tflint
           - type: serial
@@ -227,10 +227,10 @@ commands:
       - type: shell
         name: Clean Terraform
         command_line: |
-          echo $(pwd) && \
-          find . -type d -name .terraform | xargs -n1 rm -rf && \
-          find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-          find . -type f -name *.tfstate* | xargs -n1 rm -f
+          echo "$(pwd)"
+          find . -type d -name '.terraform' -prune -exec rm -rf {} +
+          find . -type f -name '.terraform.lock.hcl' -exec rm -f {} +
+          find . -type f -name '*.tfstate*' -exec rm -f {} +
 
       - type: foreachdirectory
         name: well architected
