@@ -19,6 +19,11 @@
 #     item's `projectItems`). `addProjectV2ItemById` is itself idempotent, so
 #     this is belt-and-braces and keeps the run rate-limit friendly.
 #   * With -planOnly, logs what WOULD be added without mutating the project.
+#   * -lookbackDays (default 3) bounds each run to items updated in the last N
+#     days: enumeration is ordered newest-updated-first and stops paging as soon
+#     as it crosses the cutoff, so steady-state runs fetch ~1 page per collection.
+#     -lookbackDays 0 disables the look-back and sweeps everything not already on
+#     the project (the one-off initial back-fill).
 #
 # All GitHub GraphQL calls (queries and the add mutation) are routed through
 # Invoke-GitHubCliWithRetry with incremental back-off and an extended retry-match
@@ -31,6 +36,7 @@ param(
     [string]$projectOwner = "Azure",
     [int]$projectNumber = 1011,
     [bool]$includeClosed = $false,
+    [int]$lookbackDays = 3,
     [bool]$planOnly = $false,
     [string]$outputDirectory = "."
 )
@@ -74,7 +80,6 @@ function Invoke-GhGraphQl {
         [string]$query,
         [string[]]$stringFields = @(), # passed via -f (always string)
         [string[]]$typedFields = @(),  # passed via -F (magic int/bool/null conversion)
-        [switch]$paginate,
         [int]$maxRetries = 10
     )
 
@@ -82,11 +87,6 @@ function Invoke-GhGraphQl {
     Set-Content -Path $queryFile -Value $query -Encoding utf8
 
     $arguments = @("api", "graphql")
-    if ($paginate) {
-        # Native GraphQL pagination: gh walks $endCursor/pageInfo itself and
-        # --slurp wraps every page into a single outer JSON array.
-        $arguments += @("--paginate", "--slurp")
-    }
     $arguments += @("-F", "query=@$($queryFile.FullName)")
     foreach ($field in $stringFields) { $arguments += @("-f", $field) }
     foreach ($field in $typedFields) { $arguments += @("-F", $field) }
@@ -152,16 +152,21 @@ query($owner: String!, $number: Int!) {
     return $null
 }
 
-# Enumerates every node in a repository collection ("issues" or "pullRequests")
-# for the given GraphQL states, returning a flat array of nodes each carrying its
-# node id, number, (isDraft for PRs) and projectItems membership.
+# Enumerates nodes in a repository collection ("issues" or "pullRequests") for
+# the given GraphQL states, newest-updated-first. Walks the cursor manually so we
+# can stop as soon as an item older than $cutoffUtc is seen (every later node is
+# older, given the UPDATED_AT DESC ordering) - this is the look-back that keeps
+# steady-state runs cheap. A $cutoffUtc of [datetime]::MinValue means "no
+# look-back" (full sweep). Returns @{ Nodes = <array>; RateRemaining = <int?> }
+# so the caller can surface remaining GraphQL budget, or $null on hard failure.
 function Get-RepositoryItems {
     param(
         [string]$owner,
         [string]$name,
         [ValidateSet("issues", "pullRequests")]
         [string]$collection,
-        [string]$statesGql
+        [string]$statesGql,
+        [datetime]$cutoffUtc = [datetime]::MinValue
     )
 
     $extraFields = ""
@@ -169,16 +174,22 @@ function Get-RepositoryItems {
 
     # Single-quoted template with placeholder tokens avoids escaping the GraphQL
     # `$owner`/`$name`/`$endCursor` variables against PowerShell interpolation.
+    # `rateLimit { remaining }` is essentially free and gives per-repo observability
+    # of the remaining primary GraphQL budget. `projectItems(first: 20)` is ample
+    # for the membership check (an item on >20 projects would just be re-added,
+    # which is idempotent).
     $template = @'
 query($owner: String!, $name: String!, $endCursor: String) {
+  rateLimit { remaining }
   repository(owner: $owner, name: $name) {
-    __COLLECTION__(states: [__STATES__], first: 100, after: $endCursor) {
+    __COLLECTION__(states: [__STATES__], first: 100, after: $endCursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
       pageInfo { hasNextPage endCursor }
       nodes {
         id
         number
+        updatedAt
         __EXTRA__
-        projectItems(first: 100) { nodes { project { number } } }
+        projectItems(first: 20) { nodes { project { number } } }
       }
     }
   }
@@ -186,20 +197,49 @@ query($owner: String!, $name: String!, $endCursor: String) {
 '@
     $query = $template.Replace("__COLLECTION__", $collection).Replace("__STATES__", $statesGql).Replace("__EXTRA__", $extraFields)
 
-    $result = Invoke-GhGraphQl -query $query -stringFields @("owner=$owner", "name=$name") -paginate
-    if (-not $result.success) {
-        return $null
-    }
-
     $nodes = @()
-    foreach ($page in @($result.output)) {
-        $connection = $page.data.repository.$collection
-        if ($connection -and $connection.nodes) {
-            $nodes += $connection.nodes
+    $endCursor = $null
+    $rateRemaining = $null
+    $reachedCutoff = $false
+    $useCutoff = $cutoffUtc -gt [datetime]::MinValue
+
+    while ($true) {
+        $stringFields = @("owner=$owner", "name=$name")
+        # $endCursor is a nullable String; omit it on the first page so gh sends
+        # null (an absent nullable variable is treated as null by GraphQL).
+        if ($endCursor) { $stringFields += "endCursor=$endCursor" }
+
+        $result = Invoke-GhGraphQl -query $query -stringFields $stringFields
+        if (-not $result.success) {
+            return $null
         }
+
+        $data = $result.output.data
+        if ($data.rateLimit -and $null -ne $data.rateLimit.remaining) {
+            $rateRemaining = [int]$data.rateLimit.remaining
+        }
+
+        $connection = $data.repository.$collection
+        if (-not $connection) { break }
+
+        foreach ($node in @($connection.nodes)) {
+            if ($useCutoff -and $node.updatedAt) {
+                $nodeUpdatedUtc = ([datetimeoffset]$node.updatedAt).UtcDateTime
+                if ($nodeUpdatedUtc -lt $cutoffUtc) {
+                    # Newest-first ordering guarantees every later node is older.
+                    $reachedCutoff = $true
+                    break
+                }
+            }
+            $nodes += $node
+        }
+
+        if ($reachedCutoff) { break }
+        if (-not $connection.pageInfo.hasNextPage) { break }
+        $endCursor = $connection.pageInfo.endCursor
     }
 
-    return , $nodes
+    return @{ Nodes = @($nodes); RateRemaining = $rateRemaining }
 }
 
 # Returns $true if the item's projectItems already include the target project.
@@ -237,7 +277,7 @@ $repoName = $repoSplit[4]
 $orgAndRepoName = "$orgName/$repoName"
 
 Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
-Write-Host "Adding issues/PRs for $orgAndRepoName to project $projectOwner/$projectNumber (includeClosed=$includeClosed, planOnly=$planOnly)" -ForegroundColor Green
+Write-Host "Adding issues/PRs for $orgAndRepoName to project $projectOwner/$projectNumber (includeClosed=$includeClosed, lookbackDays=$lookbackDays, planOnly=$planOnly)" -ForegroundColor Green
 Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
 $project = Resolve-ProjectV2Id -owner $projectOwner -number $projectNumber
@@ -261,6 +301,22 @@ $projectId = $project.Id
 Write-Host "Resolved project '$($project.Title)' -> $projectId"
 
 # ---------------------------------------------------------------------------
+# Look-back cutoff. A value > 0 bounds each run to items updated within the last
+# N days (enumeration is newest-first and stops paging once it crosses the
+# cutoff). A value <= 0 disables the look-back and sweeps everything not already
+# on the project (the one-off initial back-fill). [datetime]::MinValue is the
+# "no look-back" sentinel that Get-RepositoryItems understands.
+# ---------------------------------------------------------------------------
+if ($lookbackDays -gt 0) {
+    $cutoffUtc = [datetime]::UtcNow.AddDays(-$lookbackDays)
+    Write-Host "Look-back: last $lookbackDays day(s) - items updated on/after $($cutoffUtc.ToString('u'))"
+}
+else {
+    $cutoffUtc = [datetime]::MinValue
+    Write-Host "Look-back: disabled - full sweep of all items not already on the project"
+}
+
+# ---------------------------------------------------------------------------
 # Build the work list: collection -> GraphQL states
 # ---------------------------------------------------------------------------
 $collections = @(
@@ -273,10 +329,11 @@ $totalAlready = 0
 $totalAdded = 0
 $totalWouldAdd = 0
 $totalFailed = 0
+$rateRemaining = $null
 
 foreach ($collection in $collections) {
-    $items = Get-RepositoryItems -owner $orgName -name $repoName -collection $collection.Name -statesGql $collection.States
-    if ($null -eq $items) {
+    $itemsResult = Get-RepositoryItems -owner $orgName -name $repoName -collection $collection.Name -statesGql $collection.States -cutoffUtc $cutoffUtc
+    if ($null -eq $itemsResult) {
         $message = "Failed to enumerate $($collection.Name) (states: $($collection.States)) for $orgAndRepoName after retries."
         Write-Warning $message
         $issueLog = Add-IssueToLog `
@@ -288,6 +345,9 @@ foreach ($collection in $collections) {
             -issueLogFile $projectLogFile
         continue
     }
+
+    $items = @($itemsResult.Nodes)
+    if ($null -ne $itemsResult.RateRemaining) { $rateRemaining = $itemsResult.RateRemaining }
 
     Write-Host "Found $($items.Count) $($collection.Name) (states: $($collection.States)) for $orgAndRepoName"
     $totalFound += $items.Count
@@ -342,6 +402,9 @@ if ($planOnly) {
 else {
     Write-Host "  added:        $totalAdded"
     Write-Host "  failed:       $totalFailed"
+}
+if ($null -ne $rateRemaining) {
+    Write-Host "  graphql budget remaining: $rateRemaining"
 }
 
 if ($issueLog.Count -gt 0) {
