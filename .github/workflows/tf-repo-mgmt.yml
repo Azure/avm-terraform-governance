@@ -29,10 +29,6 @@ on:
         description: 'Also add closed issues and closed/merged PRs to the project (heavy historical back-fill). Off by default.'
         default: false
         type: boolean
-      project_url:
-        description: 'The GitHub Project (ProjectV2) URL to add each repository''s issues and PRs to.'
-        default: 'https://github.com/orgs/Azure/projects/1011'
-        type: string
       project_lookback_days:
         description: 'Only add issues/PRs updated in the last N days (keeps runs under API rate limits). Use 0 to disable the look-back and sweep everything not already on the project (one-off initial back-fill).'
         default: '3'
@@ -43,6 +39,12 @@ on:
 permissions:
   id-token: write
   contents: read
+
+env:
+  # The GitHub Project (ProjectV2) that every AVM Terraform repo's issues and PRs
+  # are synced into ("AVM All Up"). A central, fixed target, so it lives here as a
+  # single workflow constant rather than a per-run input.
+  PROJECT_URL: 'https://github.com/orgs/Azure/projects/1011'
 
 defaults:
   run:
@@ -190,7 +192,7 @@ jobs:
 
           $planOnly = $false
           $includeClosed = $false
-          $projectUrl = "https://github.com/orgs/Azure/projects/1011"
+          $projectUrl = $env:PROJECT_URL
           # Default look-back: scheduled/dispatch-by-event runs only consider items
           # updated in the last 3 days, which keeps steady-state runs well under the
           # GitHub API rate limits. A manual dispatch can override this (0 = full
@@ -200,9 +202,6 @@ jobs:
           if ($triggerType -eq "workflow_dispatch") {
             $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
             $includeClosed = "${{ inputs.include_closed_project_items }}".ToLower() -eq "true"
-            if ("${{ inputs.project_url }}".Trim() -ne "") {
-              $projectUrl = "${{ inputs.project_url }}"
-            }
             $parsedLookback = 0
             if ([int]::TryParse("${{ inputs.project_lookback_days }}".Trim(), [ref]$parsedLookback)) {
               $lookbackDays = $parsedLookback
