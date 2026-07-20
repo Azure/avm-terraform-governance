@@ -1,0 +1,127 @@
+---
+name: dependabot-precommit
+
+# Runs pre-commit (fmt, terraform-docs, etc.) against open Dependabot PR branches
+# across the AVM Terraform module fleet and pushes the regenerated files back to
+# each PR branch, so the module's own "PR Check (Lint, Format, Validate)" passes.
+#
+# Why this exists: Dependabot only edits the version string in a manifest; it cannot
+# run repo hooks, so provider/module bumps leave generated docs (README version
+# tables) stale and the docs check fails. This workflow closes that gap centrally,
+# reusing the same GitHub App token + repo matrix + ./avm pre-commit pattern as
+# pre-commit-cron.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: "Override the target repositories, use a comma separated list. Leave as All to run on all repositories."
+        default: "All"
+        type: string
+  # Dependabot opens/updates PRs on its weekly schedule (Mondays); run a little
+  # afterwards to fix them up. Left commented to match pre-commit-cron.yml's
+  # dispatch-first posture — enable when ready.
+  # schedule:
+  #   - cron: "17 7 * * 1"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    environment: avm
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Generate Matrix
+        uses: ./.github/actions/avm-repos
+        id: matrix
+        with:
+          repositories: ${{ inputs.repositories }}
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+  fix-dependabot-prs:
+    name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
+    runs-on: ubuntu-latest
+    environment: avm
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrixParallel) }}
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.repoName }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: List open Dependabot PRs
+        id: list
+        run: |
+          prs=$(gh pr list --repo "${{ matrix.repoFullName }}" --state open --app dependabot --json number,headRefName)
+          echo "count=$(echo "$prs" | jq 'length')" >> "$GITHUB_OUTPUT"
+          # Compact single-line JSON so it survives as a step output.
+          echo "prs=$(echo "$prs" | jq -c '.')" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Apply pre-commit to each Dependabot PR branch
+        if: steps.list.outputs.count != '0'
+        run: |
+          set -uo pipefail
+
+          git config --global user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config --global user.email "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${{ matrix.repoFullName }}.git" repo
+          cd repo
+
+          echo '${{ steps.list.outputs.prs }}' | jq -c '.[]' | while read -r pr; do
+            number=$(echo "$pr" | jq -r '.number')
+            branch=$(echo "$pr" | jq -r '.headRefName')
+            echo "::group::PR #${number} (${branch})"
+
+            git fetch origin "${branch}"
+            git checkout -B "${branch}" "origin/${branch}"
+
+            # pre-commit intentionally returns non-zero when it modifies files, so we
+            # don't treat that as fatal; run twice (fix, then verify) like pre-commit-cron.
+            chmod a+x ./avm
+            ./avm pre-commit || ./avm pre-commit || true
+
+            if [ -z "$(git status --porcelain)" ]; then
+              echo "No pre-commit changes for PR #${number}"
+              echo "::endgroup::"
+              continue
+            fi
+
+            git add .
+            git commit -m "chore(deps): apply pre-commit fixes"
+            git push origin "HEAD:${branch}"
+            echo "Pushed pre-commit fixes to PR #${number}"
+            echo "::endgroup::"
+          done
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
