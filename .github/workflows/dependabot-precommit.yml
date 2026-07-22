@@ -80,7 +80,12 @@ jobs:
       - name: List open Dependabot PRs
         id: list
         run: |
-          prs=$(gh pr list --repo "${{ matrix.repoFullName }}" --state open --app dependabot --json number,headRefName)
+          # Only Terraform-ecosystem Dependabot PRs need pre-commit: they bump
+          # provider/module versions that feed the generated README tables. The
+          # github-actions ecosystem PRs produce no pre-commit diff, so filter
+          # them out up front (by the label dependabot.yml stamps on Terraform
+          # PRs) to avoid a wasted clone + pre-commit run on each one.
+          prs=$(gh pr list --repo "${{ matrix.repoFullName }}" --state open --app dependabot --label "Language: Terraform :globe_with_meridians:" --json number,headRefName)
           echo "count=$(echo "$prs" | jq 'length')" >> "$GITHUB_OUTPUT"
           # Compact single-line JSON so it survives as a step output.
           echo "prs=$(echo "$prs" | jq -c '.')" >> "$GITHUB_OUTPUT"
