@@ -18,11 +18,10 @@ on:
         description: "Override the target repositories, use a comma separated list. Leave as All to run on all repositories."
         default: "All"
         type: string
-  # Dependabot opens/updates PRs on its weekly schedule (Mondays); run a little
-  # afterwards to fix them up. Left commented to match pre-commit-cron.yml's
-  # dispatch-first posture — enable when ready.
-  # schedule:
-  #   - cron: "17 7 * * 1"
+  # Runs after Monday Dependabot updates; workflow_dispatch remains available
+  # for scoped or manual runs.
+  schedule:
+    - cron: "17 7 * * 1"
 
 permissions:
   id-token: write
@@ -111,7 +110,7 @@ jobs:
             # pre-commit intentionally returns non-zero when it modifies files, so we
             # don't treat that as fatal; run twice (fix, then verify) like pre-commit-cron.
             chmod a+x ./avm
-            ./avm pre-commit || ./avm pre-commit || true
+            ./avm pre-commit || ./avm pre-commit
 
             if [ -z "$(git status --porcelain)" ]; then
               echo "No pre-commit changes for PR #${number}"
