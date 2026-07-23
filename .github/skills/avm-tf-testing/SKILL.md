@@ -14,7 +14,7 @@ tests/integration/                → "does it interact correctly with Azure?"  
 ```
 
 Authoritative sources:
-- <https://azure.github.io/Azure-Verified-Modules/contributing/terraform/testing/>
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/contributing/terraform/_index.md>
 - Microsoft's in-repo skill at `.agents/skills/avm-terraform-module-development/references/terraform-test.md` and `example-test.md` (read these when you're inside a module repo — they're the most up-to-date reference)
 - `Makefile` and `./avm` script in any AVM TF repo
 

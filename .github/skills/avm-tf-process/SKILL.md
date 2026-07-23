@@ -8,22 +8,22 @@ description: Use this skill whenever a contributor is going through the AVM cont
 End-to-end: from "I want to build an AVM module for X" to a published `0.1.0` on the Terraform Registry, then ongoing PR flow.
 
 Authoritative sources:
-- <https://azure.github.io/Azure-Verified-Modules/contributing/process/>
-- <https://azure.github.io/Azure-Verified-Modules/contributing/terraform/>
-- <https://azure.github.io/Azure-Verified-Modules/specs/tf/res/> (Contribution/Support section)
-- [SNFR8](https://azure.github.io/Azure-Verified-Modules/spec/SNFR8) — Module Owner(s) GitHub
-- [SNFR9](https://azure.github.io/Azure-Verified-Modules/spec/SNFR9) — AVM & PG Teams GitHub Repo Permissions
-- [SNFR10](https://azure.github.io/Azure-Verified-Modules/spec/SNFR10) — MIT Licensing
-- [SNFR23](https://azure.github.io/Azure-Verified-Modules/spec/SNFR23) — GitHub Repo Labels
-- [TFNFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFNFR3) — Branch Protection
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/contributing/process.md>
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/contributing/terraform/_index.md>
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/specs/terraform/resource.md> (Contribution/Support section)
+- [SNFR8](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR8.md) — Module Owner(s) GitHub
+- [SNFR9](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR9.md) — AVM & PG Teams GitHub Repo Permissions
+- [SNFR10](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR10.md) — MIT Licensing
+- [SNFR23](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR23.md) — GitHub Repo Labels
+- [TFNFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR3.md) — Branch Protection
 
 ## Step 1 — Propose the module
 
 Open a [module proposal issue](https://aka.ms/AVM/ModuleProposal) on `Azure/Azure-Verified-Modules`. Include the items listed in `avm-tf-lifecycle` (name, class, language=Terraform, description, owner if known).
 
-The AVM core team triages. If accepted, the module name is added to the Terraform [module index](https://azure.github.io/Azure-Verified-Modules/indexes/) and labelled `Status: Owners Identified 🤘` → `Status: Ready For Repository Creation 📝` → `Status: Repository Created 📄` as the process proceeds.
+The AVM core team triages. If accepted, the module name is added to the Terraform [module index](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/indexes/_index.md) and labelled `Status: Owners Identified 🤘` → `Status: Ready For Repository Creation 📝` → `Status: Repository Created 📄` as the process proceeds.
 
-**Today, the module owner MUST be a Microsoft FTE** ([SNFR8](https://azure.github.io/Azure-Verified-Modules/spec/SNFR8)). Community contributors can submit PRs to existing modules from forks, but owning a module requires a Microsoft email address.
+**Today, the module owner MUST be a Microsoft FTE** ([SNFR8](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR8.md)). Community contributors can submit PRs to existing modules from forks, but owning a module requires a Microsoft email address.
 
 ## Step 2 — Get added to the owners team
 
@@ -56,7 +56,7 @@ The template ships with:
 
 ## Step 4 — Make the AVM team a repo admin
 
-Per [SNFR9](https://azure.github.io/Azure-Verified-Modules/spec/SNFR9), the module owner **MUST** make these two GitHub teams admins on the repo:
+Per [SNFR9](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR9.md), the module owner **MUST** make these two GitHub teams admins on the repo:
 
 - `@Azure/avm-core-team-technical-terraform` — AVM core team
 - `@Azure/terraform-avm` — Terraform PG team
@@ -73,7 +73,7 @@ Edit `.github/CODEOWNERS`. The exact entry depends on the module — typical pat
 
 If there are multiple owners listed, the PR approval rules below apply.
 
-## Step 6 — Branch protection ([TFNFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFNFR3))
+## Step 6 — Branch protection ([TFNFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR3.md))
 
 Set on the default branch (`main`). All of the following **MUST** be enabled:
 
@@ -88,7 +88,7 @@ Set on the default branch (`main`). All of the following **MUST** be enabled:
 
 If you bootstrapped from the template, the bundled `.github/policies/branchprotection.yml` enforces most of this automatically.
 
-## Step 7 — Standard GitHub labels ([SNFR23](https://azure.github.io/Azure-Verified-Modules/spec/SNFR23))
+## Step 7 — Standard GitHub labels ([SNFR23](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR23.md))
 
 AVM uses a canonical label set across all module repos (Type/Status/Needs/Class/Language). Apply them with the [`Set-AvmGitHubLabels.ps1`](https://azure.github.io/Azure-Verified-Modules/scripts/Set-AvmGitHubLabels.ps1) script:
 
@@ -100,7 +100,7 @@ You need GitHub CLI installed and authenticated, and repo admin permissions. The
 
 ## Step 8 — License
 
-`LICENSE` **MUST** be MIT ([SNFR10](https://azure.github.io/Azure-Verified-Modules/spec/SNFR10)). The template ships with the correct file — don't replace it.
+`LICENSE` **MUST** be MIT ([SNFR10](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR10.md)). The template ships with the correct file — don't replace it.
 
 ## Step 9 — Build, test, publish
 
@@ -116,7 +116,7 @@ When the first PR merges, the release-please / semantic-release workflow cuts th
 
 ## Ongoing PR approval logic
 
-Per [contributing/process](https://azure.github.io/Azure-Verified-Modules/contributing/process/), who needs to approve a PR depends on (a) who submitted it and (b) how many owners the module has:
+Per [contributing/process](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/contributing/process.md), who needs to approve a PR depends on (a) who submitted it and (b) how many owners the module has:
 
 | | PR by a module owner | PR by anyone else |
 |---|---|---|
@@ -130,7 +130,7 @@ Bots auto-assign the expected reviewers based on these rules; you don't need to 
 ## Common pitfalls
 
 - **Creating the repo yourself before approval.** Don't — wait for the AVM core team. The repo's name, visibility, and team configuration depend on AVM tooling.
-- **Adding individual users to repo permissions** ([SNFR20](https://azure.github.io/Azure-Verified-Modules/spec/SNFR20)). All repo permissions go through GitHub teams. Add yourself to `avm-module-owners-terraform` via Core Identity; don't grant yourself direct repo access.
+- **Adding individual users to repo permissions** ([SNFR20](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR20.md)). All repo permissions go through GitHub teams. Add yourself to `avm-module-owners-terraform` via Core Identity; don't grant yourself direct repo access.
 - **Skipping the label script.** The AVM bots rely on the canonical labels — missing labels break triage automation.
 - **Forgetting that branch protection applies to admins.** TFNFR3 explicitly requires "enforced to administrators". A common mistake is leaving the admin-bypass checkbox enabled.
 - **Publishing as `1.0.0`.** Forbidden — see `avm-tf-lifecycle`. The release-please config in the template defaults to `0.x.y`; don't override it.

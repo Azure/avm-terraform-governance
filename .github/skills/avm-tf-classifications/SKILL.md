@@ -8,33 +8,33 @@ description: Use this skill whenever a contributor is deciding what KIND of Azur
 Every AVM module is exactly one of three classes. The class drives the naming convention, the repo name, the spec set that applies, and the review process.
 
 Authoritative sources:
-- <https://azure.github.io/Azure-Verified-Modules/specs/shared/module-classifications/>
-- [RMNFR1 — Resource Module Naming](https://azure.github.io/Azure-Verified-Modules/spec/RMNFR1)
-- [PMNFR1 — Pattern Module Naming](https://azure.github.io/Azure-Verified-Modules/spec/PMNFR1)
-- [RMFR1 — Single Resource Only](https://azure.github.io/Azure-Verified-Modules/spec/RMFR1)
-- [RMFR2 — No Resource Wrapper Modules](https://azure.github.io/Azure-Verified-Modules/spec/RMFR2)
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/module-classifications.md>
+- [RMNFR1 — Resource Module Naming](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/non-functional/RMNFR1.md)
+- [PMNFR1 — Pattern Module Naming](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/pattern/non-functional/PMNFR1.md)
+- [RMFR1 — Single Resource Only](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR1.md)
+- [RMFR2 — No Resource Wrapper Modules](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR2.md)
 
 ## The three classes
 
 ### Resource module (`avm-res-`)
 
-Deploys **a single instance of one primary Azure resource** ([RMFR1](https://azure.github.io/Azure-Verified-Modules/spec/RMFR1)) — e.g. one Key Vault, one Storage Account, one Search Service — plus the standard cross-cutting interfaces (lock, RBAC, diagnostic settings, private endpoints, etc. — see `avm-tf-interfaces`) and child resources that don't add value as standalone modules.
+Deploys **a single instance of one primary Azure resource** ([RMFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR1.md)) — e.g. one Key Vault, one Storage Account, one Search Service — plus the standard cross-cutting interfaces (lock, RBAC, diagnostic settings, private endpoints, etc. — see `avm-tf-interfaces`) and child resources that don't add value as standalone modules.
 
 > If a consumer needs N instances of the resource, they call the module N times. The module itself never loops over the primary resource.
 
-**Must add value over raw `azapi_resource`** ([RMFR2](https://azure.github.io/Azure-Verified-Modules/spec/RMFR2)) — usually via the standard interfaces, validation, and sensible WAF-aligned defaults. If your module is a thin wrapper that just passes inputs through to a single `azapi_resource`, you don't have a resource module — you have a useless module.
+**Must add value over raw `azapi_resource`** ([RMFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR2.md)) — usually via the standard interfaces, validation, and sensible WAF-aligned defaults. If your module is a thin wrapper that just passes inputs through to a single `azapi_resource`, you don't have a resource module — you have a useless module.
 
 ### Pattern module (`avm-ptn-`)
 
-Deploys an **opinionated multi-resource solution** to a recurring problem — e.g. "hub-and-spoke landing zone", "AKS baseline", "AI Foundry workspace with all dependencies". Pattern modules compose resource modules ([TFFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFFR1) — Cross-Referencing Modules requires them to consume AVM resource modules where available rather than re-implementing).
+Deploys an **opinionated multi-resource solution** to a recurring problem — e.g. "hub-and-spoke landing zone", "AKS baseline", "AI Foundry workspace with all dependencies". Pattern modules compose resource modules ([TFFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR1.md) — Cross-Referencing Modules requires them to consume AVM resource modules where available rather than re-implementing).
 
-If a resource module doesn't exist for a resource the pattern needs, the pattern owner **MUST** log an issue on the central AVM repo requesting it ([PMNFR4](https://azure.github.io/Azure-Verified-Modules/spec/PMNFR4)).
+If a resource module doesn't exist for a resource the pattern needs, the pattern owner **MUST** log an issue on the central AVM repo requesting it ([PMNFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/pattern/non-functional/PMNFR4.md)).
 
 ### Utility module (`avm-utl-`)
 
 Provides **shared logic with no resource deployments of its own**, or rarely with a single supporting resource (e.g. a deployment script). Today the canonical example is [`avm-utl-interfaces`](https://registry.terraform.io/modules/Azure/avm-utl-interfaces/azure/latest) — the variable schemas for the standard cross-cutting interfaces. Utility modules are introduced gradually and the specifications around them are still maturing.
 
-If a utility module deploys no resources, telemetry collection **MUST NOT** be added ([SFR3](https://azure.github.io/Azure-Verified-Modules/spec/SFR3)).
+If a utility module deploys no resources, telemetry collection **MUST NOT** be added ([SFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR3.md)).
 
 ## Decision tree
 
@@ -64,7 +64,7 @@ Notes on the resource segment:
 
 - `<resource provider>` is the **lowercased and trimmed** ARM provider name — `Microsoft.KeyVault` → `keyvault`, `Microsoft.Storage` → `storage`, `Microsoft.Search` → `search`.
 - `<ARM resource type>` is the **lowercased and singular-ish** resource type — `vaults` → `vault`, `storageAccounts` → `storageaccount`, `searchServices` → `searchservice`, `virtualMachines` → `virtualmachine`.
-- For sub-resources that warrant their own module: `avm-res-keyvault-vault-key`, `avm-res-storage-storageaccount-blob`. But sub-resources within a single resource module live under `modules/` ([TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1)) — not every child resource becomes its own AVM module.
+- For sub-resources that warrant their own module: `avm-res-keyvault-vault-key`, `avm-res-storage-storageaccount-blob`. But sub-resources within a single resource module live under `modules/` ([TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md)) — not every child resource becomes its own AVM module.
 
 ### GitHub repo name (in the `Azure` org)
 
@@ -80,7 +80,7 @@ This expands to the Terraform Registry source string `Azure/avm-res-<rp>-<type>/
 
 ### Primary resource name in code
 
-Inside the module, the primary `azapi_resource` (or, legacy, `azurerm_*` resource) **MUST** be named `this` ([TFRMNFR2](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR2)):
+Inside the module, the primary `azapi_resource` (or, legacy, `azurerm_*` resource) **MUST** be named `this` ([TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md)):
 
 ```hcl
 resource "azapi_resource" "this" {
@@ -96,5 +96,5 @@ resource "azapi_resource" "this" {
 
 - **Treating "I want to deploy 5 VMs" as a resource module.** It isn't — RMFR1 requires single-resource. Call a `avm-res-compute-virtualmachine` module 5 times, or write a pattern module if there's reusable orchestration.
 - **Inventing a new naming convention.** The repo name `terraform-azurerm-avm-...` is mechanical — don't substitute `terraform-azapi-avm-...` "because we're using AzAPI now". The Registry-side convention is fixed.
-- **Adding a primary-resource `name` default.** Resource modules **MUST NOT** default the primary resource's name ([RMNFR2 / SNFR25](https://azure.github.io/Azure-Verified-Modules/spec/SNFR25)) — the consumer must always supply it. Defaults *are* permitted (and required) for the standard-interface child resources like `pep-<name>`.
+- **Adding a primary-resource `name` default.** Resource modules **MUST NOT** default the primary resource's name ([RMNFR2 / SNFR25](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR25.md)) — the consumer must always supply it. Defaults *are* permitted (and required) for the standard-interface child resources like `pep-<name>`.
 - **Forgetting that pattern modules consume resource modules.** A pattern that re-implements a Key Vault inline instead of using `avm-res-keyvault-vault` violates TFFR1.

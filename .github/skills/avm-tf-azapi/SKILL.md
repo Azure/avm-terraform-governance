@@ -5,15 +5,15 @@ description: Use this skill whenever AzAPI is involved in an Azure Verified Modu
 
 # AzAPI — the AVM Terraform default
 
-**AVM Terraform modules MUST use the AzAPI provider.** The AzureRM provider is permitted only under the narrow [TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3) exception (e.g. some data-plane resources with no AzAPI equivalent). This is a 2026 change in the AVM spec and **the migration is not complete across the AVM ecosystem yet** — the official template and several flagship modules still use `azurerm_*` resources for their primary resource. Treat that as legacy; the AzAPI-first rule is the current spec direction.
+**AVM Terraform modules MUST use the AzAPI provider.** The AzureRM provider is permitted only under the narrow [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md) exception (e.g. some data-plane resources with no AzAPI equivalent). This is a 2026 change in the AVM spec and **the migration is not complete across the AVM ecosystem yet** — the official template and several flagship modules still use `azurerm_*` resources for their primary resource. Treat that as legacy; the AzAPI-first rule is the current spec direction.
 
 Authoritative sources:
-- <https://azure.github.io/Azure-Verified-Modules/specs/tf/> ("Why AVM Terraform modules favor AzAPI")
-- [TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3) — Providers, Permitted Versions (and the AzureRM exception)
-- [TFFR4](https://azure.github.io/Azure-Verified-Modules/spec/TFFR4) — AzAPI `response_export_values`
-- [TFFR5](https://azure.github.io/Azure-Verified-Modules/spec/TFFR5) — AzAPI `replace_triggers_refs`
-- [TFFR6](https://azure.github.io/Azure-Verified-Modules/spec/TFFR6) — AzAPI `resource_types` variable (the **`type` argument MUST come from `var.resource_types`** — never inline)
-- [TFFR7](https://azure.github.io/Azure-Verified-Modules/spec/TFFR7) — AzAPI `retry` and `timeouts` as consumer-configurable variables
+- <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/specs/_index.md> ("Why AVM Terraform modules favor AzAPI")
+- [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md) — Providers, Permitted Versions (and the AzureRM exception)
+- [TFFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR4.md) — AzAPI `response_export_values`
+- [TFFR5](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR5.md) — AzAPI `replace_triggers_refs`
+- [TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md) — AzAPI `resource_types` variable (the **`type` argument MUST come from `var.resource_types`** — never inline)
+- [TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md) — AzAPI `retry` and `timeouts` as consumer-configurable variables
 - <https://registry.terraform.io/providers/Azure/azapi/latest>
 - <https://learn.microsoft.com/azure/developer/terraform/how-to-migrate-between-azurerm-and-azapi>
 - <https://github.com/Azure/aztfmigrate>
@@ -156,7 +156,7 @@ resource "azapi_resource" "this" {
 |---|---|
 | `type` | ARM resource type + explicit API version, e.g. `Microsoft.Storage/storageAccounts@2023-01-01`. **TFFR6: the literal MUST live in `var.resource_types` and the `type` argument MUST read `var.resource_types.<key>` — never an inline string literal.** |
 | `parent_id` | ID of the parent. For top-level resources: `/subscriptions/{sub}/resourceGroups/{rg}`. For child resources: the parent resource's ID. |
-| `name` | Resource name. Per [TFRMNFR2](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR2) the *Terraform resource symbol* is `this`; the ARM resource name comes from `var.name`. |
+| `name` | Resource name. Per [TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md) the *Terraform resource symbol* is `this`; the ARM resource name comes from `var.name`. |
 | `location` | Azure region. |
 | `body` | Resource properties as an **HCL object — not a JSON string**. Maps 1:1 to ARM/Bicep. |
 | `identity {}` | Managed identity block. See `avm-tf-interfaces` for the `managed_identities` variable that drives this. |
@@ -180,7 +180,7 @@ resource "azapi_resource" "this" {
 
 You may use the AzureRM provider **only** for resources whose functionality is genuinely unavailable through any AzAPI resource (`azapi_resource`, `azapi_data_plane_resource`, `azapi_resource_action`, `azapi_update_resource`). In practice this is a small set of edge cases — typically data-plane operations such as Key Vault secrets/certificates, Storage blobs, and a handful of resources whose `azurerm_*` implementation calls non-ARM APIs.
 
-**Where this exception applies the module MUST do all of the following ([TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3)):**
+**Where this exception applies the module MUST do all of the following ([TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md)):**
 
 1. Pin `azurerm` to `~> 4.0` in `required_providers`.
 2. Use AzAPI for **every** resource that has an AzAPI equivalent. AzureRM is not a convenience alternative.
@@ -205,7 +205,7 @@ The exception **MUST NOT** be used to:
 
 ## `replace_triggers_refs` — defaults differ per resource type
 
-[TFFR5](https://azure.github.io/Azure-Verified-Modules/spec/TFFR5) requires the attribute to be set on every `azapi_resource`, but the **right value depends on the resource type**. Don't default to `[]` everywhere — some RPs have well-known properties whose mutation must force replacement, and missing the trigger means consumers hit mid-apply ARM errors instead of clean recreates.
+[TFFR5](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR5.md) requires the attribute to be set on every `azapi_resource`, but the **right value depends on the resource type**. Don't default to `[]` everywhere — some RPs have well-known properties whose mutation must force replacement, and missing the trigger means consumers hit mid-apply ARM errors instead of clean recreates.
 
 | Resource family | Sensible default | Why |
 |---|---|---|
@@ -218,7 +218,7 @@ When you author a new module, list the properties the RP rejects on update (the 
 
 ## TFNFR38 and `marketplace_partner_resource_id`
 
-[TFNFR38](https://azure.github.io/Azure-Verified-Modules/spec/TFNFR38) generally says a single AVM resource module manages a single ARM resource type. The canonical exception is **`marketplace_partner_resource_id`** on the `diagnostic_settings` interface — that single property legitimately points at any of several marketplace partner resource types (Datadog, Elastic, Logz.io, etc.), so the module is genuinely multi-type by design. If you see `marketplace_partner_resource_id`, that's the carve-out; you don't need to argue TFNFR38 around it.
+[TFNFR38](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR38.md) generally says a single AVM resource module manages a single ARM resource type. The canonical exception is **`marketplace_partner_resource_id`** on the `diagnostic_settings` interface — that single property legitimately points at any of several marketplace partner resource types (Datadog, Elastic, Logz.io, etc.), so the module is genuinely multi-type by design. If you see `marketplace_partner_resource_id`, that's the carve-out; you don't need to argue TFNFR38 around it.
 
 Outside this case, if your module appears to need to manage two different ARM resource types as primaries, it's almost certainly two modules.
 
@@ -232,7 +232,7 @@ Heads-up: the current AzAPI provider schema emits a deprecation warning for `ret
 
 **Per-resource workflow:**
 
-1. **Look up the ARM schema** for the resource — use the in-repo `azure-schema` CLI shipped at `.agents/skills/avm-terraform-module-development/scripts/azure-schema` if you're inside an AVM module repo, otherwise the ARM REST API docs on Microsoft Learn. Find the latest stable API version (prefer non-preview unless the GA feature you need is only in a preview version, per [SFR1](https://azure.github.io/Azure-Verified-Modules/spec/SFR1)).
+1. **Look up the ARM schema** for the resource — use the in-repo `azure-schema` CLI shipped at `.agents/skills/avm-terraform-module-development/scripts/azure-schema` if you're inside an AVM module repo, otherwise the ARM REST API docs on Microsoft Learn. Find the latest stable API version (prefer non-preview unless the GA feature you need is only in a preview version, per [SFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR1.md)).
 2. **Map every `azurerm_*` property to its ARM equivalent.** Most AzureRM property names are snake_case translations of the ARM camelCase — `public_network_access_enabled` ↔ `properties.publicNetworkAccess`. The `azurerm` provider source on GitHub is the cheat-sheet.
 3. **Rewrite the resource block.** Keep the Terraform symbol name (`this`). Switch `azurerm_search_service.this` → `azapi_resource.this`. Move properties from top-level (AzureRM) into the `body.properties` object (ARM/AzAPI).
 4. **Mirror dynamic blocks.** AzureRM `dynamic "network_acls" { ... }` becomes a regular HCL expression inside `body.properties.networkRuleSet`.
@@ -315,7 +315,7 @@ You can paste an ARM JSON snippet directly into VS Code with the AzAPI extension
 - **Treating `body` as a JSON string.** It's an HCL object. Don't wrap it in `jsonencode()`. Reading `azapi_resource.this.output.properties.foo` is HCL access, not JSON traversal.
 - **Forgetting `response_export_values`.** TFFR4 requires the attribute to be present even if empty — `response_export_values = []`. Without it your module fails AVM linting.
 - **Skipping `replace_triggers_refs` for immutable properties.** Update-time ARM errors that say "this property cannot be changed after creation" need to be in `replace_triggers_refs` — TFFR5.
-- **Pinning a preview API version when GA exists.** Per [SFR1](https://azure.github.io/Azure-Verified-Modules/spec/SFR1), prefer GA. Preview is only acceptable when the GA feature requires a preview API version, or when the consumer explicitly opts in (and the variable description starts with `THIS IS A VARIABLE USED FOR A PREVIEW SERVICE/FEATURE, MICROSOFT MAY NOT PROVIDE SUPPORT FOR THIS, PLEASE CHECK THE PRODUCT DOCS FOR CLARIFICATION`).
+- **Pinning a preview API version when GA exists.** Per [SFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR1.md), prefer GA. Preview is only acceptable when the GA feature requires a preview API version, or when the consumer explicitly opts in (and the variable description starts with `THIS IS A VARIABLE USED FOR A PREVIEW SERVICE/FEATURE, MICROSOFT MAY NOT PROVIDE SUPPORT FOR THIS, PLEASE CHECK THE PRODUCT DOCS FOR CLARIFICATION`).
 - **Using `azurerm` "because that's what the other AVM modules do".** Many existing modules predate the AzAPI mandate. Cite TFFR3 — if there's no AzAPI equivalent, document why; otherwise migrate.
 - **Skipping `aztfmigrate` for state migration.** Rewriting HCL without moving state addresses will cause `terraform plan` to want to destroy and recreate everything.
 - **Using `azapi` for one property and `azurerm` for another on the same resource.** State chaos. Pick one provider per resource.

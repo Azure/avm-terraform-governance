@@ -5,7 +5,7 @@ description: Use this skill whenever an AVM Terraform module is being migrated f
 
 # AVM Terraform: AzureRM → AzAPI migration playbook
 
-This skill is what you reach for when an existing AVM Terraform module needs to change provider — almost always AzureRM → AzAPI per [TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3), often combined with extracting satellite resources into a [TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1) submodule.
+This skill is what you reach for when an existing AVM Terraform module needs to change provider — almost always AzureRM → AzAPI per [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md), often combined with extracting satellite resources into a [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) submodule.
 
 It exists because the AVM-published migration guidance covers the "rewrite the HCL" half and leaves the "and don't break every consumer's state" half mostly to folklore. Cross-provider migrations are not garden-variety Terraform refactors: the provider and the resource type both change, so `moved {}` blocks have load-bearing semantics, and the slightest cardinality mismatch silently flips the upgrade into a destroy/recreate.
 
@@ -68,7 +68,7 @@ Now Terraform's per-key state re-keying carries across the cross-provider hop au
 
 ### TFRMNFR1 "no for_each on submodule primary resource" — apparent conflict, resolved
 
-[TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1) says the **submodule's primary resource SHOULD NOT use `count` or `for_each`**, and the cardinality trap above forces you to put `for_each` on the resource. These are not actually in conflict — the spec's intent is satisfied at the **composition level** (the parent's call to the submodule is `count`/`for_each`-free), and the workaround is the only viable shape for cross-provider state preservation.
+[TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) says the **submodule's primary resource SHOULD NOT use `count` or `for_each`**, and the cardinality trap above forces you to put `for_each` on the resource. These are not actually in conflict — the spec's intent is satisfied at the **composition level** (the parent's call to the submodule is `count`/`for_each`-free), and the workaround is the only viable shape for cross-provider state preservation.
 
 This is now established precedent across multiple merged migrations. Cite these in PRs if the AVM reviewer pushes back:
 
@@ -215,13 +215,13 @@ A migration release MUST include in the changelog / GitHub release notes:
 2. **The end-to-end test result**: "0 destroys / 0 replaces verified on the `examples/default` configuration; see PR description for plan output."
 3. **The consumer upgrade steps**: typically just `terraform init -upgrade && terraform plan` and verify 0 destroys before applying. If `terraform plan` shows replacements, the consumer should NOT apply and should open an issue.
 4. **The `moved {}` retention window**: "These `moved {}` blocks will be removed in v0.X+2. Upgrade through this release within that window."
-5. **The version bump**: per [SNFR12](https://azure.github.io/Azure-Verified-Modules/spec/SNFR12) 0.x.y pre-GA, a cross-provider migration warrants a minor bump (`0.4.0` → `0.5.0`), not a major, and definitely not a patch.
+5. **The version bump**: per [SNFR12](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR12.md) 0.x.y pre-GA, a cross-provider migration warrants a minor bump (`0.4.0` → `0.5.0`), not a major, and definitely not a patch.
 
 ## Authoritative sources
 
-- [TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3) — the AzAPI-only mandate (with exception checklist)
-- [TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1) — submodule rules (and the for_each spec language)
-- [SNFR12](https://azure.github.io/Azure-Verified-Modules/spec/SNFR12) — 0.x.y pre-GA versioning
+- [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md) — the AzAPI-only mandate (with exception checklist)
+- [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) — submodule rules (and the for_each spec language)
+- [SNFR12](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR12.md) — 0.x.y pre-GA versioning
 - <https://developer.hashicorp.com/terraform/language/modules/develop/refactoring> — `moved {}` mechanics
 - <https://developer.hashicorp.com/terraform/plugin/framework/resources/state-move> — `MoveResourceState` plugin framework API
 - [`aztfmigrate`](https://github.com/Azure/aztfmigrate) — `-to azapi` workflow (and its limitations)

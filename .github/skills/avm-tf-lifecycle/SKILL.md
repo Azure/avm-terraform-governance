@@ -7,7 +7,7 @@ description: Use this skill whenever an Azure Verified Module (AVM) is being pro
 
 Every Azure Verified Module moves through four lifecycle stages. This skill teaches what each stage means, what the contributor's obligations are at each stage, and the version-numbering rule that constrains releases at every stage.
 
-Authoritative source: <https://azure.github.io/Azure-Verified-Modules/specs/shared/module-lifecycle/>
+Authoritative source: <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/module-lifecycle.md>
 
 ## The four stages
 
@@ -25,7 +25,7 @@ The starting point for every new module. A contributor (anyone — Microsoft FTE
 
 The proposal **MUST** include:
 
-- module name (following the [naming convention](https://azure.github.io/Azure-Verified-Modules/spec/RMNFR1) — see `avm-tf-classifications`)
+- module name (following the [naming convention](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/non-functional/RMNFR1.md) — see `avm-tf-classifications`)
 - language (Terraform)
 - module class (resource, pattern, or utility — see `avm-tf-classifications`)
 - module description
@@ -35,7 +35,7 @@ The AVM core team reviews the proposal. If accepted → Available. If rejected �
 
 ### 2. Available
 
-The module has been developed, tested, published in the `main` branch and to the Terraform Registry. Consumers can use it in any environment. The module owner is responsible for ongoing maintenance and for responding to issues within the timescales in the [Module Support](https://azure.github.io/Azure-Verified-Modules/help-support/module-support/) page.
+The module has been developed, tested, published in the `main` branch and to the Terraform Registry. Consumers can use it in any environment. The module owner is responsible for ongoing maintenance and for responding to issues within the timescales in the [Module Support](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/help-support/module-support.md) page.
 
 **Publishing a new version of an Available module does NOT require a new proposal issue.** Just submit a PR in the module's own repository. PR approval logic depends on owner count — see `avm-tf-process`.
 
@@ -69,14 +69,14 @@ Deprecated modules receive the `Status: Module Deprecated 🔴` label and are re
 >
 > All modules **MUST** be published as a `0.x.y` pre-release version (e.g. `0.1.0`, `0.1.1`, `0.2.0`) until the AVM team provides guidance that publishing `v1.0.0` is allowed.
 
-Source: <https://azure.github.io/Azure-Verified-Modules/contributing/process/> and [SNFR12](https://azure.github.io/Azure-Verified-Modules/spec/SNFR12).
+Source: <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/contributing/process.md> and [SNFR12](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR12.md).
 
 **Practical implications:**
 
 - The first release of a new module is `0.1.0`, not `1.0.0`.
 - Breaking changes bump the **minor** segment (`0.1.0` → `0.2.0`), not the major segment.
 - Bug fixes and non-breaking features bump the **patch** segment (`0.1.0` → `0.1.1`).
-- **Only the latest released version of a module is supported** ([SNFR12](https://azure.github.io/Azure-Verified-Modules/spec/SNFR12)). If a consumer hits a bug on `0.3.0`, the first triage step is "upgrade to the latest version".
+- **Only the latest released version of a module is supported** ([SNFR12](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR12.md)). If a consumer hits a bug on `0.3.0`, the first triage step is "upgrade to the latest version".
 - Release notes **MUST** call out breaking changes clearly — consumers rely on these to decide whether to upgrade.
 
 **Do not propose a `1.0.0` release.** If a user asks for one, explain that the AVM framework itself is not GA and point at the contributing/process page. The 0.x.y constraint is lifted only when the AVM core team explicitly publishes guidance allowing it.
@@ -84,7 +84,7 @@ Source: <https://azure.github.io/Azure-Verified-Modules/contributing/process/> a
 ## Common pitfalls
 
 - **Promising long-term support for an old minor version.** SNFR12 forbids this — owners aren't expected to maintain multiple major release lines.
-- **Skipping the proposal issue and publishing a new module repo.** Without an approved proposal the module isn't an AVM module, even if the repo name follows the convention. Pattern modules in particular need the corresponding resource modules to also be proposed/available ([PMNFR4](https://azure.github.io/Azure-Verified-Modules/spec/PMNFR4)).
+- **Skipping the proposal issue and publishing a new module repo.** Without an approved proposal the module isn't an AVM module, even if the repo name follows the convention. Pattern modules in particular need the corresponding resource modules to also be proposed/available ([PMNFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/pattern/non-functional/PMNFR4.md)).
 - **Treating "Orphaned" as a soft state.** It blocks all feature work until a new owner takes over — be explicit about this when planning a contribution to an orphaned module.
 
 ## Handover checklist for a departing owner

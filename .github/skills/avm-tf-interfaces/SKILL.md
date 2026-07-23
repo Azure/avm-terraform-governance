@@ -7,7 +7,7 @@ description: Use this skill whenever an Azure Verified Module (AVM) for Terrafor
 
 > **Scope of this skill.** This is the **consumer-facing** interface guidance — variable names, schemas, and how the parent module wires them into the primary resource. For **submodule-internal** interface concerns (the rename trick when a submodule needs a non-standard `private_endpoints`-shaped collection, the map vs scalar `output "resource_id"` shape for collection submodules under RMFR7, the per-element `parent_id` derivation when consumers set per-PE `resource_group_name`), see the **`avm-tf-submodules`** skill. For migrating an interface resource from `azurerm_*` to AzAPI without consumer destroys (the `lifecycle { ignore_changes = [name] }` trick on role assignments, the `moved {}` block patterns), see **`avm-tf-migration`**.
 
-Resource modules **MUST** expose these interfaces with these **exact variable names** ([RMFR4](https://azure.github.io/Azure-Verified-Modules/spec/RMFR4)) **for each interface the primary resource actually supports**. They are how consumers configure locks, RBAC, diagnostics, identity, private connectivity, and customer-managed keys consistently across every AVM module they use. Learn the variable once → use it everywhere.
+Resource modules **MUST** expose these interfaces with these **exact variable names** ([RMFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR4.md)) **for each interface the primary resource actually supports**. They are how consumers configure locks, RBAC, diagnostics, identity, private connectivity, and customer-managed keys consistently across every AVM module they use. Learn the variable once → use it everywhere.
 
 | Optional Feature / Extension Resource | Terraform variable | Severity (if supported by primary resource) |
 |---|---|---|
@@ -22,12 +22,12 @@ Resource modules **MUST** expose these interfaces with these **exact variable na
 
 > RMFR4's MUSTs are **conditional on the primary resource actually supporting the feature.** A Resource Group has no private endpoint surface; some PaaS services don't expose CMK; an Azure Front Door doesn't take resource locks the same way a Storage Account does. If the primary resource doesn't support a feature, **omit the variable entirely** rather than expose a no-op one — the AVM tooling will accept that.
 >
-> **Implementation provider.** Per [TFFR3](https://azure.github.io/Azure-Verified-Modules/spec/TFFR3) the *implementation* of these interface resources (the lock, role assignment, diagnostic setting, private endpoint resources themselves) MUST be AzAPI — `Microsoft.Authorization/locks`, `Microsoft.Authorization/roleAssignments`, `Microsoft.Insights/diagnosticSettings`, `Microsoft.Network/privateEndpoints` — not `azurerm_*`. Many existing AVM modules still use `azurerm_*` for these; that's pre-mandate migration debt, not a pattern to copy for new modules.
+> **Implementation provider.** Per [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md) the *implementation* of these interface resources (the lock, role assignment, diagnostic setting, private endpoint resources themselves) MUST be AzAPI — `Microsoft.Authorization/locks`, `Microsoft.Authorization/roleAssignments`, `Microsoft.Insights/diagnosticSettings`, `Microsoft.Network/privateEndpoints` — not `azurerm_*`. Many existing AVM modules still use `azurerm_*` for these; that's pre-mandate migration debt, not a pattern to copy for new modules.
 
 Authoritative sources:
-- [RMFR4](https://azure.github.io/Azure-Verified-Modules/spec/RMFR4) — Consistent Feature & Extension Resources Value Add
-- [RMFR5](https://azure.github.io/Azure-Verified-Modules/spec/RMFR5) — Consistent Feature & Extension Resources Interfaces/Schemas
-- [SNFR25](https://azure.github.io/Azure-Verified-Modules/spec/SNFR25) — Resource Naming
+- [RMFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR4.md) — Consistent Feature & Extension Resources Value Add
+- [RMFR5](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR5.md) — Consistent Feature & Extension Resources Interfaces/Schemas
+- [SNFR25](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR25.md) — Resource Naming
 - The canonical schemas live in [`Azure/avm-utl-interfaces`](https://registry.terraform.io/modules/Azure/avm-utl-interfaces/azure/latest) on the Terraform Registry. Resource modules today usually inline the schema (copying from there); pattern modules increasingly consume it.
 
 ## The non-negotiable rule

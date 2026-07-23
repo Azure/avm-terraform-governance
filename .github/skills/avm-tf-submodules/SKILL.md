@@ -5,7 +5,7 @@ description: Use this skill whenever an AVM Terraform module needs to extract sa
 
 # AVM Terraform: designing submodules
 
-[TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1) lets a resource module put non-primary "satellite" resources under `modules/<name>/`. This is normal and recommended when a child resource has independent lifecycle, its own meaningful inputs/outputs, and isn't worth its own published AVM module (e.g. `key`, `secret`, `certificate` inside `keyvault-vault`).
+[TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) lets a resource module put non-primary "satellite" resources under `modules/<name>/`. This is normal and recommended when a child resource has independent lifecycle, its own meaningful inputs/outputs, and isn't worth its own published AVM module (e.g. `key`, `secret`, `certificate` inside `keyvault-vault`).
 
 This skill is the *design* companion to `avm-tf-migration` (which covers the cross-provider state preservation half) and `avm-tf-interfaces` (which covers consumer-facing standard interfaces).
 
@@ -141,7 +141,7 @@ This is independent of TFRMFR1's root-level `parent_id` migration — they're tw
 
 ### Cascading the AzAPI plumbing variables (TFFR6/TFFR7)
 
-The parent's `var.resource_types`, `var.retry`, and `var.timeouts` MUST cascade to every submodule it instantiates ([TFFR7](https://azure.github.io/Azure-Verified-Modules/spec/TFFR7) "cascade to submodules"):
+The parent's `var.resource_types`, `var.retry`, and `var.timeouts` MUST cascade to every submodule it instantiates ([TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md) "cascade to submodules"):
 
 ```hcl
 # parent main.tf
@@ -174,7 +174,7 @@ The submodule's `resource_types` declares **only the keys it actually uses**, no
 
 ## Output design — RMFR7 applies to submodules too
 
-[RMFR7](https://azure.github.io/Azure-Verified-Modules/spec/RMFR7) requires **every** resource module (including submodules) to expose `output "resource_id"`. It also requires `output "name"` and the discrete computed attributes a consumer would need.
+[RMFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR7.md) requires **every** resource module (including submodules) to expose `output "resource_id"`. It also requires `output "name"` and the discrete computed attributes a consumer would need.
 
 ### Scalar vs map output shape
 
@@ -213,7 +213,7 @@ output "secrets" {
 
 ### Don't expose the full resource object — TFFR2 applies to submodules too
 
-Even though it's a submodule, [TFFR2](https://azure.github.io/Azure-Verified-Modules/spec/TFFR2) forbids exposing the full AzAPI `output` object as a Terraform output. Discrete computed attributes only. The exception: an internal output the parent consumes (e.g. `module.lock.azapi_resource_id` for downstream `depends_on`) is fine, because it's never seen by the end consumer.
+Even though it's a submodule, [TFFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR2.md) forbids exposing the full AzAPI `output` object as a Terraform output. Discrete computed attributes only. The exception: an internal output the parent consumes (e.g. `module.lock.azapi_resource_id` for downstream `depends_on`) is fine, because it's never seen by the end consumer.
 
 ## Provider declaration
 
@@ -233,7 +233,7 @@ terraform {
 }
 ```
 
-Submodules do **not** include `main.telemetry.tf` — only the root module fires telemetry per [SFR3](https://azure.github.io/Azure-Verified-Modules/spec/SFR3).
+Submodules do **not** include `main.telemetry.tf` — only the root module fires telemetry per [SFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR3.md).
 
 ## Documentation
 
@@ -252,9 +252,9 @@ Each submodule has its own `_header.md` and `_footer.md`. `terraform-docs` regen
 
 ## Authoritative sources
 
-- [TFRMNFR1](https://azure.github.io/Azure-Verified-Modules/spec/TFRMNFR1) — submodule layout and the `for_each` rule (read in conjunction with this skill, not in isolation)
-- [RMFR7](https://azure.github.io/Azure-Verified-Modules/spec/RMFR7) — mandatory `resource_id` output
-- [TFFR2](https://azure.github.io/Azure-Verified-Modules/spec/TFFR2) — no full resource object outputs
-- [TFFR6](https://azure.github.io/Azure-Verified-Modules/spec/TFFR6), [TFFR7](https://azure.github.io/Azure-Verified-Modules/spec/TFFR7) — `resource_types` / `retry` / `timeouts` cascade rule
+- [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) — submodule layout and the `for_each` rule (read in conjunction with this skill, not in isolation)
+- [RMFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR7.md) — mandatory `resource_id` output
+- [TFFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR2.md) — no full resource object outputs
+- [TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md), [TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md) — `resource_types` / `retry` / `timeouts` cascade rule
 - [`Azure/avm-utl-interfaces`](https://github.com/Azure/avm-utl-interfaces) — the lint rule schemas
 - Reference modules with substantial submodules: `terraform-azurerm-avm-res-keyvault-vault` (`modules/key`, `modules/secret`, `modules/certificate`), `terraform-azurerm-avm-res-network-virtualnetwork` (`modules/subnet`)

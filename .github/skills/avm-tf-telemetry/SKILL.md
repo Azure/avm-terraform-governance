@@ -8,15 +8,15 @@ description: Use this skill whenever an Azure Verified Module (AVM) for Terrafor
 Every AVM Terraform module collects anonymous deployment/usage telemetry, on by default, with a single opt-out variable. The wiring lives in one file (`main.telemetry.tf`) and is shipped from the AVM template unchanged. This skill explains how it works, when (rarely) you'd edit it, and the consumer story.
 
 Authoritative sources:
-- [SFR3](https://azure.github.io/Azure-Verified-Modules/spec/SFR3) — Deployment/Usage Telemetry
-- [SFR4](https://azure.github.io/Azure-Verified-Modules/spec/SFR4) — Telemetry Enablement Flexibility
+- [SFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR3.md) — Deployment/Usage Telemetry
+- [SFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR4.md) — Telemetry Enablement Flexibility
 - <https://registry.terraform.io/providers/Azure/modtm/latest>
 - The template's `main.telemetry.tf` at <https://github.com/Azure/terraform-azurerm-avm-template/blob/main/main.telemetry.tf>
 - `aka.ms/avm/telemetry` (the consumer-facing page)
 
 ## The headline rule
 
-> Telemetry **MUST** be on/enabled by default. Consumers **MUST** be able to disable it by setting `enable_telemetry = false`. ([SFR4](https://azure.github.io/Azure-Verified-Modules/spec/SFR4))
+> Telemetry **MUST** be on/enabled by default. Consumers **MUST** be able to disable it by setting `enable_telemetry = false`. ([SFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR4.md))
 
 You don't get to opt your module out of telemetry; you only get to expose the opt-out to the consumer. Removing or defaulting `enable_telemetry` to `false` fails AVM linting.
 
