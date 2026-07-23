@@ -23,7 +23,7 @@ updates:
       prefix: chore
       include: scope
 
-  # Terraform providers in the root module, examples, and any submodules.
+  # Terraform providers in the repository_sync root module and its submodules.
   - package-ecosystem: terraform
     directories:
       - "/tf-repo-mgmt/repository_sync"
