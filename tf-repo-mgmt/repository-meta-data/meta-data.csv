@@ -133,6 +133,7 @@ avm-res-insights-metricalert,Microsoft.Insights,metricAlerts,Insights Metric Ale
 avm-res-insights-privatelinkscope,Microsoft.Insights,privateLinkScopes,Managed Services Registration Definition,,sharmilamusunuru,Sharmila Musunuru,,,false
 avm-res-insights-scheduledqueryrule,Microsoft.Insights,scheduledQueryRules,Scheduled Query Rule,,,,,,false
 avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations Instance,,agreaves-ms,Allen Greaves,,,false
+avm-res-keyvault-managedhsm,Microsoft.KeyVault,managedHSMs,Managed HSM,"Key Vault Managed HSM, MHSM",benvbr,Benjamin Van Brussel,,,false
 avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,,false
 avm-res-kubernetesconfiguration-extension,Microsoft.KubernetesConfiguration,extensions,Kubernetes Configuration Extension,,lonegunmanb,Zijie He,,,false
 avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,,false

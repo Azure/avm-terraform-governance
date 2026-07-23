@@ -12,6 +12,24 @@
   },
   "repositoryGroups": [
     {
+      "name": "canary",
+      "managedFilesAdditional": "canary",
+      "repositories": [
+        "avm-ptn-example-repo",
+        "avm-res-devopsinfrastructure-pool",
+        "avm-res-network-virtualnetwork",
+        "avm-res-documentdb-databaseaccount",
+        "avm-res-app-managedenvironment",
+        "avm-res-documentdb-mongocluster",
+        "avm-res-compute-disk",
+        "avm-res-dbformysql-flexibleserver",
+        "avm-res-cdn-profile"
+      ],
+      "topics": [
+        "canary"
+      ]
+    },
+    {
       "name": "azure-verified-modules-tier-1",
       "repositories": [
         "avm-ptn-example-repo"

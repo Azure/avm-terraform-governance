@@ -21,12 +21,30 @@ on:
         description: 'Force removal of users with direct access, even if they are JIT elevated.'
         default: false
         type: boolean
+      sync_project_items:
+        description: 'Whether to add each repository''s issues and PRs to the AVM All Up GitHub Project.'
+        default: true
+        type: boolean
+      include_closed_project_items:
+        description: 'Also add closed issues and closed/merged PRs to the project (heavy historical back-fill). Off by default.'
+        default: false
+        type: boolean
+      project_lookback_days:
+        description: 'Only add issues/PRs updated in the last N days (keeps runs under API rate limits). Use 0 to disable the look-back and sweep everything not already on the project (one-off initial back-fill).'
+        default: '3'
+        type: string
   schedule:
     - cron: '33 */4 * * 1-5'
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  # The GitHub Project (ProjectV2) that every AVM Terraform repo's issues and PRs
+  # are synced into ("AVM All Up"). A central, fixed target, so it lives here as a
+  # single workflow constant rather than a per-run input.
+  PROJECT_URL: 'https://github.com/orgs/Azure/projects/1011'
 
 defaults:
   run:
@@ -164,4 +182,70 @@ jobs:
             }
           }
           if ($hasError) { exit 1 }
+        shell: pwsh
+
+      - name: Add Repository Items to AVM All Up Project
+        if: ${{ always() && (github.event_name != 'workflow_dispatch' || inputs.sync_project_items) }}
+        run: |
+
+          $triggerType = "${{ github.event_name }}"
+
+          $planOnly = $false
+          $includeClosed = $false
+          $projectUrl = $env:PROJECT_URL
+          # Default look-back: scheduled/dispatch-by-event runs only consider items
+          # updated in the last 3 days, which keeps steady-state runs well under the
+          # GitHub API rate limits. A manual dispatch can override this (0 = full
+          # sweep for the one-off initial back-fill).
+          $lookbackDays = 3
+
+          if ($triggerType -eq "workflow_dispatch") {
+            $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
+            $includeClosed = "${{ inputs.include_closed_project_items }}".ToLower() -eq "true"
+            $parsedLookback = 0
+            if ([int]::TryParse("${{ inputs.project_lookback_days }}".Trim(), [ref]$parsedLookback)) {
+              $lookbackDays = $parsedLookback
+            }
+            else {
+              Write-Output "Could not parse project_lookback_days '${{ inputs.project_lookback_days }}'; using default $lookbackDays."
+            }
+          }
+
+          Write-Output "Project URL: $projectUrl"
+          Write-Output "Include Closed: $includeClosed"
+          Write-Output "Look-back Days: $lookbackDays"
+          Write-Output "Plan Only: $planOnly"
+
+          ./scripts/Add-RepositoryItemsToProject.ps1 `
+            -repoUrl "${{ matrix.repoUrl }}" `
+            -projectUrl $projectUrl `
+            -includeClosed $includeClosed `
+            -lookbackDays $lookbackDays `
+            -planOnly $planOnly `
+            -outputDirectory "${{ github.workspace }}"
+
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Upload Project Sync Log Json
+        if: always() && hashFiles('project-sync.log.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.repoId }}.project-sync.log.json
+          path: project-sync.log.json
+
+      - name: Project Sync Error
+        if: always() && hashFiles('project-sync.log.json') != ''
+        run: |
+          $projectSyncLogJson = Get-Content -Path "${{ github.workspace }}/project-sync.log.json" -Raw
+          $projectSyncLog = ConvertFrom-Json $projectSyncLogJson
+          $projectSyncLog | ForEach-Object {
+            $severity = if ($_.severity) { $_.severity } else { "warning" }
+            if ($severity -eq "warning") {
+              echo "::warning title=${{ matrix.repoId }} project sync::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+            } else {
+              echo "::error title=${{ matrix.repoId }} project sync::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+            }
+          }
         shell: pwsh

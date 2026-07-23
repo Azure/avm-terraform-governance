@@ -49,7 +49,13 @@ function Add-ManagedFilesFromDir {
     # `.vscode/`, `.editorconfig`, `.gitattributes`, `.terraform-docs.yml`,
     # etc. Windows does not flag dotfiles as hidden, so the bug is invisible
     # locally.
-    Get-ChildItem -Path $baseDirAbsolute -Recurse -File -Force | ForEach-Object {
+    Get-ChildItem -Path $baseDirAbsolute -Recurse -File -Force | Where-Object {
+        # `.gitkeep` files exist only to keep otherwise-empty managed-file
+        # overlay directories (e.g. the canary overlay) tracked in git. They
+        # are placeholders, never real managed content, so they must not be
+        # synced into target repos.
+        $_.Name -ne '.gitkeep'
+    } | ForEach-Object {
         $relativePath = $_.FullName.Substring($prefixLength) -replace '\\', '/'
         $absoluteSource = $_.FullName -replace '\\', '/'
         $mode = $modeMap[$relativePath]

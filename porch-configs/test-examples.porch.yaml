@@ -16,9 +16,9 @@ commands:
   - type: shell
     name: Clean Terraform
     command_line: |
-      find . -type d -name .terraform | xargs -n1 rm -rf && \
-      find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-      find . -type f -name *.tfstate* | xargs -n1 rm -f
+      find . -type d -name '.terraform' -prune -exec rm -rf {} +
+      find . -type f -name '.terraform.lock.hcl' -exec rm -f {} +
+      find . -type f -name '*.tfstate*' -exec rm -f {} +
 
   - type: foreachdirectory
     name: for each example clean up if not matching AVM_EXAMPLE
@@ -162,5 +162,17 @@ commands:
   - type: shell
     name: Clean up
     command_line: |
-      rm -fr $(pwd)
+      workdir="$(pwd)"
+      cd /
+      case "$workdir" in
+        /tmp/*|/var/tmp/*)
+          rm -rf "$workdir"
+          ;;
+        *)
+          echo "Refusing to remove non-temp directory: $workdir" 1>&2
+          find "$workdir" -type d -name '.terraform' -prune -exec rm -rf {} + 2>/dev/null || true
+          find "$workdir" -type f -name '.terraform.lock.hcl' -exec rm -f {} + 2>/dev/null || true
+          find "$workdir" -type f -name '*.tfstate*' -exec rm -f {} + 2>/dev/null || true
+          ;;
+      esac
     runs_on_condition: always

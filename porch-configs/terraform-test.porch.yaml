@@ -24,54 +24,63 @@ command_groups:
           fi
         skip_exit_codes: [99]
 
-      - type: serial
-        name: Terraform test steps
-        commands:
-        - type: copycwdtotemp
-          name: Copy current working directory to temp
-          cwd: "."
+      - type: copycwdtotemp
+        name: Copy current working directory to temp
+        cwd: "."
 
-        - type: shell
-          name: Clean Terraform
-          command_line: |
-            echo $(pwd) && \
-            find . -type d -name .terraform | xargs -n1 rm -rf && \
-            find . -type f -name .terraform.lock.hcl | xargs -n1 rm -f && \
-            find . -type f -name *.tfstate* | xargs -n1 rm -f
+      - type: shell
+        name: Clean Terraform
+        command_line: |
+          echo "$(pwd)"
+          find . -type d -name '.terraform' -prune -exec rm -rf {} +
+          find . -type f -name '.terraform.lock.hcl' -exec rm -f {} +
+          find . -type f -name '*.tfstate*' -exec rm -f {} +
 
-        - type: shell
-          name: Check and Run setup.sh
-          command_line: |
-            if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-              if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
-                echo "Making setup.sh executable"
-                chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
-              fi
-              echo "Running setup.sh"
-              ./tests/$AVM_TEST_TYPE/setup.sh
+      - type: shell
+        name: Check and Run setup.sh
+        command_line: |
+          if [ -f ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+            if [ ! -x ./tests/$AVM_TEST_TYPE/setup.sh ]; then
+              echo "Making setup.sh executable"
+              chmod +x ./tests/$AVM_TEST_TYPE/setup.sh
             fi
+            echo "Running setup.sh"
+            ./tests/$AVM_TEST_TYPE/setup.sh
+          fi
 
-        - type: pwsh
-          name: Check and Run setup.ps1
-          script: |
-            if (Test-Path ./tests/$env:AVM_TEST_TYPE/setup.ps1) {
-              Write-Host "Running setup.ps1"
-              & ./tests/$env:AVM_TEST_TYPE/setup.ps1
-            }
+      - type: pwsh
+        name: Check and Run setup.ps1
+        script: |
+          if (Test-Path ./tests/$env:AVM_TEST_TYPE/setup.ps1) {
+            Write-Host "Running setup.ps1"
+            & ./tests/$env:AVM_TEST_TYPE/setup.ps1
+          }
 
-        - type: shell
-          name: "Terraform Init"
-          command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
+      - type: shell
+        name: "Terraform Init"
+        command_line: "terraform init -test-directory ./tests/$AVM_TEST_TYPE"
 
-        - type: shell
-          name: "Terraform Test"
-          command_line: "terraform test -test-directory ./tests/$AVM_TEST_TYPE"
+      - type: shell
+        name: "Terraform Test"
+        command_line: "terraform test -test-directory ./tests/$AVM_TEST_TYPE"
 
-        - type: shell
-          name: Clean up
-          command_line: |
-            rm -fr $(pwd)
-          runs_on_condition: always
+      - type: shell
+        name: Clean up
+        command_line: |
+          workdir="$(pwd)"
+          cd /
+          case "$workdir" in
+            /tmp/*|/var/tmp/*)
+              rm -rf "$workdir"
+              ;;
+            *)
+              echo "Refusing to remove non-temp directory: $workdir" 1>&2
+              find "$workdir" -type d -name '.terraform' -prune -exec rm -rf {} + 2>/dev/null || true
+              find "$workdir" -type f -name '.terraform.lock.hcl' -exec rm -f {} + 2>/dev/null || true
+              find "$workdir" -type f -name '*.tfstate*' -exec rm -f {} + 2>/dev/null || true
+              ;;
+          esac
+        runs_on_condition: always
 
 commands:
   - type: shell
