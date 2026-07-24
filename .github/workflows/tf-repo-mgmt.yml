@@ -134,7 +134,7 @@ jobs:
           Write-Host "Authenticating gh cli"
           gh auth login -h "GitHub.com"
           Write-Host "Running repo sync"
-          ./scripts/Invoke-RepositorySync.ps1 `
+          ./scripts/Invoke-RepositoryConfigSync.ps1 `
             -planOnly $planOnly `
             -managementGroupId "${{ secrets.MANAGEMENT_GROUP_ID }}" `
             -testSubscriptionIds $testSubscriptionIds `

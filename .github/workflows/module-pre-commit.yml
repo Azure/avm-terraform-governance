@@ -1,0 +1,209 @@
+---
+name: module-pre-commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: "Override the target repositories, use a comma separated list. Leave as All to run on all repositories."
+        default: "All"
+        type: string
+      inactive_days:
+        description: "Number of days with no PR activity"
+        default: 7
+        type: number
+      first_run:
+        description: "Whether to run in first run mode"
+        default: false
+        type: boolean
+      release:
+        description: "When true, create a patch/minor/major release for each repository this run actually updates and merges."
+        default: false
+        type: boolean
+      bump:
+        description: "Semantic version part to increment when releasing updated repositories (only used when release is true)."
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_dry_run:
+        description: "When true, the release step computes and logs the next version without creating a release (only used when release is true)."
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACTIVITY_DAYS_AGO: 7
+  FORCE_COLOR: 1
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    environment: avm
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Generate Matrix
+        uses: ./.github/actions/avm-repos
+        id: matrix
+        with:
+          repositories: ${{ inputs.repositories }}
+          first_run: ${{ inputs.first_run }}
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+  run-precommit:
+    name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
+    runs-on: ubuntu-latest
+    environment: avm
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrixParallel) }}
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.repoName }}
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          $userId = gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id
+          "user-id=$userId" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Check for recent PR activity
+        id: check
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ matrix.repoFullName }}
+          INACTIVE_DAYS: ${{ inputs.inactive_days != '' && inputs.inactive_days || env.ACTIVITY_DAYS_AGO }}
+        run: |
+          $repo = "${{ matrix.repoFullName }}"
+
+          # No open PRs at all => nothing could be in-flight, so proceed.
+          $openPrs = @(gh pr list --repo $repo --base main --json number | ConvertFrom-Json)
+          if ($openPrs.Count -eq 0) {
+            Write-Host "No open PRs found, proceeding with pre-commit run."
+            "continue=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            exit 0
+          }
+
+          $inactiveDays = [int]$env:INACTIVE_DAYS
+          Write-Host "Found $($openPrs.Count) open PR(s), checking for recent activity (last $inactiveDays days)..."
+          $threshold = (Get-Date).ToUniversalTime().AddDays(-$inactiveDays)
+
+          foreach ($pr in $openPrs) {
+            $commits = (gh pr view $pr.number --json commits | ConvertFrom-Json).commits
+            $lastCommit = $commits.authoredDate | Sort-Object | Select-Object -Last 1
+            if ($lastCommit) {
+              $lastCommitDate = [System.DateTimeOffset]::Parse($lastCommit).UtcDateTime
+              if ($lastCommitDate -gt $threshold) {
+                Write-Host "Skipping repository ${{ matrix.repoId }} as PR #$($pr.number) has activity within the last $inactiveDays days (last commit: $lastCommit)."
+                exit 0
+              }
+            }
+          }
+
+          Write-Host "No recent PR activity found, proceeding with pre-commit run."
+          "continue=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Checkout governance repository
+        if: steps.check.outputs.continue
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Checkout target repository
+        if: steps.check.outputs.continue
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          repository: ${{ matrix.repoFullName }}
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: true
+          path: _target
+
+      - name: Run pre-commit
+        if: steps.check.outputs.continue
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Set-Location _target
+          chmod a+x ./avm
+          # The avm wrapper occasionally needs a second pass to converge.
+          ./avm pre-commit
+          if ($LASTEXITCODE -ne 0) { ./avm pre-commit }
+
+      - name: Commit, push, create PR and merge changes
+        id: precommit-pr
+        if: steps.check.outputs.continue
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          . ./tf-repo-mgmt/scripts/lib/GitHubPullRequest.ps1
+
+          # The target repo was checked out at _target with persisted
+          # credentials, so the push reuses those (no gh auth setup-git).
+          # -Merge is non-fatal here (no -MergeMustSucceed) to preserve the
+          # previous continue-on-error behaviour.
+          $result = Submit-AvmBotPullRequest `
+            -OrgAndRepoName "${{ matrix.repoFullName }}" `
+            -BaseBranch "main" `
+            -BranchName "pre-commit-${{ github.run_id }}" `
+            -CommitMessage "chore: pre-commit updates" `
+            -PrTitle "chore: pre-commit updates" `
+            -PrBody "This PR contains pre-commit updates." `
+            -WorkingDirectory "_target" `
+            -BotName "${{ steps.app-token.outputs.app-slug }}[bot]" `
+            -BotEmail "${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com" `
+            -StageAll `
+            -Merge `
+            -CloseOlderWithTitlePrefix "chore: pre-commit updates" `
+            -SkipGitAuthSetup
+
+          # Surface whether this run changed the repo and merged the PR so the
+          # optional release step only tags main when the change actually landed.
+          $changed = if ($result.Changed) { 'true' } else { 'false' }
+          $merged = if ($result.Merged) { 'true' } else { 'false' }
+          "changed=$changed" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "merged=$merged" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Release updated module
+        if: steps.check.outputs.continue && inputs.release && steps.precommit-pr.outputs.merged == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          . ./tf-repo-mgmt/scripts/lib/ModuleRelease.ps1
+
+          # The pre-commit PR was squash-merged to main above, so main HEAD now
+          # carries the change. Honour the release_dry_run input: when true the
+          # next version is computed and logged but no release is created.
+          # Publish-ModuleRelease still skips repos that have never been
+          # released and repos with no new commits since the latest tag.
+          $dryRun = [System.Convert]::ToBoolean('${{ inputs.release_dry_run }}')
+          Publish-ModuleRelease `
+            -RepoFullName "${{ matrix.repoFullName }}" `
+            -Bump "${{ inputs.bump }}" `
+            -DryRun $dryRun `
+            -TargetBranch "main" | Out-Null
