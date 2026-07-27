@@ -38,6 +38,13 @@ safe-outputs:
   add-labels:
     max: 10
     target: "*"
+  set-issue-type:
+    allowed:
+    - Bug
+    - Feature Request
+    - Task
+    max: 1
+    target: "*"
   close-issue:
     max: 1
     target: "*"
@@ -107,7 +114,7 @@ You are an AI agent that performs initial triage on newly created or reopened is
 This repository contains the Terraform code for a single Azure Verified Module (AVM) module. The issue, the labels, the releases, and the code to investigate are all in this repository.
 
 > **Target issue for this run: #${{ github.event.inputs.issue_number || github.event.issue.number }}**
-> Always use this number as `item_number` in issue safe output calls (`add-comment`, `add-labels`, `close-issue`, `update-issue`). When updating a pull request, use its number as `pull_request_number`.
+> Always use this number as `item_number` in issue safe output calls (`add-comment`, `add-labels`, `close-issue`, `update-issue`). Use it as `issue_number` for `set-issue-type`. When updating a pull request, use its number as `pull_request_number`.
 
 ## Your Task
 
@@ -115,7 +122,7 @@ When a new issue is created or reopened, perform the following steps **in order*
 
 1. **Read the issue and its history** — Understand the title, body, labels, and timeline. Determine whether this workflow previously closed the issue and a person later reopened it; if so, permanently disable automated closure for this issue.
 2. **Check for duplicates** — Search for existing open **and** closed issues in this repository that are similar or identical.
-3. **Suggest and attach labels** — Based on the issue content, attach appropriate labels that already exist on the repository.
+3. **Set the issue type and attach labels** — Choose the best matching GitHub issue type and attach appropriate labels that already exist on the repository.
 4. **Discover related PRs and check for existing fixes** — Search broadly for linked and unlinked PRs, validate candidate PRs by reading their changes, link only clear fixes, and determine whether the issue is conclusively resolved.
 5. **Investigate and suggest a fix** — Where possible, look at the relevant source code in this repository and suggest what the fix may be. If the issue is a question or a feature request rather than a bug, note that clearly.
 6. **Post a triage summary comment** — Summarise what you did in a single comment on the issue. **Do not emit any safe outputs until all analysis steps are complete.**
@@ -175,9 +182,19 @@ Finding a candidate above does **not** by itself mean you close. Closing is a se
 
 ---
 
-## Step 3: Suggest and Attach Labels
+## Step 3: Set the Issue Type and Attach Labels
 
 The repository label definitions are available at `/tmp/gh-aw/agent/repo-labels.json`. If this file is missing or unreadable, skip label application and note in your triage comment that "Labels could not be applied due to a data loading error."
+
+### Set the GitHub Issue Type
+
+Classify every issue as exactly one of these GitHub issue types and use the `set-issue-type` safe output to apply it:
+
+- **Bug** — Unexpected or incorrect behavior, regressions, errors, failed deployments, or behavior that does not match the documented contract.
+- **Feature Request** — Requests for new user-facing capabilities, resources, variables, outputs, integrations, or enhancements to existing behavior.
+- **Task** — Concrete maintenance, documentation, testing, CI, refactoring, investigation, or other actionable work that is neither a defect nor a feature request.
+
+Choose the single best fit from the issue's primary intent. Do not create or use any other issue type. If the issue already has the correct type, leave it unchanged. Issue types are independent of labels, so continue with label analysis after setting the type.
 
 Analyse the issue content and attach the most appropriate labels from the repository's existing label set. Apply **all** labels that are relevant.
 
@@ -330,6 +347,7 @@ If the issue has already been triaged, do not skip analysis. Publish the current
 The bullet points should include:
 
 - **Duplicate check result:** Whether duplicates or similar issues were found, with links to those issues. If closing as duplicate, state this clearly with the link.
+- **Issue type:** State whether you set the issue type to `Bug`, `Feature Request`, or `Task`, or whether the existing type was already correct.
 - **Labels applied:** List only the labels you **added** in this run, with a brief justification for each (e.g., "Applied `bug` — issue reports a failed `terraform apply`"). **Do NOT list or re-justify labels that were already on the issue.** If you added no new labels, say so in a single short line (do not enumerate the existing labels).
 - **No labels applied:** If no labels could be confidently determined, state this.
 - **Labels skipped:** If label definitions could not be loaded, state "Labels could not be applied due to a data loading error."
@@ -439,6 +457,7 @@ When you are **highly confident** an issue is a confirmed duplicate of another (
 - If you **close the issue** because it is conclusively fixed: Use `add-comment` for the triage summary **first**, then use `update-issue` with `status: closed`. This is the completed-closure path.
 - If the **Human Reopen Override** is active: Never use `close-issue` or use `update-issue` to set `status: closed`, regardless of duplicate or fix confidence. Continue with any non-closing outputs and explain the veto in the triage comment.
 - If you find an unlinked **confirmed-fix PR**: Use `update-pull-request` with `pull_request_number`, `operation: append`, and a body of exactly `Fixes #<issue-number>`. Do not update likely or merely related candidates.
+- Use `set-issue-type` with `issue_number` and exactly one of `Bug`, `Feature Request`, or `Task` when the issue's current type does not match its primary intent.
 - If you find a **possible duplicate** but are **not highly confident** it is the same root cause: do **NOT** use `close-issue`. Use `add-comment` to flag `Possible duplicate of #N` (with the link) and leave the issue open; apply labels with `add-labels` as usual (but not `duplicate`). Reserve `close-issue` for confirmed duplicates only.
 - If you **add labels AND post a comment** (most common case): Call **both** `add-labels` (to apply labels to the issue) AND `add-comment` (for the triage summary). ⚠️ Listing label names inside the comment body does NOT apply them — you MUST call `add-labels` as a separate action.
 - If you **only post a comment** (no labels to add, no close): Use `add-comment`.
