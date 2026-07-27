@@ -23,6 +23,21 @@ function Invoke-TerraformWithRetry {
         $command.Arguments = @("-chdir=$workingDirectory") + $command.Arguments
     }
 
+    # The repository sync is the only writer of each repo's state and runs on a
+    # 4 hourly schedule, so any lock we hit is left over from a cancelled or
+    # crashed run rather than a concurrent one. Break it and retry.
+    $recoveryActions = @(
+        @{
+            Name        = "terraform state lock"
+            Pattern     = "Error acquiring the state lock"
+            MaxAttempts = 3
+            Action      = {
+                param([string[]]$errorOutput)
+                Clear-TerraformStateLock -errorOutput $errorOutput -workingDirectory $workingDirectory
+            }.GetNewClosure()
+        }
+    )
+
     return Invoke-CommandWithRetry `
         -parentCommand "terraform" `
         -commands $commands `
@@ -31,9 +46,61 @@ function Invoke-TerraformWithRetry {
         -maxRetries $maxRetries `
         -retryDelayIncremental $retryDelayIncremental `
         -retryOn $retryOn `
+        -recoveryActions $recoveryActions `
         -printOutput:$printOutput.IsPresent `
         -printOutputOnError:$printOutputOnError.IsPresent `
         -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
+}
+
+# Parses the lock ID out of a Terraform "Error acquiring the state lock"
+# message and releases it with `terraform force-unlock`. Returns $true only
+# when the lock was actually released, so the caller can fall through to the
+# normal failure path when the lock cannot be parsed or broken.
+function Clear-TerraformStateLock {
+    param(
+        [string[]]$errorOutput,
+        [string]$workingDirectory,
+        [string]$outputLog = "force-unlock.log",
+        [string]$errorLog = "force-unlock.error.log"
+    )
+
+    # Terraform colourises and box-draws this output, so match the GUID rather
+    # than anchoring on the surrounding characters.
+    $lockIdPattern = 'ID:\s*([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})'
+
+    $lockId = $null
+    foreach ($line in $errorOutput) {
+        $lockIdMatch = [regex]::Match($line, $lockIdPattern)
+        if ($lockIdMatch.Success) {
+            $lockId = $lockIdMatch.Groups[1].Value
+            break
+        }
+    }
+
+    if (!$lockId) {
+        Write-Warning "Could not parse a Terraform state lock ID from the error output. Leaving the lock in place."
+        return $false
+    }
+
+    Write-Host "Found stale Terraform state lock '$lockId'. Forcing unlock."
+
+    $process = Start-Process `
+        -FilePath "terraform" `
+        -ArgumentList @("-chdir=$workingDirectory", "force-unlock", "-force", $lockId) `
+        -RedirectStandardOutput $outputLog `
+        -RedirectStandardError $errorLog `
+        -PassThru `
+        -NoNewWindow `
+        -Wait
+
+    if ($process.ExitCode -ne 0) {
+        Write-Warning "terraform force-unlock failed with exit code $($process.ExitCode)."
+        Get-Content -Path $errorLog | Write-Host
+        return $false
+    }
+
+    Write-Host "Released Terraform state lock '$lockId'."
+    return $true
 }
 
 function Invoke-GitHubCliWithRetry {
@@ -71,6 +138,7 @@ function Invoke-CommandWithRetry {
         [int]$maxRetries = 10,
         [int]$retryDelayIncremental = 10,
         [string[]]$retryOn = @("API rate limit exceeded"),
+        [hashtable[]]$recoveryActions = @(),
         [switch]$printOutput,
         [switch]$printOutputOnError,
         [switch]$returnOutputParsedFromJson
@@ -105,16 +173,44 @@ function Invoke-CommandWithRetry {
             if ($process.ExitCode -ne 0) {
                 Write-Host "$parentCommand failed with exit code $($process.ExitCode)."
 
+                $errorOutput = @(Get-Content -Path $errorLog)
+
                 if ($retryOn -contains "*") {
                     $shouldRetry = $true
                 } else {
-                    $errorOutput = Get-Content -Path $errorLog
                     foreach ($line in $errorOutput) {
                         foreach ($retryError in $retryOn) {
                             if ($line -like "*$retryError*") {
                                 Write-Host "Retrying $parentCommand due to error: $line"
                                 $shouldRetry = $true
                             }
+                        }
+                    }
+                }
+
+                # Recovery actions handle failures that will never clear on
+                # their own, such as a stale Terraform state lock. Retry only
+                # when the action reports that it actually fixed the problem.
+                if (!$shouldRetry) {
+                    foreach ($recovery in $recoveryActions) {
+                        if (!($errorOutput | Where-Object { $_ -like "*$($recovery.Pattern)*" })) {
+                            continue
+                        }
+
+                        $maxRecoveryAttempts = 1
+                        if ($recovery.MaxAttempts) {
+                            $maxRecoveryAttempts = $recovery.MaxAttempts
+                        }
+                        if ($recovery.Attempts -ge $maxRecoveryAttempts) {
+                            Write-Host "Recovery for '$($recovery.Name)' already attempted $($recovery.Attempts) time(s). Not retrying."
+                            continue
+                        }
+
+                        $recovery.Attempts = [int]$recovery.Attempts + 1
+                        Write-Host "Attempting recovery for '$($recovery.Name)' (attempt $($recovery.Attempts) of $maxRecoveryAttempts)."
+                        if (& $recovery.Action $errorOutput) {
+                            $shouldRetry = $true
+                            break
                         }
                     }
                 }
