@@ -41,7 +41,7 @@ safe-outputs:
   set-issue-type:
     allowed:
     - Bug
-    - Feature Request
+    - Feature
     - Task
     max: 1
     target: "*"
@@ -191,7 +191,7 @@ The repository label definitions are available at `/tmp/gh-aw/agent/repo-labels.
 Classify every issue as exactly one of these GitHub issue types and use the `set-issue-type` safe output to apply it:
 
 - **Bug** — Unexpected or incorrect behavior, regressions, errors, failed deployments, or behavior that does not match the documented contract.
-- **Feature Request** — Requests for new user-facing capabilities, resources, variables, outputs, integrations, or enhancements to existing behavior.
+- **Feature** — Feature requests for new user-facing capabilities, resources, variables, outputs, integrations, or enhancements to existing behavior.
 - **Task** — Concrete maintenance, documentation, testing, CI, refactoring, investigation, or other actionable work that is neither a defect nor a feature request.
 
 Choose the single best fit from the issue's primary intent. Do not create or use any other issue type. If the issue already has the correct type, leave it unchanged. Issue types are independent of labels, so continue with label analysis after setting the type.
@@ -347,7 +347,7 @@ If the issue has already been triaged, do not skip analysis. Publish the current
 The bullet points should include:
 
 - **Duplicate check result:** Whether duplicates or similar issues were found, with links to those issues. If closing as duplicate, state this clearly with the link.
-- **Issue type:** State whether you set the issue type to `Bug`, `Feature Request`, or `Task`, or whether the existing type was already correct.
+- **Issue type:** State whether you set the issue type to `Bug`, `Feature`, or `Task`, or whether the existing type was already correct.
 - **Labels applied:** List only the labels you **added** in this run, with a brief justification for each (e.g., "Applied `bug` — issue reports a failed `terraform apply`"). **Do NOT list or re-justify labels that were already on the issue.** If you added no new labels, say so in a single short line (do not enumerate the existing labels).
 - **No labels applied:** If no labels could be confidently determined, state this.
 - **Labels skipped:** If label definitions could not be loaded, state "Labels could not be applied due to a data loading error."
@@ -457,7 +457,7 @@ When you are **highly confident** an issue is a confirmed duplicate of another (
 - If you **close the issue** because it is conclusively fixed: Use `add-comment` for the triage summary **first**, then use `update-issue` with `status: closed`. This is the completed-closure path.
 - If the **Human Reopen Override** is active: Never use `close-issue` or use `update-issue` to set `status: closed`, regardless of duplicate or fix confidence. Continue with any non-closing outputs and explain the veto in the triage comment.
 - If you find an unlinked **confirmed-fix PR**: Use `update-pull-request` with `pull_request_number`, `operation: append`, and a body of exactly `Fixes #<issue-number>`. Do not update likely or merely related candidates.
-- Use `set-issue-type` with `issue_number` and exactly one of `Bug`, `Feature Request`, or `Task` when the issue's current type does not match its primary intent.
+- Use `set-issue-type` with `issue_number` and exactly one of `Bug`, `Feature`, or `Task` when the issue's current type does not match its primary intent.
 - If you find a **possible duplicate** but are **not highly confident** it is the same root cause: do **NOT** use `close-issue`. Use `add-comment` to flag `Possible duplicate of #N` (with the link) and leave the issue open; apply labels with `add-labels` as usual (but not `duplicate`). Reserve `close-issue` for confirmed duplicates only.
 - If you **add labels AND post a comment** (most common case): Call **both** `add-labels` (to apply labels to the issue) AND `add-comment` (for the triage summary). ⚠️ Listing label names inside the comment body does NOT apply them — you MUST call `add-labels` as a separate action.
 - If you **only post a comment** (no labels to add, no close): Use `add-comment`.
