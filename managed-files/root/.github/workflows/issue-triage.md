@@ -310,7 +310,7 @@ Once you have identified what the issue is about, attempt to investigate the roo
 
 **Do not emit any safe outputs until ALL analysis steps (Steps 1–5) are complete.**
 
-ALWAYS post **exactly one new** comment on the issue using the `add-comment` safe output, even if no triage actions were taken. On a manual rerun, reassess the issue from scratch instead of trusting the previous triage result. The workflow minimizes its older triage comments so this new comment becomes the current result. The comment must follow this exact format:
+ALWAYS post **exactly one new** comment on the issue using the `add-comment` safe output, even if no triage actions were taken. On a manual rerun, reassess the issue from scratch instead of trusting the previous triage result. Before posting the new result, the `add-comment` handler marks older comments from this same `issue-triage` workflow as outdated and minimizes them. It identifies workflow-owned comments using their hidden `gh-aw-workflow-id` metadata, so human comments and comments from other workflows are not affected. The comment must follow this exact format:
 
 ```
 ## 🤖 GitHub Agentic Workflow Automated Triage 🤖
@@ -461,7 +461,7 @@ When you are **highly confident** an issue is a confirmed duplicate of another (
 - If you find a **possible duplicate** but are **not highly confident** it is the same root cause: do **NOT** use `close-issue`. Use `add-comment` to flag `Possible duplicate of #N` (with the link) and leave the issue open; apply labels with `add-labels` as usual (but not `duplicate`). Reserve `close-issue` for confirmed duplicates only.
 - If you **add labels AND post a comment** (most common case): Call **both** `add-labels` (to apply labels to the issue) AND `add-comment` (for the triage summary). ⚠️ Listing label names inside the comment body does NOT apply them — you MUST call `add-labels` as a separate action.
 - If you **only post a comment** (no labels to add, no close): Use `add-comment`.
-- On a manual rerun, perform a complete fresh assessment. Use `add-comment` for the current result; the workflow will minimize its older triage comments.
+- On a manual rerun, perform a complete fresh assessment. Use `add-comment` for the current result; the handler will mark older comments carrying this same workflow's hidden `gh-aw-workflow-id` as outdated and minimize them.
 
 ---
 
