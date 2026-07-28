@@ -1,6 +1,6 @@
 ---
 name: avm-tf-codestyle
-description: Use this skill whenever a contributor needs to write or review the structural plumbing of an Azure Verified Module (AVM) in Terraform — file layout, provider pinning in `terraform.tf`, variable and output ordering, snake_case naming, variable validation, sensitive flags, formatting (`terraform fmt`), linting (`tflint`), and the `avmfix` auto-fixer. Covers what each canonical file (main.tf, main.*.tf, variables.tf, outputs.tf, locals.tf, terraform.tf) is for, the required provider version constraints, and the conventions the AVM CI will enforce (TFNFR4 for snake_case, TFNFR5/7/8 for variable hygiene). Trigger on phrases like "AVM file layout", "terraform.tf", "required_providers AVM", "AzAPI version pin", "snake_case", "variable validation", "tflint", "terrafmt", "avmfix", "module style", "where does this code go", "main.privateendpoint.tf".
+description: Use this skill whenever a contributor needs to write or review the structural plumbing of an Azure Verified Module (AVM) in Terraform — file layout, provider pinning in `terraform.tf`, variable and output ordering, snake\_case naming, variable validation, sensitive flags, formatting (`terraform fmt`), linting (`tflint`), and the `avmfix` auto-fixer. Covers what each canonical file (main.tf, main.\*.tf, variables.tf, outputs.tf, locals.tf, terraform.tf) is for, the required provider version constraints, and the conventions the AVM CI will enforce (TFNFR4 for snake\_case, TFNFR5/7/8 for variable hygiene). Trigger on phrases like "AVM file layout", "terraform.tf", "required\_providers AVM", "AzAPI version pin", "snake\_case", "variable validation", "tflint", "terrafmt", "avmfix", "module style", "where does this code go", "main.privateendpoint.tf".
 ---
 
 # AVM Terraform code style & file layout
@@ -9,11 +9,12 @@ A well-formed AVM Terraform module looks the same as every other well-formed AVM
 
 Authoritative sources:
 - [TFNFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR4.md) — Lower snake_casing
-- [TFNFR5, TFNFR7, TFNFR8](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/_index.md) — Variable hygiene (descriptions, validation, sensitive)
-- [TFNFR11, TFNFR12](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/_index.md) — Output hygiene
-- [TFNFR17](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR17.md) — Code style
-- [TFNFR21](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR21.md) — terraform.tf provider constraints
-- [TFNFR23](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR23.md) — `_header.md` / `_footer.md` (see `avm-tf-documentation`)
+- [TFNFR39](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR39.md) — Standard File Layout
+- [TFNFR17](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR17.md), [TFNFR18](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR18.md), [TFNFR19](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR19.md) — Variable descriptions, types, sensitivity
+- [TFNFR29](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR29.md) — Sensitive Data Outputs
+- [TFNFR26](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR26.md), [TFNFR27](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR27.md) — `terraform.tf` provider constraints
+- [TFNFR31](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR31.md) — `locals.tf` for locals only
+- [TFNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR2.md) — `_header.md` / `_footer.md` generation (see `avm-tf-documentation`)
 - [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) — Subresources as submodules
 - [TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md) — Primary resource named `this`
 
@@ -107,19 +108,33 @@ Rules ([TFNFR21](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/
 
 ```hcl
 resource "azapi_resource" "this" {
-  type      = var.resource_types.search_search_services   # TFFR6 — never an inline literal
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
+  type      = var.resource_types.search_search_services   # TFFR6 — never inline a literal type
+  parent_id = var.parent_id                               # TFRMFR1 — never derive this from resource_group_name
   name      = var.name
   location  = var.location
   tags      = var.tags
   body      = { ... }
-  response_export_values = [ ... ]   # TFFR4 — required attribute, can be []
+
+  response_export_values = []   # TFFR4 — required, may be []
+  replace_triggers_refs  = []   # TFFR5 — required, may be []
+
+  retry = var.retry             # TFFR7 — `retry` is an attribute, not a block
+
+  dynamic "timeouts" {          # TFFR7 — `timeouts` IS a block
+    for_each = var.timeouts == null ? [] : [var.timeouts]
+    content {
+      create = timeouts.value.create
+      read   = timeouts.value.read
+      update = timeouts.value.update
+      delete = timeouts.value.delete
+    }
+  }
 }
 ```
 
 The `type` **MUST** come from `var.resource_types.<key>` per [TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md) (see the "Required AzAPI plumbing variables" section below) — never an inline `"Microsoft.…@apiVersion"` string literal.
 
-The primary resource is **always named `this`** ([TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md)). Same for the standard-interface resources, which are **also AzAPI** ([TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md)) — e.g. `azapi_resource.lock`, `azapi_resource.diagnostic_settings` (with `for_each` if it's a map interface). For child resources within the same module that aren't iterables: still `this`. For iterables: a sensible name (e.g. `azapi_resource.private_endpoint`, `azapi_resource.private_endpoint_dns_zone_group`).
+The **primary** resource is always named `this` ([TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md)) — and only the primary resource. Every satellite resource (locks, role assignments, diagnostic settings, private endpoints, CMK) **MUST NOT** be named `this`; name it after what it represents: `azapi_resource.lock`, `azapi_resource.role_assignments`, `azapi_resource.diagnostic_settings`, `azapi_resource.private_endpoints`. Child resources of the primary belong in submodules per TFRMNFR1, not inline.
 
 ## `variables.tf`
 
@@ -129,7 +144,7 @@ Required inputs first, then optional inputs grouped by interface, in this order:
 # Required
 variable "location" { ... }
 variable "name" { ... }
-variable "resource_group_name" { ... }
+variable "parent_id" { ... }   # TFRMFR1 — a single string input, NOT resource_group_name (nullable = false; validate with can(provider::azapi::parse_resource_id(...)) per TFNFR38)
 
 # Resource-specific optional inputs (alphabetised within the group)
 variable "sku_name" { ... }
@@ -248,13 +263,13 @@ locals {
 
 Every AVM TF module MUST declare three module-level variables that consumers can override and that flow into every `azapi_resource` block:
 
-- **`resource_types`** ([TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md)) — object whose keys are the snake_case ARM types the module uses (with `Microsoft.` dropped and provider as a single lowercase token: `Microsoft.Search/searchServices` → `search_search_services`, `Microsoft.KeyVault/vaults/secrets` → `keyvault_vaults_secrets`). Each value is the full `type@apiVersion` string. The module's `azapi_resource` blocks then read `type = var.resource_types.<key>`, never inline string literals. Submodules accept and use a sub-object of the same shape.
-- **`retry`** ([TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md)) — object with optional `error_message_regex`, `interval_seconds`, `max_interval_seconds`. `default = null`. The module MAY supply defaults for known transient errors via `coalesce()` in the `dynamic "retry"` block.
+- **`resource_types`** ([TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md)) — object whose keys are the snake\_case ARM types the module uses (with `Microsoft.` dropped and provider as a single lowercase token: `Microsoft.Search/searchServices` → `search_search_services`, `Microsoft.KeyVault/vaults/secrets` → `keyvault_vaults_secrets`). Each value is the full `type@apiVersion` string. The module's `azapi_resource` blocks then read `type = var.resource_types.<key>`, never inline string literals. Submodules accept and use a sub-object of the same shape.
+- **`retry`** ([TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md)) — object with optional `error_message_regex`, `interval_seconds`, `max_interval_seconds`. `default = null`. `retry` is an **attribute** on `azapi_resource`, so assign it directly (`retry = var.retry`) — do not wrap it in a `dynamic` block. The module MAY default `error_message_regex` to known transient errors for the RP at the variable level.
 - **`timeouts`** ([TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md)) — object with optional `create`/`read`/`update`/`delete` (Go duration strings). `default = null`.
 
 All three MUST cascade to every submodule the parent instantiates.
 
-## snake_case everywhere ([TFNFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR4.md))
+## snake\_case everywhere ([TFNFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/non-functional/TFNFR4.md))
 
 - Variable names: `public_network_access_enabled`, NOT `publicNetworkAccessEnabled`.
 - Output names: `resource_id`, NOT `resourceId`.
@@ -262,18 +277,18 @@ All three MUST cascade to every submodule the parent instantiates.
 - Terraform resource symbols: `azapi_resource.this`, NOT `azapi_resource.This`.
 - File names: `main.private_endpoint.tf`, NOT `main.privateEndpoint.tf`.
 
-The ARM property names *inside* `body` stay in their native ARM camelCase — that's not Terraform code, that's ARM payload, and AzAPI passes it through verbatim. So `body.properties.publicNetworkAccess` is correct (it's an ARM key), but `var.public_network_access_enabled` (the Terraform variable that feeds it) is snake_case.
+The ARM property names *inside* `body` stay in their native ARM camelCase — that's not Terraform code, that's ARM payload, and AzAPI passes it through verbatim. So `body.properties.publicNetworkAccess` is correct (it's an ARM key), but `var.public_network_access_enabled` (the Terraform variable that feeds it) is snake\_case.
 
 ## Subresources as submodules ([TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md))
 
-If a child resource of the primary resource has independent lifecycle and meaningful inputs/outputs — and *isn't* worth its own published AVM module — put it under `modules/<name>/`. Examples in `keyvault-vault`: `modules/key/`, `modules/secret/`, `modules/certificate/`. Each submodule follows the same file layout as the parent (main.tf, variables.tf, outputs.tf, _header.md, _footer.md).
+If a child resource of the primary resource has independent lifecycle and meaningful inputs/outputs — and *isn't* worth its own published AVM module — put it under `modules/<name>/`. Examples in `keyvault-vault`: `modules/key/`, `modules/secret/`, `modules/certificate/`. Each submodule follows the same file layout as the parent (main.tf, variables.tf, outputs.tf, \_header.md, \_footer.md).
 
 ## Formatting & linting tools
 
 The `./avm pre-commit` script runs these in order. You can run them individually too:
 
 | Tool | What it does | Failure mode |
-|---|---|---|
+| --- | --- | --- |
 | `terraform fmt -recursive` | Whitespace + alignment. | Pre-commit fails with a diff. |
 | `tflint --recursive` | Lints HCL — required providers, unused declarations, deprecated syntax. | Pre-commit fails with the rule violation. |
 | `avmfix` | AVM-specific fixer — fixes file-layout / variable-ordering / naming issues. | Pre-commit fails or auto-fixes. |

@@ -74,11 +74,7 @@ Because "provider hop + collection extraction into a compliant submodule" cannot
 
 4. **Extracting a consumer-data collection into a *new* compliant submodule is inherently state-breaking.** If you must both extract *and* preserve state, the only options are a documented per-key `terraform state mv` recipe for consumers, or doing the extraction as a separate breaking release from the provider migration. Prefer designing subresources as submodules from day one so no extraction is ever needed.
 
-Cite these merged migrations if a reviewer wants precedent — note they all migrated the provider **flat**, without a same-release submodule extraction:
-
-- [`terraform-azurerm-avm-res-web-serverfarm` PR #121](https://github.com/Azure/terraform-azurerm-avm-res-web-serverfarm/pull/121) — App Service Plan; root-level `moved {}` for the plan, lock and role assignment.
-- [`terraform-azurerm-avm-res-network-natgateway` PR #192](https://github.com/Azure/terraform-azurerm-avm-res-network-natgateway/pull/192) — NAT Gateway; a `for_each` `public_ip` collection re-keyed by a same-level wildcard `moved {}`.
-- [`terraform-azurerm-avm-res-eventgrid-domain` PR #18](https://github.com/Azure/terraform-azurerm-avm-res-eventgrid-domain/pull/18) — Event Grid Domain support interfaces migrated as a breaking change (no `moved {}`).
+All three of these strategies migrate the provider **flat**, without a same-release submodule extraction — that ordering is what keeps state preservable. The dynamic-`moved` limitation that forces the split is a genuine spec gap: [AVM spec PR #2744](https://github.com/Azure/Azure-Verified-Modules/pull/2744) tightened TFRMNFR1's caller-owned-cardinality rule specifically because it kept being misread. If it blocks a real migration, raise it upstream on `Azure/Azure-Verified-Modules` rather than arguing precedent on a review.
 
 ## 2. The `moved {}` patterns you actually need
 

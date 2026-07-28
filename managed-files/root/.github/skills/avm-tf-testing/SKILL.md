@@ -67,9 +67,9 @@ resource "azapi_resource" "rg" {
 module "this" {
   source = "../.."
 
-  name                = "srch${random_string.this.result}"
-  location            = azapi_resource.rg.location
-  resource_group_name = azapi_resource.rg.name
+  name      = "srch${random_string.this.result}"
+  location  = azapi_resource.rg.location
+  parent_id = azapi_resource.rg.id
 
   # Drive the feature you're demonstrating, e.g. for the private-endpoint example:
   private_endpoints = {
@@ -112,9 +112,9 @@ mock_provider "azapi" {}
 mock_provider "azurerm" {}
 
 variables {
-  location            = "westeurope"
-  name                = "srch-test"
-  resource_group_name = "rg-test"
+  location  = "westeurope"
+  name      = "srch-test"
+  parent_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test"
 }
 
 run "no_lock_creates_no_lock_resource" {
@@ -246,7 +246,7 @@ AVM modules **MUST NOT use service principal secrets** for CI. Use OIDC federate
      --identity-name id-avm-<module-name> \
      --resource-group rg-avm-test \
      --issuer https://token.actions.githubusercontent.com \
-     --subject "repo:Azure/terraform-azurerm-avm-res-<module>:environment:test" \
+     --subject "repo:Azure/terraform-azure-avm-res-<module>:environment:test" \
      --audiences api://AzureADTokenExchange
    ```
 6. **Store the UAMI's `client_id`, the subscription `id`, and the `tenant_id` as secrets on the `test` GitHub environment** (the AVM template's `pr-check.yml` reads them as `secrets.*`, scoped to the environment — even though the values aren't strictly sensitive, the template treats them as secrets and you should match that pattern so the upstream workflows work unmodified):
@@ -267,7 +267,8 @@ The canonical local commands (use `PORCH_NO_TUI=1` to disable the interactive TU
 | `./avm tf-test-integration` | Run all `tests/integration/` tests. |
 | `./avm test-examples` | Apply every `examples/<name>/` configuration (skipping `.e2eignore` ones). |
 | `AVM_EXAMPLE="default" ./avm test-examples` | Apply only one example. |
-| `./avm docs` | Regenerate `README.md` from `_header.md` + module sources + `_footer.md`. |
+
+Documentation regeneration (`terraform-docs`) runs as part of `./avm pre-commit`; there is no standalone `docs` target.
 
 Windows equivalents: `.\avm.ps1 pre-commit`, etc.
 

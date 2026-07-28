@@ -84,7 +84,7 @@ data "azapi_client_config" "current" {}
 
 resource "azapi_resource" "this" {
   type      = var.resource_types.search_search_services       # TFFR6 — NEVER inline a literal type
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
+  parent_id = var.parent_id                                   # TFRMFR1 — a single string input, never derived from resource_group_name
   name      = var.name
   location  = var.location
   tags      = var.tags
@@ -126,16 +126,10 @@ resource "azapi_resource" "this" {
   # TFFR5 — required attribute. Use [] when no properties need a replace trigger.
   replace_triggers_refs = []
 
-  # TFFR7 — driven by var.retry, not a hard-coded block. The module MAY default
-  # `retry.error_message_regex` to known transient errors for this RP.
-  dynamic "retry" {
-    for_each = var.retry == null ? [] : [var.retry]
-    content {
-      error_message_regex  = coalesce(retry.value.error_message_regex, ["ResourceGroupNotFound", "AnotherOperationInProgress"])
-      interval_seconds     = coalesce(retry.value.interval_seconds, 10)
-      max_interval_seconds = coalesce(retry.value.max_interval_seconds, 60)
-    }
-  }
+  # TFFR7 — `retry` is an attribute on azapi_resource, so assign the variable
+  # directly. Only `timeouts` is a block requiring `dynamic`. Module-level
+  # defaults for known transient errors belong on the variable, not here.
+  retry = var.retry
 
   # TFFR7 — same pattern for timeouts
   dynamic "timeouts" {
@@ -293,7 +287,7 @@ resource search 'Microsoft.Search/searchServices@2024-06-01-preview' = {
 # AzAPI
 resource "azapi_resource" "this" {
   type      = "Microsoft.Search/searchServices@2024-06-01-preview"
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
+  parent_id = var.parent_id                                   # TFRMFR1 — a single string input, never derived from resource_group_name
   name      = var.name
   location  = var.location
   body = {

@@ -187,5 +187,5 @@ Per SFR3, **utility modules that deploy no resources MUST NOT include telemetry.
 - **Editing the modtm logic to add custom tags.** Don't — telemetry shape is standardised. If you genuinely need richer telemetry (e.g. for a new module class), raise it with the AVM core team.
 - **Not passing `enable_telemetry` through to child AVM modules.** A consumer who sets `enable_telemetry = false` on the pattern module expects telemetry off for the whole graph; if you don't pass it through, child resource modules still emit telemetry.
 - **Forgetting the Data Collection notice in `_footer.md`.** Required by SFR3. The template includes it; deletions will fail review.
-- **Putting the Data Collection notice in `README.md` directly.** It gets overwritten on the next `./avm docs` run. Put it in `_footer.md`.
+- **Putting the Data Collection notice in `README.md` directly.** It gets overwritten on the next `./avm pre-commit` run. Put it in `_footer.md`.
 - **Using a `modtm` version other than `~> 0.3`.** Pinned by spec and validated by lint.

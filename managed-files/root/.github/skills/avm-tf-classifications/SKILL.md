@@ -1,6 +1,6 @@
 ---
 name: avm-tf-classifications
-description: Use this skill whenever a contributor is deciding what KIND of Azure Verified Module to build in Terraform — resource module, pattern module, or utility module — or is naming a module / GitHub repo / Terraform Registry entry. Covers the three module classes, the criteria that separate them ("single resource only" vs "opinionated multi-resource solution" vs "shared logic"), the naming conventions per class (`avm-res-`, `avm-ptn-`, `avm-utl-`), and the corresponding GitHub repo name (`terraform-azurerm-avm-<class>-<name>`). Trigger on phrases like "resource module vs pattern module", "what class is this", "how do I name my AVM module", "wrapper module", "single resource", "multi-resource", "utility module", "avm-res-", "avm-ptn-", "avm-utl-".
+description: Use this skill whenever a contributor is deciding what KIND of Azure Verified Module to build in Terraform — resource module, pattern module, or utility module — or is naming a module / GitHub repo / Terraform Registry entry. Covers the three module classes, the criteria that separate them ("single resource only" vs "opinionated multi-resource solution" vs "shared logic"), the naming conventions per class (`avm-res-`, `avm-ptn-`, `avm-utl-`), and the corresponding GitHub repo name (`terraform-azure-avm-<class>-<name>` for new modules; `terraform-azurerm-avm-<class>-<name>` for legacy ones). Trigger on phrases like "resource module vs pattern module", "what class is this", "how do I name my AVM module", "wrapper module", "single resource", "multi-resource", "utility module", "avm-res-", "avm-ptn-", "avm-utl-".
 ---
 
 # AVM module classifications & naming (Terraform)
@@ -68,15 +68,17 @@ Notes on the resource segment:
 
 ### GitHub repo name (in the `Azure` org)
 
-The repo name **prefixes the module name with `terraform-azurerm-`**, even though AVM Terraform modules now use AzAPI (the prefix is a Terraform Registry convention, not a statement of provider choice):
+The repo name **prefixes the module name with `terraform-azure-`** ([RMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/non-functional/RMNFR1.md)). The `<provider>` segment is a legacy Terraform Registry requirement; the spec now fixes it to `azure` for **new** modules — even though AVM Terraform modules use AzAPI:
 
 | Class | Repo |
 |---|---|
-| Resource | `terraform-azurerm-avm-res-<rp>-<type>` — e.g. `terraform-azurerm-avm-res-keyvault-vault` |
-| Pattern | `terraform-azurerm-avm-ptn-<name>` — e.g. `terraform-azurerm-avm-ptn-aks-production` |
-| Utility | `terraform-azurerm-avm-utl-<name>` — e.g. `terraform-azurerm-avm-utl-interfaces` |
+| Resource | `terraform-azure-avm-res-<rp>-<type>` — e.g. `terraform-azure-avm-res-storage-storageaccount` |
+| Pattern | `terraform-azure-avm-ptn-<name>` — e.g. `terraform-azure-avm-ptn-aks-production` |
+| Utility | `terraform-azure-avm-utl-<name>` — e.g. `terraform-azure-avm-utl-interfaces` |
 
-This expands to the Terraform Registry source string `Azure/avm-res-<rp>-<type>/azurerm` (the `/azurerm` suffix is the Registry's "provider" namespace and is fixed by convention even when the module's code uses AzAPI).
+This expands to the Terraform Registry source string `Azure/avm-res-<rp>-<type>/azure` (the `/azure` suffix is the Registry's "provider" namespace, fixed by convention even though the module's code uses AzAPI).
+
+> **Legacy note.** Most existing repos are still named `terraform-azurerm-avm-*` with an `Azure/avm-res-.../azurerm` Registry source — RMNFR1 changed the required `<provider>` segment from `azurerm` to `azure`, and the bulk of published modules pre-date the change. Keep an existing module's published name/source as-is; use `azure` only for **new** modules. The template repo itself remains `terraform-azurerm-avm-template`.
 
 ### Primary resource name in code
 
@@ -85,7 +87,7 @@ Inside the module, the primary `azapi_resource` (or, legacy, `azurerm_*` resourc
 ```hcl
 resource "azapi_resource" "this" {
   type      = "Microsoft.Search/searchServices@2024-06-01-preview"
-  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
+  parent_id = var.parent_id
   name      = var.name
   location  = var.location
   body      = { properties = { ... } }
@@ -95,6 +97,6 @@ resource "azapi_resource" "this" {
 ## Common pitfalls
 
 - **Treating "I want to deploy 5 VMs" as a resource module.** It isn't — RMFR1 requires single-resource. Call a `avm-res-compute-virtualmachine` module 5 times, or write a pattern module if there's reusable orchestration.
-- **Inventing a new naming convention.** The repo name `terraform-azurerm-avm-...` is mechanical — don't substitute `terraform-azapi-avm-...` "because we're using AzAPI now". The Registry-side convention is fixed.
+- **Inventing a new naming convention.** The repo name `terraform-azure-avm-...` is mechanical — don't substitute `terraform-azapi-avm-...` "because we're using AzAPI now". The Registry-side convention is fixed.
 - **Adding a primary-resource `name` default.** Resource modules **MUST NOT** default the primary resource's name ([RMNFR2 / SNFR25](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/non-functional/SNFR25.md)) — the consumer must always supply it. Defaults *are* permitted (and required) for the standard-interface child resources like `pep-<name>`.
 - **Forgetting that pattern modules consume resource modules.** A pattern that re-implements a Key Vault inline instead of using `avm-res-keyvault-vault` violates TFFR1.

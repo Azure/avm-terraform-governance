@@ -93,7 +93,7 @@ If you bootstrapped from the template, the bundled `.github/policies/branchprote
 AVM uses a canonical label set across all module repos (Type/Status/Needs/Class/Language). Apply them with the [`Set-AvmGitHubLabels.ps1`](https://azure.github.io/Azure-Verified-Modules/scripts/Set-AvmGitHubLabels.ps1) script:
 
 ```powershell
-Set-AvmGitHubLabels.ps1 -RepositoryName "Azure/terraform-azurerm-avm-res-your-module" -CreateCsvLabelExports $false -NoUserPrompts $true
+Set-AvmGitHubLabels.ps1 -RepositoryName "Azure/terraform-azure-avm-res-your-module" -CreateCsvLabelExports $false -NoUserPrompts $true
 ```
 
 You need GitHub CLI installed and authenticated, and repo admin permissions. The label set is pulled from the AVM-hosted CSV at `https://azure.github.io/Azure-Verified-Modules/governance/avm-standard-github-labels.csv` and includes everything the AVM bots and issue templates expect (e.g. `Needs: Triage 🔍`, `Status: Module Available 🟢`, `Language: Terraform 🌐`, `Class: Resource Module 📦`).
@@ -112,7 +112,7 @@ PORCH_NO_TUI=1 ./avm tf-test-unit   # provider-mocked unit tests
 PORCH_NO_TUI=1 ./avm pr-check       # the same checks CI will run
 ```
 
-When the first PR merges, the release-please / semantic-release workflow cuts the tag (`v0.1.0`), which triggers publication to the Terraform Registry under `Azure/avm-res-<rp>-<type>/azurerm`.
+When the first PR merges, the release-please / semantic-release workflow cuts the tag (`v0.1.0`), which triggers publication to the Terraform Registry under `Azure/avm-res-<rp>-<type>/azure` (the `/azure` provider segment for new modules per RMNFR1; legacy modules stay on `/azurerm`).
 
 ## Ongoing PR approval logic
 

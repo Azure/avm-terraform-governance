@@ -26,32 +26,33 @@ modules/<name>/
 
 The submodule's `terraform.tf` re-declares the same provider versions as the parent — Terraform requires it, even though the parent already declared them.
 
-## Composition rule — parent `for_each`s the submodule call, submodule is single-instance
+## Composition rule — parent owns cardinality, submodule manages exactly one instance
 
-This is the single most important design rule for submodules, and it is a **MUST** in [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md): a submodule **MUST deploy exactly one instance** of the resource it manages — its primary `azapi_resource` **MUST NOT** declare `count` or `for_each` — and **cardinality is the parent's responsibility** via `count`/`for_each` on the submodule *call*. This keeps each submodule independently consumable, with single-resource variables, outputs and tests.
+[TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) puts cardinality on the caller. A submodule manages exactly one instance so it stays independently usable — a consumer can call `./modules/secret` directly for a single secret without inheriting a map interface.
 
 ```hcl
-# ❌ DON'T: for_each on the resource inside the submodule
-# (pushes cardinality into the submodule — TFRMNFR1 violation)
-resource "azapi_resource" "this" {
-  for_each = var.secrets
-  # ...
-}
-
-# ✅ DO: parent for_eachs the CALL; submodule manages one instance
+# ✅ DO: for_each on the module call — cardinality is the parent's job
 module "secret" {
   source   = "./modules/secret"
   for_each = var.secrets
 
-  name = each.value.name
+  name      = coalesce(each.value.name, each.key)
+  parent_id = azapi_resource.this.id
   # ...
+}
+
+# ❌ DON'T: parent calls once and hands the whole map to the submodule
+module "secrets" {
+  source  = "./modules/secrets"
+  secrets = var.secrets
 }
 ```
 
 ```hcl
-# ./modules/secret/main.tf — single instance, no count/for_each
+# ./modules/secret/main.tf — exactly one instance, no count/for_each
 variable "name" {
-  type = string
+  type     = string
+  nullable = false
 }
 
 resource "azapi_resource" "this" {
@@ -62,7 +63,9 @@ resource "azapi_resource" "this" {
 }
 ```
 
-> **Migration note.** It's tempting to invert this (parent calls the submodule once with a whole map; submodule owns `for_each` internally) because that shape lets a wildcard `moved {}` block preserve state across an AzureRM→AzAPI hop. **Don't** — it violates TFRMNFR1 and has been rejected by AVM maintainers on review. The compliant way to preserve state during migration is covered in `avm-tf-migration` §1 (migrate the provider *flat* first; extract into a submodule in a separate release; or migrate a resource in place *inside* an already-`for_each`'d submodule).
+Submodule outputs are therefore scalar (`resource_id`, `name`), not maps. The parent aggregates with a `for` expression over `module.secret` when it needs a map.
+
+> **Migration aside.** The reason this rule is sometimes inverted is a real gap, not a reason to break TFRMNFR1: `moved {}` blocks can't be dynamically generated, so re-keying per-instance state across an AzureRM→AzAPI provider hop means writing a `moved` block per key by hand. That's a spec-level limitation worth raising upstream on `Azure/Azure-Verified-Modules` — [spec PR #2744](https://github.com/Azure/Azure-Verified-Modules/pull/2744) tightened this rule precisely because it was being misread. The compliant migration paths are covered in `avm-tf-migration` §1; don't push cardinality into the submodule to work around it.
 
 ## Variable design
 
@@ -141,28 +144,49 @@ module "secret" {
 
   name = each.value.name
 
-  # cascade
-  resource_types = var.resource_types
+  # cascade — pass the submodule's nested resource_types slot, not the whole object
+  resource_types = var.resource_types.keyvault_vaults_secrets
   retry          = var.retry
   timeouts       = var.timeouts
 }
 ```
 
 ```hcl
-# ./modules/secret/variables.tf — accept a SUB-OBJECT of the parent's resource_types
+# parent variables.tf — declare a nested resource_types slot PER submodule (TFRMNFR1)
 variable "resource_types" {
   type = object({
-    keyvault_vaults_secrets = optional(string, "Microsoft.KeyVault/vaults/secrets@2023-07-01")
+    keyvault_vaults = optional(string, "Microsoft.KeyVault/vaults@2024-11-01")
+    keyvault_vaults_secrets = optional(object({
+      keyvault_vaults_secrets = optional(string, "Microsoft.KeyVault/vaults/secrets@2024-11-01")
+    }), {})
+  })
+  default  = {}
+  nullable = false
+}
+```
+
+```hcl
+# ./modules/secret/variables.tf — accept ONLY this submodule's slot object
+variable "resource_types" {
+  type = object({
+    keyvault_vaults_secrets = optional(string, "Microsoft.KeyVault/vaults/secrets@2024-11-01")
   })
   default  = {}
   nullable = false
 }
 
-variable "retry"    { type = object({ /* same shape as parent */ }), default = null }
-variable "timeouts" { type = object({ /* same shape as parent */ }), default = null }
+variable "retry" {
+  type    = object({ /* same shape as parent */ })
+  default = null
+}
+
+variable "timeouts" {
+  type    = object({ /* same shape as parent */ })
+  default = null
+}
 ```
 
-The submodule's `resource_types` declares **only the keys it actually uses**, not the whole parent set. When the parent passes `var.resource_types`, Terraform's structural typing accepts the extra keys quietly.
+TFRMNFR1 defines the shape explicitly: the parent declares a nested `optional(object({...}), {})` slot for each submodule and cascades **that slot** (`var.resource_types.keyvault_vaults_secrets`) unchanged. It does *not* pass the whole flat object and rely on structural typing to silently drop the extra keys — although Terraform would accept that, it isn't the spec shape and it denies the consumer the documented nested override for a submodule's resource types.
 
 ## Output design — RMFR7 applies to submodules too
 

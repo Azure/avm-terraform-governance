@@ -71,16 +71,23 @@ Implementation (in `main.tf`) — AzAPI per [TFFR3](https://raw.githubuserconten
 
 ```hcl
 resource "azapi_resource" "lock" {
-  count     = var.lock != null ? 1 : 0
-  type      = var.resource_types.authorization_locks # e.g. "Microsoft.Authorization/locks@2020-05-01"
+  count = var.lock != null ? 1 : 0
+
+  type      = var.resource_types.authorization_locks
   parent_id = azapi_resource.this.id
   name      = coalesce(var.lock.name, "lock-${var.name}")
+
   body = {
     properties = {
       level = var.lock.kind
       notes = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
     }
   }
+
+  response_export_values = []
+  replace_triggers_refs  = []
+
+  retry = var.retry
 }
 ```
 
@@ -328,7 +335,7 @@ Wire into `body.properties.encryption*` or the resource-type-specific equivalent
 
 ### `alerts` (SHOULD)
 
-Schema varies by resource (the spec doesn't yet fix one), but if your resource supports Azure Monitor alerts you SHOULD expose an `alerts` map variable that creates the corresponding AzAPI resources — `Microsoft.Insights/metricAlerts` or `Microsoft.Insights/scheduledQueryRules` (`azapi_resource`, per TFFR3), not `azurerm_monitor_*`.
+Schema varies by resource (the spec doesn't yet fix one), but if your resource supports Azure Monitor alerts you SHOULD expose an `alerts` map variable that creates `azapi_resource` instances of `Microsoft.Insights/metricAlerts` or `Microsoft.Insights/scheduledQueryRules`, sourced from `var.resource_types` per TFFR6. Per TFFR3, don't reach for `azurerm_monitor_*` here — both types have AzAPI equivalents.
 
 ## File layout convention
 
