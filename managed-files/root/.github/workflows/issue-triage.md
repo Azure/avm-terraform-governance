@@ -105,6 +105,13 @@ steps:
     EVIDENCE_FILE=/tmp/gh-aw/agent/pr-candidate-evidence.json
     REPO="${GH_AW_GITHUB_REPOSITORY}"
     NUM="${ISSUE_NUMBER}"
+    if ! printf '%s' "${REPO}" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' \
+      || ! printf '%s' "${NUM}" | grep -Eq '^[1-9][0-9]*$'; then
+      jq -n --arg issue "${NUM}" --arg repo "${REPO}" \
+        '{issue_number:$issue,repository:$repo,loaded:false,complete:false,success:false,errors:["invalid repository or issue number"],candidate_count:0,candidates:[]}' \
+        > "${EVIDENCE_FILE}"
+      exit 0
+    fi
     WORK_DIR=$(mktemp -d)
     CANDIDATES_JSONL="${WORK_DIR}/candidates.jsonl"
     ERRORS_FILE="${WORK_DIR}/errors.txt"
@@ -114,7 +121,9 @@ steps:
     # Conservative fallback written up front: if this step dies before the final
     # write below, the agent still finds an honest "incomplete" file rather than a
     # stale or missing one, so it never treats a failed load as a false success.
-    printf '{"issue_number":%s,"repository":"%s","loaded":false,"complete":false,"success":false,"errors":["prefetch step did not finish"],"candidate_count":0,"candidates":[]}\n' "${NUM}" "${REPO}" > "${EVIDENCE_FILE}"
+    jq -n --argjson issue "${NUM}" --arg repo "${REPO}" \
+      '{issue_number:$issue,repository:$repo,loaded:false,complete:false,success:false,errors:["prefetch step did not finish"],candidate_count:0,candidates:[]}' \
+      > "${EVIDENCE_FILE}"
     record_error() {
       echo "$1" >> "${ERRORS_FILE}"
       COMPLETE=false
@@ -143,11 +152,9 @@ steps:
     else
       record_error "timeline: gh api fetch failed for issue #${NUM}"
     fi
-    # Source 2: exhaustive PR scan via GraphQL - exact issue-number search across PR
-    # title/body over ALL states (OPEN, CLOSED, MERGED) with no date limit, plus a
-    # commit-message scan (commits whose message contains #N or a qualified ref,
-    # mapped back to their PR; commit-body "Refs #N" style references are tagged
-    # separately from a bare mention).
+    # Sources 2-4: an exhaustive, paginated PR scan. It provides exact title/body
+    # matches and commit references across every PR state, plus a compact inventory
+    # of every currently open PR so reference-free fixes remain discoverable.
     GRAPHQL_QUERY="${WORK_DIR}/pr-scan.graphql"
     cat > "${GRAPHQL_QUERY}" <<'GRAPHQL_EOF'
     query($owner: String!, $repo: String!, $endCursor: String) {
@@ -162,8 +169,13 @@ steps:
             isDraft
             merged
             body
-            commits(first: 20) {
+            commits(first: 100) {
+              pageInfo { hasNextPage }
               nodes { commit { oid message } }
+            }
+            files(first: 30) {
+              pageInfo { hasNextPage }
+              nodes { path }
             }
           }
         }
@@ -182,6 +194,12 @@ steps:
         | .[]
         | . as $pr
         | (
+            (if $pr.state == "OPEN" then
+              [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""),
+                source:"open_pr_inventory", detail:"Current open PR; screen title, body excerpt, and changed-file names for relevance",
+                file_names:[$pr.files.nodes[]?.path], files_truncated:($pr.files.pageInfo.hasNextPage // false)}]
+            else [] end)
+            +
             (if (($pr.title // "") | test($numRef) or (($pr.title // "") | test($qualRef))) then
               [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""), source:"issue_number_search_title", detail:("PR title contains #" + $num + " or a repo-qualified reference")}]
             else [] end)
@@ -204,6 +222,11 @@ steps:
           )
           | .[]
       ' "${PR_SCAN_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "graphql pr scan: jq processing failed for issue #${NUM}"
+      TRUNCATED_COMMITS=$(jq -s '[.[].data.repository.pullRequests.nodes[]? | select(.commits.pageInfo.hasNextPage == true)] | length' "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}") \
+        || { TRUNCATED_COMMITS=1; record_error "graphql pr scan: jq commit-pagination check failed"; }
+      if [ "${TRUNCATED_COMMITS}" -gt 0 ]; then
+        record_error "graphql pr scan: ${TRUNCATED_COMMITS} PR(s) have more than 100 commits; commit-reference evidence is incomplete"
+      fi
       LAST_HAS_NEXT=$(jq -s '[.[].data.repository.pullRequests.pageInfo.hasNextPage] | last // false' "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}")
       if [ "${LAST_HAS_NEXT}" = "true" ]; then
         record_error "graphql pr scan: pagination did not complete (hasNextPage still true) - results may be partial"
@@ -226,6 +249,13 @@ steps:
               detail: "Matched via GitHub search in a PR comment"
             }
         ' "${COMMENT_SEARCH_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "comment search: jq processing failed for variant ${VARIANT}"
+        SEARCH_TOTAL=$(jq -s '[.[].total_count // 0] | max // 0' "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}") \
+          || { SEARCH_TOTAL=1; record_error "comment search: jq total-count check failed for variant ${VARIANT}"; }
+        SEARCH_COLLECTED=$(jq -s '[.[] | (.items // []) | length] | add // 0' "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}") \
+          || { SEARCH_COLLECTED=0; record_error "comment search: jq result-count check failed for variant ${VARIANT}"; }
+        if [ "${SEARCH_TOTAL}" -gt "${SEARCH_COLLECTED}" ]; then
+          record_error "comment search: GitHub search returned ${SEARCH_COLLECTED} of ${SEARCH_TOTAL} results for ${VARIANT} (1000-result cap or incomplete pagination)"
+        fi
       else
         record_error "comment search: gh api search fetch failed for variant ${VARIANT}"
       fi
@@ -244,7 +274,9 @@ steps:
             merged: (any(.[]; .merged == true)),
             body_excerpt: ((first(.[] | select(.body != null and .body != "") | .body) // "")[0:600]),
             sources: ([.[] | .source] | unique),
-            evidence: [.[] | {source, detail, sha, message}]
+            file_names: ([.[] | .file_names[]?] | unique),
+            files_truncated: (any(.[]; .files_truncated == true)),
+            evidence: [.[] | {source, detail, sha, message} | with_entries(select(.value != null))]
           })
         | sort_by(.number)
       ' "${CANDIDATES_JSONL}" > "${WORK_DIR}/deduped.json" 2>>"${ERRORS_FILE}" || record_error "dedupe: jq processing failed"
@@ -415,15 +447,17 @@ A pre-agent step has already fetched deterministic PR candidate evidence for thi
 The file is produced by fixed `gh api`/GraphQL calls (not the model), so it deterministically covers, across **all PR states with no date limit**:
 
 - Timeline cross-references on the issue, **including non-closing mentions** (`source: timeline_cross_reference`).
-- An exact search for `#<issue-number>` and the repository-qualified reference (`owner/repo#<issue-number>`) in PR titles (`issue_number_search_title`), bodies (`issue_number_search_body`), and comments (`issue_number_search_comment`).
+- Exact `#<issue-number>` and repository-qualified (`owner/repo#<issue-number>`) matches in PR titles (`issue_number_search_title`), bodies (`issue_number_search_body`), and PR/issue comments (`issue_number_search_comment`).
 - Commits whose message contains `#<issue-number>` or a qualified ref, mapped back to their associated PR — tagged `commit_body_refs` when the commit message uses a `Refs #<issue-number>` / `Fixes #<issue-number>` / `Closes #<issue-number>` / `Resolves #<issue-number>` style line, or `commit_message_reference` for any other mention. This is the only reliable way to catch a reference that lives in a commit body of an **open, unmerged** PR rather than in the PR's own title/body — those commits are not on the default branch and GitHub's commit search does not fully index commit bodies, so this cannot be found by ad-hoc searching alone.
+- A compact, paginated inventory of **every currently open PR** (`open_pr_inventory`), including title, body excerpt, draft state, and up to 30 changed-file names. This is deliberately reference-free.
 
-Each candidate in the file's `candidates` array carries the PR `number`, `title`, `url`, `state`, `draft`, `merged`, a `body_excerpt`, the de-duplicated list of matching `sources`, and per-source `evidence` entries (including the matching commit `sha`/`message` where applicable). The same PR can and will appear from multiple sources at once; nothing here is pre-filtered for relevance.
+Each candidate carries the PR `number`, `title`, `url`, `state`, `draft`, `merged`, a 600-character `body_excerpt`, compact `file_names`, the de-duplicated `sources`, and per-source `evidence` (including matching commit `sha`/`message`). The same PR can appear from multiple sources; nothing here is pre-filtered for relevance.
 
-**Enumerate every single candidate in the file — do not skip or sample.** For each one:
+**Enumerate every candidate; never skip or sample.** References are discovery signals, never proof.
 
-1. Open the actual PR and inspect its real diff, changed files, commits, tests, and review discussion yourself. **A source or evidence entry in this file is discovery only — it proves a textual reference exists, never that the PR fixes the issue.** Treat every candidate exactly as you would a candidate found through your own searching: a shared issue number, keyword, or commit message is a lead, not proof. Dependency-bump, changelog, or otherwise unrelated PRs frequently show up here (e.g. because a changelog entry or version bump body happens to contain the issue number as a substring) — inspecting the real diff is what filters these out.
-2. Classify it into one of the **Fix Confidence Tiers** below based on that inspection, not on which deterministic source found it.
+1. For every candidate with a timeline, exact title/body/comment, or commit source, open the PR and inspect its real diff, changed files, commits, tests, status, and review discussion.
+2. For candidates found only through `open_pr_inventory`, first screen the compact title/body/file evidence. Fully inspect the real diff and status of every plausible match; record irrelevant inventory entries as screened without spending tokens on their full diffs.
+3. Classify all fully inspected candidates using the **Fix Confidence Tiers** below. Report related and partial PRs even when they have no development link.
 
 If the file is missing, unreadable, or reports `loaded: false`, `complete: false`, or `success: false` (or a non-empty `errors` list), see **Incomplete or Failed Evidence Load** below before doing anything else in this step.
 
@@ -467,7 +501,7 @@ If the file is **missing, unreadable**, or reports **`loaded: false`, `complete:
 - **Labels, the issue type, and the triage comment are unaffected** — continue to apply `add-labels`, `set-issue-type`, and post the Step 6 comment normally.
 - **Explain the veto in the triage comment**: state plainly that confirmed-fix closure and PR linking were skipped this run because the deterministic PR-evidence prefetch did not complete, and summarize what you found through manual investigation instead so a maintainer can act on it.
 
-This veto applies only to the two write actions above. It does **not** apply to and must never weaken the **Duplicate Closure Flow** in Step 2: a duplicate closure (`close-issue` with the `duplicate` state reason) is decided solely by the duplicate-confidence rules in Step 2, is independent of this file, and remains fully allowed whenever the evidence load did succeed and the duplicate match is conclusive — including when a separately discovered, unrelated fix candidate for the underlying topic is itself still open or unmerged. An inconclusive or missing fix-PR candidate must never be used as a reason to downgrade or skip an otherwise-conclusive duplicate closure.
+This veto applies only to the two write actions above. It does **not** apply to and must never weaken the **Duplicate Closure Flow** in Step 2: a duplicate closure (`close-issue` with the `duplicate` state reason) is decided solely by the duplicate-confidence rules in Step 2, is independent of this file, and remains fully allowed when the duplicate match is conclusive **even if this evidence load is missing, incomplete, or failed** — including when a separately discovered fix candidate is still open or unmerged. Missing or inconclusive fix-PR evidence must never downgrade or skip an otherwise-conclusive duplicate closure.
 
 ### Link an Unlinked Fix PR
 
