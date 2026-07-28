@@ -128,19 +128,31 @@ commands:
           retryable='SkuNotAvailable|Capacity Restrictions|is currently not available in location|sku_selector found no deployable VM size|Allocation ?Failed|results in exceeding approved'
 
           log="$(mktemp)"
-          terraform apply -auto-approve tfplan > "$log" 2>&1
-          rc=$?
-          cat "$log"
+          rc_file="$(mktemp)"
 
-          if [ "$rc" -eq 0 ]; then
+          # Piped through tee rather than redirected to the log, so that output still
+          # streams while the apply runs and porch's progress ticker keeps reporting.
+          # The exit code is stashed in a file because "$?" after a pipeline is tee's.
+          { terraform apply -auto-approve tfplan 2>&1; echo "$?" > "$rc_file"; } | tee "$log"
+          rc="$(cat "$rc_file")"
+          rm -f "$rc_file"
+
+          if [ "${rc:-1}" -eq 0 ]; then
+            rm -f "$log"
             exit 0
           fi
 
+          # Porch only prints stderr for failed steps unless it is run with --stdout,
+          # so re-emit the captured output there to keep failures diagnosable.
+          cat "$log" 1>&2
+
           if grep -qEi "$retryable" "$log"; then
-            echo "::warning::Example $ITEM hit a retryable capacity error, retrying in a new region." 1>&2
+            echo "Example $ITEM hit a retryable capacity error, retrying in a new region." 1>&2
+            rm -f "$log"
             exit 90
           fi
 
+          rm -f "$log"
           exit 1
         success_exit_codes: [0, 90]
 

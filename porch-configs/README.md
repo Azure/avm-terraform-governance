@@ -8,7 +8,8 @@ They ensure consistency between local tests and CI tests.
 ### Output errors to stderr
 
 When writing checks, redirect any output to `stderr` instead of `stdout`.
-This is important because the Porch displays `stdout` by default for failed steps.
+This is important because Porch only displays `stderr` for failed steps.
+`stdout` is captured but hidden unless Porch is run with `--stdout`, which CI only does when re-run with debug logging enabled.
 
 E.g.
 
@@ -179,6 +180,15 @@ which re-rolls the region and, through `sku_selector`, the VM size. The `-replac
 The patterns live in the `retryable` variable in the apply step and are matched case insensitively against the combined apply output. Keep them anchored to capacity and quota wording.
 
 Broad Azure error codes are deliberately excluded. `OperationNotAllowed`, for example, covers both quota exhaustion and "cannot delete resource while nested resources exist", and only the former should ever be retried.
+
+### How the apply output is handled
+
+Classifying the failure means the apply step has to capture its own output, which interacts with two Porch behaviours:
+
+- Porch only displays `stderr` for failed steps, so the step re-emits the captured output to `stderr` before exiting non-zero. Without this a genuine, non-retryable failure would report only an exit code and no diagnostics.
+- Porch's progress ticker reads `stdout`, so the apply is piped through `tee` rather than redirected to a file. Buffering the whole apply to a file would leave long-running deployments with no live output.
+
+Because `$?` after a pipeline is `tee`'s status, terraform's real exit code is stashed in a temporary file inside the pipeline and read back afterwards.
 
 ### What is not retried
 
