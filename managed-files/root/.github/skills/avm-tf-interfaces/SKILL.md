@@ -5,7 +5,7 @@ description: Use this skill whenever an Azure Verified Module (AVM) for Terrafor
 
 # AVM standard cross-cutting interfaces (Terraform)
 
-> **Scope of this skill.** This is the **consumer-facing** interface guidance — variable names, schemas, and how the parent module wires them into the primary resource. For **submodule-internal** interface concerns (the rename trick when a submodule needs a non-standard `private_endpoints`-shaped collection, the map vs scalar `output "resource_id"` shape for collection submodules under RMFR7, the per-element `parent_id` derivation when consumers set per-PE `resource_group_name`), see the **`avm-tf-submodules`** skill. For migrating an interface resource from `azurerm_*` to AzAPI without consumer destroys (the `lifecycle { ignore_changes = [name] }` trick on role assignments, the `moved {}` block patterns), see **`avm-tf-migration`**.
+> **Scope of this skill.** This is the **consumer-facing** interface guidance — variable names, schemas, and how the parent module wires them into the primary resource. For **submodule-internal** interface concerns (the rename trick when a submodule needs a non-standard `private_endpoints`-shaped collection, the scalar `output "resource_id"` a single-instance submodule exposes under RMFR7 while the parent aggregates the map, the per-element `parent_id` derivation when consumers set per-PE `resource_group_name`), see the **`avm-tf-submodules`** skill. For migrating an interface resource from `azurerm_*` to AzAPI without consumer destroys (the `lifecycle { ignore_changes = [name] }` trick on role assignments, the `moved {}` block patterns), see **`avm-tf-migration`**.
 
 Resource modules **MUST** expose these interfaces with these **exact variable names** ([RMFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR4.md)) **for each interface the primary resource actually supports**. They are how consumers configure locks, RBAC, diagnostics, identity, private connectivity, and customer-managed keys consistently across every AVM module they use. Learn the variable once → use it everywhere.
 
@@ -67,15 +67,20 @@ DESCRIPTION
 }
 ```
 
-Implementation (in `main.tf`):
+Implementation (in `main.tf`) — AzAPI per [TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md); the lock is an extension resource whose `parent_id` is the primary resource:
 
 ```hcl
-resource "azurerm_management_lock" "this" {
-  count      = var.lock != null ? 1 : 0
-  lock_level = var.lock.kind
-  name       = coalesce(var.lock.name, "lock-${var.name}")
-  scope      = azapi_resource.this.id
-  notes      = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
+resource "azapi_resource" "lock" {
+  count     = var.lock != null ? 1 : 0
+  type      = var.resource_types.authorization_locks # e.g. "Microsoft.Authorization/locks@2020-05-01"
+  parent_id = azapi_resource.this.id
+  name      = coalesce(var.lock.name, "lock-${var.name}")
+  body = {
+    properties = {
+      level = var.lock.kind
+      notes = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
+    }
+  }
 }
 ```
 
@@ -113,7 +118,28 @@ DESCRIPTION
 }
 ```
 
-Implementation uses the role-definition-name-vs-ID heuristic with `strcontains(lower(each.value.role_definition_id_or_name), "/providers/microsoft.authorization/roledefinitions/")` — copy from any existing AVM module (e.g. `keyvault-vault/main.tf`) verbatim.
+Implementation is an AzAPI `azapi_resource` per `for_each` of type `Microsoft.Authorization/roleAssignments` (`parent_id = azapi_resource.this.id`), resolving `role_definition_id_or_name` to a full role definition ID with the name-vs-ID heuristic `strcontains(lower(each.value.role_definition_id_or_name), "/providers/microsoft.authorization/roledefinitions/")`. Because AzAPI role assignments use a server-allocated GUID `name`, add `lifecycle { ignore_changes = [name] }` (see `avm-tf-migration` for why). Sketch:
+
+```hcl
+resource "azapi_resource" "role_assignment" {
+  for_each  = var.role_assignments
+  type      = var.resource_types.authorization_role_assignments # e.g. "Microsoft.Authorization/roleAssignments@2022-04-01"
+  parent_id = azapi_resource.this.id
+  name      = uuidv5("url", "${each.key}${azapi_resource.this.id}${each.value.principal_id}")
+  body = {
+    properties = {
+      roleDefinitionId                 = local.role_definition_id_map[each.key]
+      principalId                      = each.value.principal_id
+      principalType                    = each.value.principal_type
+      description                      = each.value.description
+      condition                        = each.value.condition
+      conditionVersion                 = each.value.condition_version
+      delegatedManagedIdentityResourceId = each.value.delegated_managed_identity_resource_id
+    }
+  }
+  lifecycle { ignore_changes = [name] }
+}
+```
 
 ### `diagnostic_settings`
 
@@ -137,7 +163,31 @@ variable "diagnostic_settings" {
 }
 ```
 
-Implementation: one `azurerm_monitor_diagnostic_setting "this"` per `for_each`, with dynamic `enabled_log` blocks for `log_categories`, dynamic `enabled_log` blocks for `log_groups`, and dynamic `metric` blocks for `metric_categories`. Default name **MUST** prefix with `diag-` per SNFR25.
+Implementation: one AzAPI `azapi_resource "diagnostic_settings"` per `for_each`, of type `Microsoft.Insights/diagnosticSettings` — an extension resource whose `parent_id` is the primary resource. Build `body.properties.logs` from `log_categories` (`category`) and `log_groups` (`categoryGroup`), and `body.properties.metrics` from `metric_categories`. Default name **MUST** prefix with `diag-` per SNFR25:
+
+```hcl
+resource "azapi_resource" "diagnostic_settings" {
+  for_each  = var.diagnostic_settings
+  type      = var.resource_types.insights_diagnostic_settings # e.g. "Microsoft.Insights/diagnosticSettings@2021-05-01-preview"
+  parent_id = azapi_resource.this.id
+  name      = coalesce(each.value.name, "diag-${var.name}")
+  body = {
+    properties = {
+      workspaceId                 = each.value.workspace_resource_id
+      storageAccountId            = each.value.storage_account_resource_id
+      eventHubAuthorizationRuleId = each.value.event_hub_authorization_rule_resource_id
+      eventHubName                = each.value.event_hub_name
+      marketplacePartnerId        = each.value.marketplace_partner_resource_id
+      logAnalyticsDestinationType = each.value.log_analytics_destination_type
+      logs = concat(
+        [for g in each.value.log_groups : { categoryGroup = g, enabled = true }],
+        [for c in each.value.log_categories : { category = c, enabled = true }],
+      )
+      metrics = [for m in each.value.metric_categories : { category = m, enabled = true }]
+    }
+  }
+}
+```
 
 ### `managed_identities`
 
@@ -213,11 +263,49 @@ variable "private_endpoints" {
 variable "private_endpoints_manage_dns_zone_group" {
   type        = bool
   default     = true
-  description = "Whether to manage Private DNS Zone Groups. Set to false to use the `this_unmanaged_dns_zone_groups` resource branch (for AzAPI-driven setups where the DNS zone group is managed elsewhere)."
+  description = "Whether to manage Private DNS Zone Groups. Set to `false` when the DNS zone group is managed elsewhere — the `azapi_resource.private_endpoint_dns_zone_group` resource is then not created."
 }
 ```
 
-Implementation: split into two `azurerm_private_endpoint` resources — `this` (with `private_dns_zone_group`) and `this_unmanaged_dns_zone_groups` (without) — driven by `private_endpoints_manage_dns_zone_group`. **Default name MUST be `pep-<primary-resource-name>`** per SNFR25.
+Implementation (AzAPI, in `main.private_endpoint.tf`): the private endpoint is a top-level `azapi_resource` of type `Microsoft.Network/privateEndpoints` (`parent_id` is the resource group), and the DNS wiring is a **separate child** `azapi_resource` of type `Microsoft.Network/privateEndpoints/privateDnsZoneGroups` gated on `private_endpoints_manage_dns_zone_group`. **Default name MUST be `pep-<primary-resource-name>`** per SNFR25:
+
+```hcl
+resource "azapi_resource" "private_endpoint" {
+  for_each  = var.private_endpoints
+  type      = var.resource_types.network_private_endpoints # e.g. "Microsoft.Network/privateEndpoints@2023-11-01"
+  parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${coalesce(each.value.resource_group_name, var.resource_group_name)}"
+  name      = coalesce(each.value.name, "pep-${var.name}")
+  location  = coalesce(each.value.location, var.location)
+  body = {
+    properties = {
+      subnet = { id = each.value.subnet_resource_id }
+      privateLinkServiceConnections = [{
+        name = coalesce(each.value.private_service_connection_name, "pse-${var.name}")
+        properties = {
+          privateLinkServiceId = azapi_resource.this.id
+          groupIds             = [local.private_endpoint_subresource]
+        }
+      }]
+    }
+  }
+}
+
+# Managed DNS zone group — only when private_endpoints_manage_dns_zone_group = true
+resource "azapi_resource" "private_endpoint_dns_zone_group" {
+  for_each  = var.private_endpoints_manage_dns_zone_group ? var.private_endpoints : {}
+  type      = var.resource_types.network_private_endpoints_private_dns_zone_groups # ".../privateDnsZoneGroups@2023-11-01"
+  parent_id = azapi_resource.private_endpoint[each.key].id
+  name      = each.value.private_dns_zone_group_name
+  body = {
+    properties = {
+      privateDnsZoneConfigs = [for id in each.value.private_dns_zone_resource_ids : {
+        name       = replace(reverse(split("/", id))[0], ".", "-")
+        properties = { privateDnsZoneId = id }
+      }]
+    }
+  }
+}
+```
 
 ### `customer_managed_key`
 
@@ -240,7 +328,7 @@ Wire into `body.properties.encryption*` or the resource-type-specific equivalent
 
 ### `alerts` (SHOULD)
 
-Schema varies by resource (the spec doesn't yet fix one), but if your resource supports Azure Monitor alerts you SHOULD expose an `alerts` map variable that creates `azurerm_monitor_metric_alert` / `azurerm_monitor_scheduled_query_rules_alert_v2` instances.
+Schema varies by resource (the spec doesn't yet fix one), but if your resource supports Azure Monitor alerts you SHOULD expose an `alerts` map variable that creates the corresponding AzAPI resources — `Microsoft.Insights/metricAlerts` or `Microsoft.Insights/scheduledQueryRules` (`azapi_resource`, per TFFR3), not `azurerm_monitor_*`.
 
 ## File layout convention
 

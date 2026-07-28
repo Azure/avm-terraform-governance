@@ -1,6 +1,6 @@
 ---
 name: avm-tf-migration
-description: Use this skill whenever an AVM Terraform module is being migrated from AzureRM to AzAPI, whether for the primary resource, a cross-cutting interface resource (lock, role assignment, diagnostic setting, private endpoint), or when extracting satellite resources into TFRMNFR1 submodules during the same change. Covers the cardinality trap that destroys state across the cross-provider hop (module-call `for_each` vs internal `for_each`), the canonical `moved {}` patterns for in-place and submodule-extraction moves, the end-to-end migration test recipe (deploy with published AzureRM → swap to local → 0 destroys → re-plan idempotent → teardown), `MoveResourceState` and `terraform state mv` mechanics, the Terraform 1.8+ requirement, and per-resource gotchas like `lifecycle { ignore_changes = [name] }` on role assignments to preserve server-allocated GUIDs. Trigger on phrases like "migrate this module to AzAPI", "azurerm to azapi", "extract into submodule", "moved block", "MoveResourceState", "destroy/create on upgrade", "state preservation", "consumers will see replace", "cardinality trap", "module for_each migration", "TFRMNFR1 submodule extraction", "split satellite into submodule", "0 destroys", "migration test recipe", "aztfmigrate state".
+description: Use this skill whenever an AVM Terraform module is being migrated from AzureRM to AzAPI, whether for the primary resource, a cross-cutting interface resource (lock, role assignment, diagnostic setting, private endpoint), or when extracting satellite resources into TFRMNFR1 submodules. Covers the cardinality trap (why a reusable `moved {}` block cannot re-home a collection into a `for_each`'d submodule call, and why pushing `for_each` inside the submodule is a TFRMNFR1 violation rather than a fix), the TFRMNFR1-compliant migration strategies (migrate the provider flat first with a same-level wildcard `moved {}`; migrate a resource in place inside an already-`for_each`'d submodule; accept a breaking change for module-managed interface resources; treat collection extraction as inherently state-breaking), the canonical `moved {}` patterns, the end-to-end migration test recipe (deploy with published AzureRM → swap to local → 0 destroys → re-plan idempotent → teardown), `MoveResourceState` and `terraform state mv` mechanics, the Terraform 1.8+ requirement, and per-resource gotchas like `lifecycle { ignore_changes = [name] }` on role assignments to preserve server-allocated GUIDs. Trigger on phrases like "migrate this module to AzAPI", "azurerm to azapi", "extract into submodule", "moved block", "MoveResourceState", "destroy/create on upgrade", "state preservation", "consumers will see replace", "cardinality trap", "module for_each migration", "TFRMNFR1 submodule extraction", "split satellite into submodule", "0 destroys", "migration test recipe", "aztfmigrate state".
 ---
 
 # AVM Terraform: AzureRM → AzAPI migration playbook
@@ -17,64 +17,68 @@ This sits alongside AzAPI-first as a top-line rule, not a nice-to-have.
 
 ## 1. The cardinality trap (read this first if you're extracting submodules)
 
-The single most common way migrations break: a previously root-level `azurerm_X.this` resource is extracted into a TFRMNFR1 submodule at the same time as the provider hop. Authors instinctively reach for `for_each` on the module call:
+The single most common way migrations break: authors try to **extract a root-level collection into a [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) submodule at the same time as the provider hop**, and expect a reusable `moved {}` block to preserve state. It can't — and the shape that *would* make a reusable `moved {}` work is the one shape the spec forbids.
+
+TFRMNFR1 is unambiguous about cardinality: the **parent** puts `count`/`for_each` on the submodule *call*, and the submodule's primary `azapi_resource` manages **exactly one instance** (it **MUST NOT** declare `count` or `for_each`). So the compliant call is:
 
 ```hcl
-# ❌ THIS DESTROYS STATE ACROSS THE PROVIDER HOP
+# ✅ TFRMNFR1-compliant cardinality: for_each on the module CALL, single instance inside
 module "subnet" {
   source   = "./modules/subnet"
   for_each = var.subnets
   # ...
 }
-
-moved {
-  from = azurerm_subnet.this[each.key]
-  to   = module.subnet[each.key].azapi_resource.this
-}
 ```
 
-Terraform **cannot re-key state across a cross-provider hop when `for_each` is on the module call**. The `moved {}` block parses but the planner treats the old `azurerm_subnet.this[<key>]` entries and the new `module.subnet["<key>"].azapi_resource.this` entries as unrelated — every consumer sees destroy/recreate.
-
-**The correct shape:** parent calls the submodule **once** with a map input; submodule owns the `for_each` **internally** on the resource:
+But you **cannot** write a single reusable `moved {}` block that re-homes a root-level `for_each` resource into that `for_each`'d module call:
 
 ```hcl
-# ✅ parent module
-module "subnets" {
-  source  = "./modules/subnet"
-  subnets = var.subnets  # the whole map, not per-key
-  # ...
-}
-
+# ❌ There is no general (wildcard) moved {} block for this shape
 moved {
-  from = azurerm_subnet.this
-  to   = module.subnets.azapi_resource.this
+  from = azurerm_subnet.this               # keys are the consumer's
+  to   = module.subnet.azapi_resource.this
 }
 ```
 
-```hcl
-# ✅ submodule (./modules/subnet/main.tf)
-variable "subnets" {
-  type = map(object({ /* ... */ }))
-}
+Terraform requires an **explicit instance key** on a `moved` target that sits inside a `for_each`'d module call (`module.subnet["snet-web"].azapi_resource.this`), and those keys belong to the consumer — unknowable when you author the module. The wildcard form above never compiles to a per-key mapping, so every consumer sees destroy/recreate. (Terraform [refactoring docs](https://developer.hashicorp.com/terraform/language/modules/develop/refactoring): "you must specify a specific instance key … to match with the new location of the resource configuration".)
 
-resource "azapi_resource" "this" {
-  for_each = var.subnets
-  type     = var.resource_types.network_virtual_networks_subnets
-  # ...
-}
-```
+**Do not "solve" this by pushing the `for_each` inside the submodule.** The shape where the parent calls the submodule *once* with a whole map and the submodule's `azapi_resource` carries `for_each` internally *does* let a wildcard `moved {}` re-key state — but it is exactly what **TFRMNFR1 forbids**: submodules **MUST** manage a single instance so they remain independently consumable. AVM maintainers have confirmed this on review. State preservation is not a licence to break TFRMNFR1.
 
-Now Terraform's per-key state re-keying carries across the cross-provider hop automatically because the shape (`for_each` on the resource) matches between old and new addresses.
+### The compliant migration strategies
 
-### TFRMNFR1 "no for_each on submodule primary resource" — apparent conflict, resolved
+Because "provider hop + collection extraction into a compliant submodule" cannot be done in one state-preserving step, split the concerns:
 
-[TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md) says the **submodule's primary resource SHOULD NOT use `count` or `for_each`**, and the cardinality trap above forces you to put `for_each` on the resource. These are not actually in conflict — the spec's intent is satisfied at the **composition level** (the parent's call to the submodule is `count`/`for_each`-free), and the workaround is the only viable shape for cross-provider state preservation.
+1. **Migrate the provider first, keep the resource flat (preferred).** In one release, swap `azurerm_X.this` → `azapi_resource.this` (or a named `azapi_resource.X` for a collection) **at the root of the module**, with a same-level wildcard `moved {}`. Both addresses live at the same module depth, so the wildcard re-keys cleanly across the provider hop — even when both sides are `for_each`'d:
 
-This is now established precedent across multiple merged migrations. Cite these in PRs if the AVM reviewer pushes back:
+   ```hcl
+   # ✅ Same module level, for_each on both sides — wildcard moved works
+   moved {
+     from = azurerm_public_ip.this   # for_each = var.public_ips
+     to   = azapi_resource.public_ip # for_each = var.public_ips
+   }
+   ```
 
-- [`terraform-azurerm-avm-res-web-serverfarm` PR #121](https://github.com/Azure/terraform-azurerm-avm-res-web-serverfarm/pull/121) — App Service Plan multiple-instance migration.
-- [`terraform-azurerm-avm-res-network-natgateway` PR #192](https://github.com/Azure/terraform-azurerm-avm-res-network-natgateway/pull/192) — NAT Gateway subnet-association extraction.
-- [`terraform-azurerm-avm-res-eventgrid-domain` PR #18](https://github.com/Azure/terraform-azurerm-avm-res-eventgrid-domain/pull/18) — Event Grid Domain topic extraction.
+2. **Migrate a resource that already lives in a submodule, in place.** When the submodule already exists (the parent already `for_each`'s it) and you're only changing the provider of the resource *inside* it, put the `moved {}` **inside the submodule** so each instance re-homes itself at its own module level:
+
+   ```hcl
+   # ./modules/subnet/main.tf — evaluated once per submodule instance
+   moved {
+     from = azurerm_subnet.this
+     to   = azapi_resource.this
+   }
+   ```
+
+   This is the pattern `terraform-azurerm-avm-res-network-virtualnetwork` uses in `modules/subnet`, and it is fully TFRMNFR1-compliant (the submodule is still single-instance).
+
+3. **Accept a breaking change for module-managed interface resources.** Locks, diagnostic settings and role assignments are managed *by* the module, not by the consumer, so recreating them is low impact. Where a state-preserving `moved {}` isn't available, migrate them without one and flag the recreate in the release notes.
+
+4. **Extracting a consumer-data collection into a *new* compliant submodule is inherently state-breaking.** If you must both extract *and* preserve state, the only options are a documented per-key `terraform state mv` recipe for consumers, or doing the extraction as a separate breaking release from the provider migration. Prefer designing subresources as submodules from day one so no extraction is ever needed.
+
+Cite these merged migrations if a reviewer wants precedent — note they all migrated the provider **flat**, without a same-release submodule extraction:
+
+- [`terraform-azurerm-avm-res-web-serverfarm` PR #121](https://github.com/Azure/terraform-azurerm-avm-res-web-serverfarm/pull/121) — App Service Plan; root-level `moved {}` for the plan, lock and role assignment.
+- [`terraform-azurerm-avm-res-network-natgateway` PR #192](https://github.com/Azure/terraform-azurerm-avm-res-network-natgateway/pull/192) — NAT Gateway; a `for_each` `public_ip` collection re-keyed by a same-level wildcard `moved {}`.
+- [`terraform-azurerm-avm-res-eventgrid-domain` PR #18](https://github.com/Azure/terraform-azurerm-avm-res-eventgrid-domain/pull/18) — Event Grid Domain support interfaces migrated as a breaking change (no `moved {}`).
 
 ## 2. The `moved {}` patterns you actually need
 
@@ -102,22 +106,22 @@ moved {
 }
 ```
 
-### 2c. Submodule extraction, collection (the trap case)
+### 2c. Same-level collection, provider changes (in-place, `for_each` on both sides)
 
 ```hcl
-# Before: azurerm_subnet.this  (for_each = var.subnets)
-# After:  module.subnets.azapi_resource.this  (for_each = var.subnets, INTERNAL to submodule)
+# Before: azurerm_public_ip.this  (for_each = var.public_ips)  — at module root
+# After:  azapi_resource.public_ip (for_each = var.public_ips) — still at module root
 moved {
-  from = azurerm_subnet.this
-  to   = module.subnets.azapi_resource.this
+  from = azurerm_public_ip.this
+  to   = azapi_resource.public_ip
 }
 ```
 
-Note: **no `[each.key]`** on either side. The whole resource collection moves under the submodule wrapper; per-key state carries across automatically when the `for_each` shape matches.
+Note: **no `[each.key]`** on either side, and **both addresses are at the same module depth**. The wildcard form re-keys every instance across the provider hop because Terraform can pair the old and new addresses one-to-one. This is the shape `terraform-azurerm-avm-res-network-natgateway` used for its `public_ip` collection.
 
-### 2d. Per-key explicit moves (when shapes don't align)
+### 2d. Collection *extraction* into a submodule — not a `moved {}` case
 
-If the submodule expects a different key shape (e.g. you're consolidating two old collections under one new key), each key needs its own `moved {}`. This is rare and expensive — prefer to keep keys stable and write a single collection-level move.
+Moving a root-level `for_each` collection **into** a `for_each`'d submodule call cannot be expressed with a reusable `moved {}` block (see §1: the target keys inside a `for_each`'d module call are the consumer's and can't be wildcarded). Don't attempt it, and don't work around it by putting `for_each` inside the submodule (TFRMNFR1 violation). Options: migrate the provider **flat** first and extract in a later breaking release, or ship the extraction as a breaking change with a per-key `terraform state mv` recipe for consumers. If the resource already lives in a submodule, migrate it in place with a `moved {}` **inside** that submodule (§1, strategy 2).
 
 ## 3. The end-to-end migration test recipe
 
@@ -163,7 +167,7 @@ A migration PR description without this output is incomplete. Reviewers should r
 
 | Symptom in step 3 | Likely cause |
 |---|---|
-| Resource will be destroyed and recreated | Cardinality trap (§1) or `moved {}` block address doesn't match old state exactly |
+| Resource will be destroyed and recreated | Cardinality trap (§1 — a `moved {}` targeting a resource inside a `for_each`'d module call), or the `moved {}` block address doesn't match old state exactly |
 | Resource will be updated in-place (with body diff) | AzAPI `body` shape doesn't match what AzureRM produced — usually nullable property differences |
 | Resource will be created (no destroy) | Old address wasn't in state at apply time — the `moved {}` block silently no-ops |
 | Provider configuration is required for resource being destroyed | You removed `azurerm` from `required_providers` too early — keep it until after one release with the `moved` blocks shipped |
@@ -172,8 +176,8 @@ A migration PR description without this output is incomplete. Reviewers should r
 
 The cross-provider `moved {}` machinery is `MoveResourceState`, added to the Terraform plugin framework and to `terraform` itself in **1.8.0**. The AVM template currently pins `required_version = ">= 1.9, < 2.0"`, so this is normally fine, but two things to flag:
 
-- **Submodule moves use `module.<name>.<address>` addressing**, not just `<address>`. The address on the `to` side is the address as seen from the parent module.
-- **Per-key state carries across `for_each` automatically when the shape aligns** (see §1). When it doesn't align, the move silently no-ops — Terraform doesn't error, the planner just doesn't connect the old and new addresses, and you get destroy/create.
+- **Submodule moves use `module.<name>.<address>` addressing**, not just `<address>`. The address on the `to` side is the address as seen from the parent module. A wildcard `moved {}` only works when the module on the `to` side is **not** `for_each`/`count`-indexed; for a resource migrating *within* an already-`for_each`'d submodule, put the `moved {}` inside the submodule so each instance re-homes at its own level (§1, strategy 2).
+- **Same-level wildcard `moved {}` re-keys `for_each` collections automatically** when both addresses sit at the same module depth (§2c). When the shapes don't align — or the target is inside a `for_each`'d module call — the move silently no-ops: Terraform doesn't error, the planner just doesn't connect the old and new addresses, and you get destroy/create.
 - **`lifecycle { ignore_changes = [name] }` on role assignments.** AzAPI `Microsoft.Authorization/roleAssignments` typically uses a server-allocated GUID for `name`. When migrating from `azurerm_role_assignment` (which also has a UUID `name` that Terraform computed), preserving the old GUID is what keeps the role assignment from being recreated. Pattern:
 
   ```hcl

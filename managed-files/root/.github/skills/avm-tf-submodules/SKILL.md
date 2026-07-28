@@ -1,6 +1,6 @@
 ---
 name: avm-tf-submodules
-description: Use this skill whenever an AVM Terraform module needs to extract satellite resources into a TFRMNFR1 submodule under `modules/<name>/`, or when designing the variable/output shape of a submodule that the parent module composes. Covers the canonical `parent calls submodule once, submodule owns for_each internally` pattern; the variable-rename trick that avoids the AVM interface lint rule colliding when a submodule needs an internal collection named `private_endpoints` or `role_assignments`; RMFR7's mandatory `output "resource_id"` (which becomes a map keyed by the input key when the submodule's primary resource is a collection); the `parent_id` derivation pattern when a per-element `resource_group_name` is set; and the submodule file layout (`main.tf`, `variables.tf`, `outputs.tf`, `terraform.tf`, `_header.md`, `_footer.md` mirror parent). Trigger on phrases like "split into submodule", "extract child resource", "modules/<name> structure", "submodule variables.tf", "submodule outputs", "TFRMNFR1", "RMFR7 resource_id output", "interface lint collision", "rename private_endpoints to endpoints", "submodule for_each", "parent_id submodule", "composable child module".
+description: Use this skill whenever an AVM Terraform module needs to extract satellite resources into a TFRMNFR1 submodule under `modules/<name>/`, or when designing the variable/output shape of a submodule that the parent module composes. Covers the canonical `parent for_eachs the submodule call, submodule stays single-instance` pattern (TFRMNFR1: the submodule's primary `azapi_resource` MUST NOT declare `count`/`for_each`); the variable-rename trick that avoids the AVM interface lint rule colliding when a submodule needs an internal collection named `private_endpoints` or `role_assignments`; RMFR7's mandatory `output "resource_id"` (scalar in the submodule; the parent aggregates the map keyed by the input key); the `parent_id` derivation pattern when a per-element `resource_group_name` is set; and the submodule file layout (`main.tf`, `variables.tf`, `outputs.tf`, `terraform.tf`, `_header.md`, `_footer.md` mirror parent). Trigger on phrases like "split into submodule", "extract child resource", "modules/<name> structure", "submodule variables.tf", "submodule outputs", "TFRMNFR1", "RMFR7 resource_id output", "interface lint collision", "rename private_endpoints to endpoints", "submodule for_each", "parent_id submodule", "composable child module".
 ---
 
 # AVM Terraform: designing submodules
@@ -26,49 +26,43 @@ modules/<name>/
 
 The submodule's `terraform.tf` re-declares the same provider versions as the parent — Terraform requires it, even though the parent already declared them.
 
-## Composition rule — parent calls submodule once, submodule owns `for_each`
+## Composition rule — parent `for_each`s the submodule call, submodule is single-instance
 
-This is the single most important design rule for submodules in 2026 — **the migration cardinality trap (see `avm-tf-migration` §1) makes this non-negotiable for any cross-provider migration**. Even for greenfield submodules, this shape is best practice because it future-proofs you against migrations that may come later.
+This is the single most important design rule for submodules, and it is a **MUST** in [TFRMNFR1](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR1.md): a submodule **MUST deploy exactly one instance** of the resource it manages — its primary `azapi_resource` **MUST NOT** declare `count` or `for_each` — and **cardinality is the parent's responsibility** via `count`/`for_each` on the submodule *call*. This keeps each submodule independently consumable, with single-resource variables, outputs and tests.
 
 ```hcl
-# ❌ DON'T: for_each on the module call
+# ❌ DON'T: for_each on the resource inside the submodule
+# (pushes cardinality into the submodule — TFRMNFR1 violation)
+resource "azapi_resource" "this" {
+  for_each = var.secrets
+  # ...
+}
+
+# ✅ DO: parent for_eachs the CALL; submodule manages one instance
 module "secret" {
   source   = "./modules/secret"
   for_each = var.secrets
-  name     = each.value.name
-  # ...
-}
 
-# ✅ DO: parent calls once, submodule owns for_each internally
-module "secrets" {
-  source  = "./modules/secrets"
-  secrets = var.secrets        # the whole map
+  name = each.value.name
   # ...
 }
 ```
 
 ```hcl
-# ./modules/secrets/main.tf
-variable "secrets" {
-  type = map(object({
-    name         = optional(string)
-    content_type = optional(string)
-    # ...
-  }))
-  default = {}
+# ./modules/secret/main.tf — single instance, no count/for_each
+variable "name" {
+  type = string
 }
 
 resource "azapi_resource" "this" {
-  for_each = var.secrets
-
   type      = var.resource_types.keyvault_vaults_secrets
   parent_id = var.parent_id
-  name      = coalesce(each.value.name, each.key)
+  name      = var.name
   # ...
 }
 ```
 
-This satisfies TFRMNFR1's intent (the submodule call has no `count`/`for_each`) **and** preserves state across cross-provider migrations.
+> **Migration note.** It's tempting to invert this (parent calls the submodule once with a whole map; submodule owns `for_each` internally) because that shape lets a wildcard `moved {}` block preserve state across an AzureRM→AzAPI hop. **Don't** — it violates TFRMNFR1 and has been rejected by AVM maintainers on review. The compliant way to preserve state during migration is covered in `avm-tf-migration` §1 (migrate the provider *flat* first; extract into a submodule in a separate release; or migrate a resource in place *inside* an already-`for_each`'d submodule).
 
 ## Variable design
 
@@ -99,9 +93,8 @@ variable "parent_id" {
   description = "The ARM ID of the parent virtual network."
 }
 
-# main.tf
+# main.tf — single instance; the parent for_eachs the module call
 resource "azapi_resource" "this" {
-  for_each  = var.subnets
   parent_id = var.parent_id
   # ...
 }
@@ -111,43 +104,42 @@ resource "azapi_resource" "this" {
 
 ```hcl
 # Per RMFR4 private_endpoints schema, each PE can specify its own resource_group_name.
-# The submodule must derive a per-element parent_id from the parent's subscription.
-variable "endpoints" {
-  type = map(object({
-    name                = optional(string)
-    resource_group_name = optional(string)
-    # ...
-  }))
+# The single-instance submodule derives ITS parent_id from the subscription + the RG
+# passed for THIS instance; the parent for_eachs the call, one instance per endpoint.
+variable "name" {
+  type = string
+}
+
+variable "resource_group_name" {
+  type        = string
+  description = "The RG this endpoint lives in (the parent resolves per-element RG before calling)."
 }
 
 variable "subscription_id" {
   type = string
 }
 
-variable "default_resource_group_name" {
-  type = string
-}
-
 resource "azapi_resource" "this" {
-  for_each = var.endpoints
-  type     = var.resource_types.network_private_endpoints
-
-  parent_id = "/subscriptions/${var.subscription_id}/resourceGroups/${coalesce(each.value.resource_group_name, var.default_resource_group_name)}"
+  type      = var.resource_types.network_private_endpoints
+  name      = var.name
+  parent_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}"
   # ...
 }
 ```
 
-This is independent of TFRMFR1's root-level `parent_id` migration — they're two different concerns and the parent must derive per-PE `parent_id` from its own subscription when the consumer sets per-PE `resource_group_name`. Don't conflate them.
+The parent — which owns the `for_each` over `var.private_endpoints` — resolves each element's `resource_group_name` (falling back to its own default) and passes the scalar down. Per-element RG derivation is the parent's job; the submodule just consumes a single resolved `resource_group_name`. This is independent of TFRMNFR1's root-level `parent_id` migration — don't conflate them.
 
 ### Cascading the AzAPI plumbing variables (TFFR6/TFFR7)
 
 The parent's `var.resource_types`, `var.retry`, and `var.timeouts` MUST cascade to every submodule it instantiates ([TFFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR7.md) "cascade to submodules"):
 
 ```hcl
-# parent main.tf
-module "secrets" {
-  source  = "./modules/secrets"
-  secrets = var.secrets
+# parent main.tf — for_each the CALL; cascade the plumbing to each instance
+module "secret" {
+  source   = "./modules/secret"
+  for_each = var.secrets
+
+  name = each.value.name
 
   # cascade
   resource_types = var.resource_types
@@ -157,7 +149,7 @@ module "secrets" {
 ```
 
 ```hcl
-# ./modules/secrets/variables.tf — accept a SUB-OBJECT of the parent's resource_types
+# ./modules/secret/variables.tf — accept a SUB-OBJECT of the parent's resource_types
 variable "resource_types" {
   type = object({
     keyvault_vaults_secrets = optional(string, "Microsoft.KeyVault/vaults/secrets@2023-07-01")
@@ -176,40 +168,36 @@ The submodule's `resource_types` declares **only the keys it actually uses**, no
 
 [RMFR7](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/functional/RMFR7.md) requires **every** resource module (including submodules) to expose `output "resource_id"`. It also requires `output "name"` and the discrete computed attributes a consumer would need.
 
-### Scalar vs map output shape
+### Submodule outputs are scalar; the parent aggregates the map
 
-If the submodule's primary resource is a **single instance** (`count = 0 or 1`):
+Because a submodule is **single-instance** (TFRMNFR1), its `resource_id` output is a **scalar**, not a map:
 
 ```hcl
+# ./modules/secret/outputs.tf
 output "resource_id" {
   description = "The ARM ID of the resource."
-  value       = azapi_resource.this[0].id
-}
-```
-
-If the submodule's primary resource is a **collection** (`for_each = var.<inputs>`) — and per the cardinality trap rule, this is now the dominant shape:
-
-```hcl
-output "resource_id" {
-  description = "A map of ARM IDs, keyed by the input map keys."
-  value       = { for k, v in azapi_resource.this : k => v.id }
+  value       = azapi_resource.this.id
 }
 
 output "name" {
-  description = "A map of resource names, keyed by the input map keys."
-  value       = { for k, v in azapi_resource.this : k => v.name }
+  description = "The name of the resource."
+  value       = azapi_resource.this.name
 }
 ```
 
-This **is not intuitive from the spec wording** — RMFR7 says "resource_id" without distinguishing scalar from map. The map shape is the right interpretation when the submodule manages a collection, because consumers will key into it. The parent module then exposes a *flat* map output that consumers see:
+The **parent** owns the `for_each` over the submodule call, so it's the parent that builds the map consumers see — by projecting over its `module.<name>` instances:
 
 ```hcl
 # parent outputs.tf
 output "secrets" {
   description = "A map of created Key Vault secrets, keyed by the keys in var.secrets."
-  value       = module.secrets.resource_id   # the submodule's map output, surfaced
+  value       = { for k, m in module.secret : k => m.resource_id }
 }
 ```
+
+This is the RMFR7-compliant shape: each module (submodule and parent) exposes `resource_id`, and the collection lives where the cardinality lives — on the parent's `for_each`, never inside the submodule.
+
+If a submodule is instantiated with `count` (0-or-1, e.g. an optional lock), index it: `azapi_resource.this.id` is still scalar inside the submodule, and the parent reads `one(module.lock[*].resource_id)`.
 
 ### Don't expose the full resource object — TFFR2 applies to submodules too
 
@@ -243,9 +231,9 @@ Each submodule has its own `_header.md` and `_footer.md`. `terraform-docs` regen
 
 | Mistake | Symptom | Fix |
 |---|---|---|
-| `for_each` on the module call (cardinality trap) | Cross-provider migration plans destroy/recreate | Move `for_each` to the resource inside the submodule (see `avm-tf-migration` §1) |
+| `for_each` (or `count`) on the submodule's primary `azapi_resource` | TFRMNFR1 violation; submodule isn't independently consumable | Move cardinality to the parent's `for_each` on the module *call*; keep the submodule single-instance (see `avm-tf-migration` §1) |
+| Map-shaped `output "resource_id"` inside the submodule | Contradicts the single-instance rule; consumers of the submodule directly get a surprising shape | Submodule output is scalar; the **parent** aggregates `{ for k, m in module.<name> : k => m.resource_id }` |
 | Submodule variable named `private_endpoints` with a non-AVM shape | Interface lint rule fails on submodule check | Rename to `endpoints` (or whatever fits the domain) |
-| Scalar `output "resource_id"` for a collection submodule | Consumer can't key into the result | Use the map shape: `{ for k, v in azapi_resource.this : k => v.id }` |
 | Submodule re-declares `azapi` at a different version | `terraform init` errors with provider version conflict | Match parent exactly |
 | Submodule includes `main.telemetry.tf` | Duplicate telemetry pings per apply | Only the root module fires telemetry (SFR3); submodules never do |
 | Submodule re-derives `parent_id` from `data.azapi_client_config` instead of accepting it as a variable | Tight coupling, breaks when the parent's primary resource lives in a different subscription/RG than the submodule's resources | Accept `parent_id` (or `subscription_id` + `resource_group_name`) as variables |

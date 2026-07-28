@@ -107,7 +107,7 @@ Rules ([TFNFR21](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/
 
 ```hcl
 resource "azapi_resource" "this" {
-  type      = "Microsoft.Search/searchServices@2024-06-01-preview"
+  type      = var.resource_types.search_search_services   # TFFR6 — never an inline literal
   parent_id = "/subscriptions/${data.azapi_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}"
   name      = var.name
   location  = var.location
@@ -117,7 +117,9 @@ resource "azapi_resource" "this" {
 }
 ```
 
-The primary resource is **always named `this`** ([TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md)). Same for the standard-interface resources: `azurerm_management_lock.this`, `azurerm_monitor_diagnostic_setting.this` (with `for_each` if it's a map interface). For child resources within the same module that aren't iterables: still `this`. For iterables: a sensible name (e.g. `azurerm_private_endpoint.this`, `azurerm_private_endpoint.this_unmanaged_dns_zone_groups`).
+The `type` **MUST** come from `var.resource_types.<key>` per [TFFR6](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR6.md) (see the "Required AzAPI plumbing variables" section below) — never an inline `"Microsoft.…@apiVersion"` string literal.
+
+The primary resource is **always named `this`** ([TFRMNFR2](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/resource/non-functional/TFRMNFR2.md)). Same for the standard-interface resources, which are **also AzAPI** ([TFFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/terraform/shared/functional/TFFR3.md)) — e.g. `azapi_resource.lock`, `azapi_resource.diagnostic_settings` (with `for_each` if it's a map interface). For child resources within the same module that aren't iterables: still `this`. For iterables: a sensible name (e.g. `azapi_resource.private_endpoint`, `azapi_resource.private_endpoint_dns_zone_group`).
 
 ## `variables.tf`
 
