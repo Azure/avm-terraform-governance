@@ -146,3 +146,58 @@ Add `.env` to your module's `.gitignore` so it is never committed.
 >   }
 > }
 > ```
+
+## Example test retries
+
+End to end example tests deploy real Azure infrastructure, so they fail intermittently on region and SKU capacity rather than on module defects: `SkuNotAvailable`, zonal allocation failures, quota exhaustion, or `sku_selector` finding no deployable size in the randomly chosen region. [`test-examples.porch.yaml`](./test-examples.porch.yaml) retries those failures automatically, up to twice per example.
+
+Porch has no retry primitive, so the attempts are unrolled as ordinary steps and chained together with exit codes:
+
+| Exit code | Emitted by | Meaning |
+| --------- | ---------- | ------- |
+| `0` | apply | Success. The remaining retry steps skip themselves. |
+| `90` | apply | Failed, and the output matched the retryable error list. |
+| `91` | retry plan | A retry plan ran, so the matching retry apply may proceed. |
+| `1` | either | Failed for any other reason. Fail immediately. |
+
+The chain runs `Terraform Apply` → `Terraform Plan (retry 1)` → `Terraform Apply (retry 1)` → `Terraform Plan (retry 2)` → `Terraform Apply (retry 2, final)`. Each retry step uses `runs_on_condition: exit-codes` and only executes when the previously executed step emitted the code it gates on. Porch does not advance its "previous result" state for skipped steps, which is what lets a successful first apply skip past every retry step straight to the idempotency check.
+
+A separate exit code is needed for the retry plan because a plain `0` is indistinguishable from the original apply succeeding, which would fire the retry apply on the happy path.
+
+### Retries re-roll the region
+
+Capacity errors are region and SKU specific, so a retry that redeploys into the same region fails identically. The retry plan therefore runs:
+
+```shell
+terraform plan -replace=random_integer.region_index -out tfplan
+```
+
+which re-rolls the region and, through `sku_selector`, the VM size. The `-replace` is guarded by a `terraform state list` lookup, so examples that do not use the conventional `random_integer.region_index` address are planned normally and are unaffected.
+
+### Tuning the error list
+
+The patterns live in the `retryable` variable in the apply step and are matched case insensitively against the combined apply output. Keep them anchored to capacity and quota wording.
+
+Broad Azure error codes are deliberately excluded. `OperationNotAllowed`, for example, covers both quota exhaustion and "cannot delete resource while nested resources exist", and only the former should ever be retried.
+
+### What is not retried
+
+- **The idempotency check.** Retrying it would hide genuinely non-idempotent modules.
+- **Plan failures.** Only apply output is classified.
+- **Anything not matching the list.** It fails on the first attempt, as before.
+
+`Terraform Destroy` keeps `runs_on_condition: always`, so resources are torn down whether the example passes, exhausts its retries, or fails outright.
+
+### Changing the number of attempts
+
+The attempt count is fixed by how many plan/apply pairs are unrolled. To add one, copy a `Terraform Plan (retry N)` and `Terraform Apply (retry N)` pair. Note that `success_exit_codes` differs by position:
+
+- Every apply **except the last** uses `success_exit_codes: [0, 90]`. Exit 90 must count as a success, otherwise a failed early attempt marks the whole example as failed even when a later attempt passes.
+- The **last** apply omits `90`, which is what makes exhausting the retries fail the run.
+
+So when adding a pair, the previously final apply must gain `success_exit_codes: [0, 90]`.
+
+### Testing the retry path
+
+The mock module example [`retry-flaky`](../tests/terraform-azurerm-avm-res-mock/examples/retry-flaky) fails its first apply with a message matching the retryable list, then succeeds on the next attempt. It runs in the `governance - test` workflow, so a regression in the retry chain fails CI. The other mock examples never produce capacity errors, so without it the retry steps would only ever be skipped.
+

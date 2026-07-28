@@ -112,11 +112,77 @@ commands:
           set -a; [ -f .env ] && . ./.env; set +a
           terraform plan -out tfplan
 
+        # Exit 90 means "failed, but the error looks transient" and is what gates the
+        # retry steps below. It is listed in success_exit_codes so that a failed early
+        # attempt does not mark the whole example as failed when a later attempt passes.
+        # The final attempt omits it, so exhausting the retries fails the run.
       - type: shell
         name: Terraform Apply
-        command_line: |
+        command_line: &apply_classify |
           set -a; [ -f .env ] && . ./.env; set +a
-          terraform apply -auto-approve tfplan
+
+          # Matched case insensitively against the combined apply output. Keep these
+          # anchored to capacity and quota wording. Bare Azure codes such as
+          # OperationNotAllowed are deliberately excluded, as they also cover genuine
+          # failures that a retry would only mask.
+          retryable='SkuNotAvailable|Capacity Restrictions|is currently not available in location|sku_selector found no deployable VM size|Allocation ?Failed|results in exceeding approved'
+
+          log="$(mktemp)"
+          terraform apply -auto-approve tfplan > "$log" 2>&1
+          rc=$?
+          cat "$log"
+
+          if [ "$rc" -eq 0 ]; then
+            exit 0
+          fi
+
+          if grep -qEi "$retryable" "$log"; then
+            echo "::warning::Example $ITEM hit a retryable capacity error, retrying in a new region." 1>&2
+            exit 90
+          fi
+
+          exit 1
+        success_exit_codes: [0, 90]
+
+        # Re-roll the region, otherwise the retry redeploys into the same capacity
+        # constrained location and fails identically. Exit 91 signals "a retry plan
+        # ran", which is what the matching retry apply gates on. Plain exit 0 cannot
+        # be used, as the original apply also exits 0 on success.
+      - type: shell
+        name: Terraform Plan (retry 1)
+        command_line: &replan_new_region |
+          set -a; [ -f .env ] && . ./.env; set +a
+
+          replace=""
+          if terraform state list 2>/dev/null | grep -qxF 'random_integer.region_index'; then
+            replace="-replace=random_integer.region_index"
+            echo "Replacing random_integer.region_index to select a new region." 1>&2
+          fi
+
+          terraform plan $replace -out tfplan && exit 91
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [90]
+        success_exit_codes: [91]
+
+      - type: shell
+        name: Terraform Apply (retry 1)
+        command_line: *apply_classify
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [91]
+        success_exit_codes: [0, 90]
+
+      - type: shell
+        name: Terraform Plan (retry 2)
+        command_line: *replan_new_region
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [90]
+        success_exit_codes: [91]
+
+      - type: shell
+        name: Terraform Apply (retry 2, final)
+        command_line: *apply_classify
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [91]
 
       - type: shell
         name: Terraform Plan Idempotency Check
