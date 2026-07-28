@@ -94,6 +94,185 @@ steps:
       echo '{"loaded":false,"events":[]}' > "${HISTORY_FILE}"
     fi
     rm -f "${EVENTS_FILE}"
+- name: Prefetch PR candidate evidence for target issue
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
+    ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+  run: |
+    set -o pipefail
+    mkdir -p /tmp/gh-aw/agent
+    EVIDENCE_FILE=/tmp/gh-aw/agent/pr-candidate-evidence.json
+    REPO="${GH_AW_GITHUB_REPOSITORY}"
+    NUM="${ISSUE_NUMBER}"
+    WORK_DIR=$(mktemp -d)
+    CANDIDATES_JSONL="${WORK_DIR}/candidates.jsonl"
+    ERRORS_FILE="${WORK_DIR}/errors.txt"
+    : > "${CANDIDATES_JSONL}"
+    : > "${ERRORS_FILE}"
+    COMPLETE=true
+    # Conservative fallback written up front: if this step dies before the final
+    # write below, the agent still finds an honest "incomplete" file rather than a
+    # stale or missing one, so it never treats a failed load as a false success.
+    printf '{"issue_number":%s,"repository":"%s","loaded":false,"complete":false,"success":false,"errors":["prefetch step did not finish"],"candidate_count":0,"candidates":[]}\n' "${NUM}" "${REPO}" > "${EVIDENCE_FILE}"
+    record_error() {
+      echo "$1" >> "${ERRORS_FILE}"
+      COMPLETE=false
+    }
+    # Source 1: issue timeline - cross-referenced PRs, including non-closing mentions.
+    TIMELINE_RAW="${WORK_DIR}/timeline.jsonl"
+    if gh api --paginate "repos/${REPO}/issues/${NUM}/timeline?per_page=100" > "${TIMELINE_RAW}" 2>>"${ERRORS_FILE}"; then
+      jq -c -s '
+        add // []
+        | .[]
+        | select(.event == "cross-referenced")
+        | (.source.issue? // empty)
+        | select(.pull_request != null)
+        | {
+            number: .number,
+            title: .title,
+            url: .html_url,
+            state: (.state // "unknown" | ascii_upcase),
+            draft: (.draft // false),
+            merged: (.pull_request.merged_at != null),
+            body: (.body // ""),
+            source: "timeline_cross_reference",
+            detail: "Timeline cross-reference on the issue (includes non-closing mentions)"
+          }
+      ' "${TIMELINE_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "timeline: jq processing failed for issue #${NUM}"
+    else
+      record_error "timeline: gh api fetch failed for issue #${NUM}"
+    fi
+    # Source 2: exhaustive PR scan via GraphQL - exact issue-number search across PR
+    # title/body over ALL states (OPEN, CLOSED, MERGED) with no date limit, plus a
+    # commit-message scan (commits whose message contains #N or a qualified ref,
+    # mapped back to their PR; commit-body "Refs #N" style references are tagged
+    # separately from a bare mention).
+    GRAPHQL_QUERY="${WORK_DIR}/pr-scan.graphql"
+    cat > "${GRAPHQL_QUERY}" <<'GRAPHQL_EOF'
+    query($owner: String!, $repo: String!, $endCursor: String) {
+      repository(owner: $owner, name: $repo) {
+        pullRequests(first: 50, after: $endCursor, states: [OPEN, CLOSED, MERGED], orderBy: {field: UPDATED_AT, direction: DESC}) {
+          pageInfo { hasNextPage endCursor }
+          nodes {
+            number
+            title
+            url
+            state
+            isDraft
+            merged
+            body
+            commits(first: 20) {
+              nodes { commit { oid message } }
+            }
+          }
+        }
+      }
+    }
+    GRAPHQL_EOF
+    OWNER_NAME="${REPO%%/*}"
+    REPO_NAME="${REPO##*/}"
+    PR_SCAN_RAW="${WORK_DIR}/pr-scan.jsonl"
+    if gh api graphql --paginate -F query="@${GRAPHQL_QUERY}" -f owner="${OWNER_NAME}" -f repo="${REPO_NAME}" > "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}"; then
+      jq -c -s --arg num "${NUM}" --arg repo "${REPO}" '
+        ("#" + $num + "\\b") as $numRef
+        | ($repo + "#" + $num + "\\b") as $qualRef
+        | ("(?i)\\b(refs?|fixes?|closes?|resolves?)\\b[[:space:]]*#" + $num + "\\b") as $bodyRef
+        | [.[].data.repository.pullRequests.nodes[]?]
+        | .[]
+        | . as $pr
+        | (
+            (if (($pr.title // "") | test($numRef) or (($pr.title // "") | test($qualRef))) then
+              [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""), source:"issue_number_search_title", detail:("PR title contains #" + $num + " or a repo-qualified reference")}]
+            else [] end)
+            +
+            (if (($pr.body // "") | test($numRef) or (($pr.body // "") | test($qualRef))) then
+              [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""), source:"issue_number_search_body", detail:("PR body contains #" + $num + " or a repo-qualified reference")}]
+            else [] end)
+            +
+            [
+              ($pr.commits.nodes[]? | .commit
+               | select((.message | test($numRef)) or (.message | test($qualRef)))
+               | {
+                   number: $pr.number, title: $pr.title, url: $pr.url, state: $pr.state, draft: $pr.isDraft, merged: $pr.merged, body: ($pr.body // ""),
+                   source: (if (.message | test($bodyRef)) then "commit_body_refs" else "commit_message_reference" end),
+                   sha: .oid, message: .message,
+                   detail: ("Commit message references #" + $num)
+                 }
+              )
+            ]
+          )
+          | .[]
+      ' "${PR_SCAN_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "graphql pr scan: jq processing failed for issue #${NUM}"
+      LAST_HAS_NEXT=$(jq -s '[.[].data.repository.pullRequests.pageInfo.hasNextPage] | last // false' "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}")
+      if [ "${LAST_HAS_NEXT}" = "true" ]; then
+        record_error "graphql pr scan: pagination did not complete (hasNextPage still true) - results may be partial"
+      fi
+    else
+      record_error "graphql pr scan: gh api graphql fetch failed for repo ${REPO}"
+    fi
+    # Source 3: exact issue-number search across PR comments (all states, no date limit).
+    for VARIANT in "#${NUM}" "${REPO}#${NUM}"; do
+      SAFE_NAME=$(echo "${VARIANT}" | tr -c 'a-zA-Z0-9' '_')
+      COMMENT_SEARCH_RAW="${WORK_DIR}/comment-search-${SAFE_NAME}.jsonl"
+      if gh api --paginate --method GET search/issues -f q="repo:${REPO} is:pr in:comments \"${VARIANT}\"" > "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}"; then
+        jq -c -s '
+          [.[] | (.items // [])[]?]
+          | .[]
+          | {
+              number: .number, title: .title, url: .html_url, state: (.state | ascii_upcase),
+              draft: (.draft // false), merged: (.pull_request.merged_at != null),
+              body: (.body // ""), source: "issue_number_search_comment",
+              detail: "Matched via GitHub search in a PR comment"
+            }
+        ' "${COMMENT_SEARCH_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "comment search: jq processing failed for variant ${VARIANT}"
+      else
+        record_error "comment search: gh api search fetch failed for variant ${VARIANT}"
+      fi
+    done
+    # Merge and de-dupe by PR number, preserving every source and its evidence so
+    # Step 6 can report related/partial PRs even when they are not linked.
+    if [ -s "${CANDIDATES_JSONL}" ]; then
+      jq -c -s '
+        group_by(.number)
+        | map({
+            number: .[0].number,
+            title: (first(.[] | select(.title != null and .title != "") | .title) // .[0].title),
+            url: (first(.[] | select(.url != null and .url != "") | .url) // .[0].url),
+            state: (first(.[] | select(.state != null and .state != "") | .state) // .[0].state),
+            draft: (any(.[]; .draft == true)),
+            merged: (any(.[]; .merged == true)),
+            body_excerpt: ((first(.[] | select(.body != null and .body != "") | .body) // "")[0:600]),
+            sources: ([.[] | .source] | unique),
+            evidence: [.[] | {source, detail, sha, message}]
+          })
+        | sort_by(.number)
+      ' "${CANDIDATES_JSONL}" > "${WORK_DIR}/deduped.json" 2>>"${ERRORS_FILE}" || record_error "dedupe: jq processing failed"
+    else
+      echo '[]' > "${WORK_DIR}/deduped.json"
+    fi
+    if [ ! -s "${WORK_DIR}/deduped.json" ]; then
+      echo '[]' > "${WORK_DIR}/deduped.json"
+    fi
+    CANDIDATE_COUNT=$(jq 'length' "${WORK_DIR}/deduped.json" 2>/dev/null || echo 0)
+    jq -n \
+      --arg issue "${NUM}" \
+      --arg repo "${REPO}" \
+      --argjson complete "${COMPLETE}" \
+      --argjson candidates "$(cat "${WORK_DIR}/deduped.json")" \
+      --rawfile errorlog "${ERRORS_FILE}" \
+      '{
+        issue_number: ($issue | tonumber),
+        repository: $repo,
+        loaded: true,
+        complete: $complete,
+        success: $complete,
+        errors: ($errorlog | split("\n") | map(select(length > 0))),
+        candidate_count: ($candidates | length),
+        candidates: $candidates
+      }' > "${EVIDENCE_FILE}"
+    echo "Wrote ${CANDIDATE_COUNT} de-duplicated PR candidates to ${EVIDENCE_FILE} (complete=${COMPLETE})"
+    rm -rf "${WORK_DIR}"
 tools:
   cache-memory: true
   github:
@@ -171,7 +350,7 @@ Then **open the most promising candidate issues and compare them semantically** 
 
 Finding a candidate above does **not** by itself mean you close. Closing is a separate, deliberate decision with a **high bar**. Sort each candidate you found into one of these tiers:
 
-- **Confirmed duplicate (close):** Close as a duplicate **only** when you are **highly confident** the two issues are the **same underlying problem / root cause** and the Human Reopen Override is not active — the wording or framing may differ, but the actual defect, request, or question is the same and re-reporting it adds no new information. First post your triage comment (see Step 6 — Duplicate Closure Flow) explaining the match, then use the `close-issue` safe output. This closes the issue with the `duplicate` state reason and links it to the canonical issue.
+- **Confirmed duplicate (close):** Close as a duplicate **only** when you are **highly confident** the two issues are the **same underlying problem / root cause** and the Human Reopen Override is not active — the wording or framing may differ, but the actual defect, request, or question is the same and re-reporting it adds no new information. First post your triage comment (see Step 6 — Duplicate Closure Flow) explaining the match, then use the `close-issue` safe output. This closes the issue with the `duplicate` state reason and links it to the canonical issue. This decision is governed only by these duplicate rules: it does not depend on, and is never weakened by, the Step 4 PR-evidence prefetch or the state of any related fix PR — close as a duplicate even if a topically related PR is still open, draft, or unmerged, or if that PR's own evidence load was incomplete.
 - **Possible duplicate (do NOT close, but link):** You found a strong candidate that looks like the same problem, but you are **not** highly confident — e.g. it overlaps heavily yet also raises a distinct question, adds new context, or you cannot fully confirm the same root cause. **Leave the issue open.** In your triage comment, explicitly flag it as `Possible duplicate of #N` with a link so triagers can make the final call. Do **not** apply the `duplicate` label in this tier (that label is only for issues you actually close).
 - **Related / similar (do NOT close):** Touches a related area but is a **different** root cause, request, or question. Mention it as a related issue in your triage comment. Leave the issue open.
 - **No duplicates found:** Note this in your triage comment.
@@ -229,12 +408,31 @@ Use the issue content to determine the most appropriate labels, but only apply l
 
 Before investigating a new fix, determine whether a PR or release already addresses the issue. Do not assume that the absence of a GitHub development link means no PR exists: contributors often omit closing keywords.
 
+### Deterministic PR Candidate Evidence (read this first)
+
+A pre-agent step has already fetched deterministic PR candidate evidence for this issue into `/tmp/gh-aw/agent/pr-candidate-evidence.json`. **You MUST read this file before doing anything else in Step 4.**
+
+The file is produced by fixed `gh api`/GraphQL calls (not the model), so it deterministically covers, across **all PR states with no date limit**:
+
+- Timeline cross-references on the issue, **including non-closing mentions** (`source: timeline_cross_reference`).
+- An exact search for `#<issue-number>` and the repository-qualified reference (`owner/repo#<issue-number>`) in PR titles (`issue_number_search_title`), bodies (`issue_number_search_body`), and comments (`issue_number_search_comment`).
+- Commits whose message contains `#<issue-number>` or a qualified ref, mapped back to their associated PR — tagged `commit_body_refs` when the commit message uses a `Refs #<issue-number>` / `Fixes #<issue-number>` / `Closes #<issue-number>` / `Resolves #<issue-number>` style line, or `commit_message_reference` for any other mention. This is the only reliable way to catch a reference that lives in a commit body of an **open, unmerged** PR rather than in the PR's own title/body — those commits are not on the default branch and GitHub's commit search does not fully index commit bodies, so this cannot be found by ad-hoc searching alone.
+
+Each candidate in the file's `candidates` array carries the PR `number`, `title`, `url`, `state`, `draft`, `merged`, a `body_excerpt`, the de-duplicated list of matching `sources`, and per-source `evidence` entries (including the matching commit `sha`/`message` where applicable). The same PR can and will appear from multiple sources at once; nothing here is pre-filtered for relevance.
+
+**Enumerate every single candidate in the file — do not skip or sample.** For each one:
+
+1. Open the actual PR and inspect its real diff, changed files, commits, tests, and review discussion yourself. **A source or evidence entry in this file is discovery only — it proves a textual reference exists, never that the PR fixes the issue.** Treat every candidate exactly as you would a candidate found through your own searching: a shared issue number, keyword, or commit message is a lead, not proof. Dependency-bump, changelog, or otherwise unrelated PRs frequently show up here (e.g. because a changelog entry or version bump body happens to contain the issue number as a substring) — inspecting the real diff is what filters these out.
+2. Classify it into one of the **Fix Confidence Tiers** below based on that inspection, not on which deterministic source found it.
+
+If the file is missing, unreadable, or reports `loaded: false`, `complete: false`, or `success: false` (or a non-empty `errors` list), see **Incomplete or Failed Evidence Load** below before doing anything else in this step.
+
 ### Candidate Discovery
 
-Use several complementary searches in this repository. Do not rely on one title query or an arbitrary six-month window.
+The file above is a deterministic floor, not a ceiling — it does not replace judgment-driven searching. Run these complementary searches too, and treat every hit (from the file or from these searches) the same way: a lead requiring real inspection, never proof by itself. Do not rely on one title query or an arbitrary six-month window.
 
-1. **Inspect existing links and timeline references** — Review PRs, commits, and releases already referenced by the issue or its comments.
-2. **Search for the exact issue number without a date limit** — Search open, closed, and merged PR titles, bodies, comments, and commit messages for `#<issue-number>` and the repository-qualified issue reference.
+1. **Inspect existing links and timeline references** — Review PRs, commits, and releases already referenced by the issue or its comments, including the timeline entries already captured in the prefetched file.
+2. **Search for the exact issue number without a date limit** — Confirm and extend the prefetched title/body/comment/commit-message matches with your own search, in case the deterministic pass hit a pagination or rate-limit ceiling (see `errors` in the file).
 3. **Run several semantic PR searches** — Search open, closed, and merged PRs using:
    - Distinctive error-message fragments and symptoms.
    - Terraform resource, data source, variable, output, module, and provider names.
@@ -243,7 +441,7 @@ Use several complementary searches in this repository. Do not rely on one title 
 4. **Search default-branch history** — Search commits after the issue was created, plus earlier commits when the report may concern a fix that existed before the issue was filed. Trace promising commits back to their PR when possible.
 5. **Check releases** — Determine whether a validated fix is available in a release. Review release notes and tags, and identify the first release containing the merged fix when possible.
 
-Open every promising candidate and inspect its title, body, changed files, diff, commits, tests, review discussion, merge target, and merge status. A shared keyword, file, module, or resource is only a lead; it is not proof that the PR fixes the issue.
+Open every promising candidate — from the prefetched file and from these searches — and inspect its title, body, changed files, diff, commits, tests, review discussion, merge target, and merge status. A shared keyword, file, module, or resource is only a lead; it is not proof that the PR fixes the issue.
 
 ### Fix Confidence Tiers
 
@@ -255,6 +453,21 @@ Classify each candidate before taking any write action:
 - **No candidate found:** Continue to Step 5.
 
 **False-positive protection:** Never link or close based only on title similarity, shared labels, a common file, broad component overlap, or an AI-generated claim in another comment. If the issue is broader than the PR, the fix requires multiple PRs, the issue reports a new variant, or evidence conflicts, downgrade the candidate and leave the issue open.
+
+### Incomplete or Failed Evidence Load
+
+Check `/tmp/gh-aw/agent/pr-candidate-evidence.json` for `loaded`, `complete`, `success`, and `errors` before relying on it.
+
+If the file is **missing, unreadable**, or reports **`loaded: false`, `complete: false`, or `success: false`** (or a non-empty `errors` array), the deterministic candidate list cannot be trusted as exhaustive. In that case:
+
+- **Continue the full read-only investigation.** Keep searching and reading issues, PRs, commits, and releases exactly as described above — an incomplete prefetch never excuses skipping analysis.
+- **Conservatively block two specific write actions for this run:**
+  1. Do not close the issue as `completed` under **Close an Issue That Is Already Fixed** below.
+  2. Do not append `Fixes #<issue-number>` to any PR under **Link an Unlinked Fix PR** below.
+- **Labels, the issue type, and the triage comment are unaffected** — continue to apply `add-labels`, `set-issue-type`, and post the Step 6 comment normally.
+- **Explain the veto in the triage comment**: state plainly that confirmed-fix closure and PR linking were skipped this run because the deterministic PR-evidence prefetch did not complete, and summarize what you found through manual investigation instead so a maintainer can act on it.
+
+This veto applies only to the two write actions above. It does **not** apply to and must never weaken the **Duplicate Closure Flow** in Step 2: a duplicate closure (`close-issue` with the `duplicate` state reason) is decided solely by the duplicate-confidence rules in Step 2, is independent of this file, and remains fully allowed whenever the evidence load did succeed and the duplicate match is conclusive — including when a separately discovered, unrelated fix candidate for the underlying topic is itself still open or unmerged. An inconclusive or missing fix-PR candidate must never be used as a reason to downgrade or skip an otherwise-conclusive duplicate closure.
 
 ### Link an Unlinked Fix PR
 
@@ -268,11 +481,11 @@ If a PR is a **confirmed fix**, is clearly intended to resolve this issue, and i
 
 2. Mention the PR-body update in the triage summary.
 
-Do not add the marker to more than one PR per run. Do not add it when the PR only partially addresses the issue, when multiple PRs are jointly required, or when confidence is below the **confirmed fix** tier. An open confirmed-fix PR may be linked, but the issue must remain open until the PR is merged.
+Do not add the marker to more than one PR per run. Do not add it when the PR only partially addresses the issue, when multiple PRs are jointly required, or when confidence is below the **confirmed fix** tier. An open confirmed-fix PR may be linked, but the issue must remain open until the PR is merged. Do not perform this action at all when the **Incomplete or Failed Evidence Load** veto above is active.
 
 ### Close an Issue That Is Already Fixed
 
-Close the issue as `completed` only when the fix is **confirmed**, the Human Reopen Override is not active, and one of the following is true:
+Close the issue as `completed` only when the fix is **confirmed**, the Human Reopen Override is not active, the **Incomplete or Failed Evidence Load** veto above is not active, and one of the following is true:
 
 - The fixing PR is merged into the default branch.
 - The fixing commit is present on the default branch and there is strong direct evidence that it resolves the issue.
@@ -354,9 +567,11 @@ The bullet points should include:
 - **Suggested fix:** If you identified a likely root cause or potential fix from investigating the source code, include it with specific file/line references. If the issue is a question or consideration rather than a bug, note that. If you could not determine a fix, state that further investigation is needed.
 - **Already fixed:** If a recent release or merged PR already addresses this issue, tell the user which version or PR contains the fix and recommend they upgrade.
 - **PR linked:** If you appended `Fixes #<issue-number>` to a confirmed-fix PR, identify the PR and state that it is now linked. Do not claim an ambiguous candidate was linked.
+- **Related or partial PRs:** Always report any PR you classified as **likely related fix** or **related-only** in Step 4, with a link and a one-line reason, even though you deliberately did not link or close against it. Do not omit these just because no write action was taken on them — surfacing them is the point, so a maintainer can judge candidates you intentionally left out of the automated decision.
+- **PR-evidence load status:** State whether `/tmp/gh-aw/agent/pr-candidate-evidence.json` loaded successfully. If it did not (missing, unreadable, or `loaded`/`complete`/`success: false`), say so explicitly and state that confirmed-fix closure and PR linking were skipped this run as a result (see Step 4 — Incomplete or Failed Evidence Load), while noting that duplicate-closure decisions were not affected by this.
 - **Closure:** If closing an issue that is conclusively fixed, state the evidence supporting closure and whether the fix is released or only present on the default branch. Include a note advising the author to reopen with evidence if the problem persists.
 - **Human reopen override:** If this workflow previously closed the issue and a person later reopened it, state that the issue will remain open for human review even if the agent found a duplicate or an existing fix.
-- **What this triage looked at (collapsed accordion):** At the very bottom of the comment, include a collapsed `<details>` block listing the actual search queries/terms you ran for the duplicate check and the key sources you inspected. This is for transparency — keep it out of the visible summary above.
+- **What this triage looked at (collapsed accordion):** At the very bottom of the comment, include a collapsed `<details>` block listing the actual search queries/terms you ran for the duplicate check, the deterministic PR-evidence sources that fired (e.g. timeline cross-reference, exact issue-number match in a title/body/comment, commit-message reference, commit-body `Refs #N`), and the key sources you inspected. This is for transparency — keep it out of the visible summary above.
 
 Keep the comment concise and factual. Do not speculate or add unnecessary detail.
 
