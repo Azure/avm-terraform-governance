@@ -103,13 +103,61 @@ steps:
     set -o pipefail
     mkdir -p /tmp/gh-aw/agent
     EVIDENCE_FILE=/tmp/gh-aw/agent/pr-candidate-evidence.json
+    STATUS_FILE=/tmp/gh-aw/agent/pr-candidate-status.json
+    INDEX_FILE=/tmp/gh-aw/agent/pr-candidate-screening-index.json
+    INDEX_VERSION=1
     REPO="${GH_AW_GITHUB_REPOSITORY}"
     NUM="${ISSUE_NUMBER}"
+    write_failure_contracts() {
+      FAILURE_MESSAGE="$1"
+      jq -n --arg issue "${NUM}" --arg repo "${REPO}" --arg error "${FAILURE_MESSAGE}" \
+        '{issue_number:($issue | tonumber? // $issue),repository:$repo,loaded:false,complete:false,success:false,errors:[$error],candidate_count:0,candidates:[]}' \
+        > "${EVIDENCE_FILE}"
+      jq -n --arg issue "${NUM}" --arg repo "${REPO}" --arg error "${FAILURE_MESSAGE}" --argjson version "${INDEX_VERSION}" \
+        '{
+          version:$version,
+          issue_number:($issue | tonumber? // $issue),
+          repository:$repo,
+          loaded:false,
+          complete:false,
+          success:false,
+          errors:[$error],
+          candidate_count:0,
+          required_inspection:[],
+          open_inventory_screening:[]
+        }' > "${INDEX_FILE}"
+      jq -n \
+        --arg issue "${NUM}" \
+        --arg repo "${REPO}" \
+        --arg error "${FAILURE_MESSAGE}" \
+        --arg evidence_path "${EVIDENCE_FILE}" \
+        --arg index_path "${INDEX_FILE}" \
+        --argjson index_version "${INDEX_VERSION}" \
+        '{
+          issue_number:($issue | tonumber? // $issue),
+          repository:$repo,
+          loaded:false,
+          complete:false,
+          success:false,
+          errors:[$error],
+          candidate_count:0,
+          open_inventory_count:0,
+          required_inspection_count:0,
+          required_inspection_numbers:[],
+          exact_required_inspection_count:0,
+          exact_required_inspection_numbers:[],
+          timeline_required_inspection_count:0,
+          timeline_required_inspection_numbers:[],
+          commit_required_inspection_count:0,
+          commit_required_inspection_numbers:[],
+          evidence_path:$evidence_path,
+          screening_index_path:$index_path,
+          index_version:$index_version
+        }' > "${STATUS_FILE}"
+    }
     if ! printf '%s' "${REPO}" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' \
       || ! printf '%s' "${NUM}" | grep -Eq '^[1-9][0-9]*$'; then
-      jq -n --arg issue "${NUM}" --arg repo "${REPO}" \
-        '{issue_number:$issue,repository:$repo,loaded:false,complete:false,success:false,errors:["invalid repository or issue number"],candidate_count:0,candidates:[]}' \
-        > "${EVIDENCE_FILE}"
+      write_failure_contracts "invalid repository or issue number"
       exit 0
     fi
     WORK_DIR=$(mktemp -d)
@@ -121,21 +169,25 @@ steps:
     # Conservative fallback written up front: if this step dies before the final
     # write below, the agent still finds an honest "incomplete" file rather than a
     # stale or missing one, so it never treats a failed load as a false success.
-    jq -n --argjson issue "${NUM}" --arg repo "${REPO}" \
-      '{issue_number:$issue,repository:$repo,loaded:false,complete:false,success:false,errors:["prefetch step did not finish"],candidate_count:0,candidates:[]}' \
-      > "${EVIDENCE_FILE}"
+    write_failure_contracts "prefetch step did not finish"
     record_error() {
       echo "$1" >> "${ERRORS_FILE}"
       COMPLETE=false
     }
+    ISSUE_RAW="${WORK_DIR}/issue.json"
+    if ! gh api "repos/${REPO}/issues/${NUM}" > "${ISSUE_RAW}" 2>>"${ERRORS_FILE}"; then
+      echo '{"title":"","body":""}' > "${ISSUE_RAW}"
+      record_error "issue metadata: gh api fetch failed for issue #${NUM}"
+    fi
     # Source 1: issue timeline - cross-referenced PRs, including non-closing mentions.
     TIMELINE_RAW="${WORK_DIR}/timeline.jsonl"
     if gh api --paginate "repos/${REPO}/issues/${NUM}/timeline?per_page=100" > "${TIMELINE_RAW}" 2>>"${ERRORS_FILE}"; then
-      jq -c -s '
+      jq -c -s --arg repo "${REPO}" '
         add // []
         | .[]
         | select(.event == "cross-referenced")
         | (.source.issue? // empty)
+        | select(.repository_url == ("https://api.github.com/repos/" + $repo))
         | select(.pull_request != null)
         | {
             number: .number,
@@ -291,7 +343,7 @@ steps:
       --arg issue "${NUM}" \
       --arg repo "${REPO}" \
       --argjson complete "${COMPLETE}" \
-      --argjson candidates "$(cat "${WORK_DIR}/deduped.json")" \
+      --slurpfile candidates "${WORK_DIR}/deduped.json" \
       --rawfile errorlog "${ERRORS_FILE}" \
       '{
         issue_number: ($issue | tonumber),
@@ -300,10 +352,199 @@ steps:
         complete: $complete,
         success: $complete,
         errors: ($errorlog | split("\n") | map(select(length > 0))),
-        candidate_count: ($candidates | length),
-        candidates: $candidates
+        candidate_count: ($candidates[0] | length),
+        candidates: $candidates[0]
       }' > "${EVIDENCE_FILE}"
-    echo "Wrote ${CANDIDATE_COUNT} de-duplicated PR candidates to ${EVIDENCE_FILE} (complete=${COMPLETE})"
+    # Build a compact index for inventory screening. The evidence file above remains
+    # authoritative; this bounded view exists so the agent never has to print it.
+    jq -n \
+      --arg issue "${NUM}" \
+      --arg repo "${REPO}" \
+      --argjson complete "${COMPLETE}" \
+      --argjson version "${INDEX_VERSION}" \
+      --slurpfile issue_data "${ISSUE_RAW}" \
+      --slurpfile candidates "${WORK_DIR}/deduped.json" \
+      --rawfile errorlog "${ERRORS_FILE}" \
+      '
+        def tokens:
+          ascii_downcase
+          | gsub("[^a-z0-9_]+"; " ")
+          | split(" ")
+          | map(select(length >= 4))
+          | map(
+              if test("^[a-z][a-z0-9_]*s$") and length > 4 and (endswith("ss") | not)
+              then .[0:-1]
+              else .
+              end
+            )
+          | . as $tokens
+          | [
+              "about","above","across","after","again","against","already","also","although","always",
+              "among","another","appear","applied","apply","available","because","before","being","below",
+              "between","body","branch","change","changes","check","checked","clear","code","configuration",
+              "continue","correlation","could","current","default","description","details","during","each",
+              "error","example","existing","fails","from","github","have","having","include","issue","later",
+              "main","make","module","more","need","needed","other","passes","please","provider","request",
+              "resource","should","state","still","than","that","their","then","there","these","they","this",
+              "through","type","update","using","value","version","when","where","which","while","with","would"
+            ] as $stop
+          | $tokens
+          | map(. as $token | select(($stop | index($token)) == null))
+          | unique;
+        def overlap($left; $right):
+          [$left[] as $token | select(($right | index($token)) != null) | $token] | unique | sort;
+        def has_source($names): any(.sources[]?; . as $source | ($names | index($source)) != null);
+        def is_required:
+          has_source([
+            "timeline_cross_reference",
+            "issue_number_search_title",
+            "issue_number_search_body",
+            "issue_number_search_comment",
+            "commit_body_refs",
+            "commit_message_reference"
+          ]);
+        (($issue_data[0].title // "") | tokens) as $issue_title_tokens
+        | (($issue_data[0].body // "") | tokens) as $issue_body_tokens
+        | def compact_candidate:
+            . as $candidate
+            | (($candidate.title // "") | tokens) as $pr_title_tokens
+            | (($candidate.body_excerpt // "") | tokens) as $pr_body_tokens
+            | ([($candidate.file_names[]? // "") | tokens[]] | unique) as $pr_file_tokens
+            | overlap($issue_title_tokens; $pr_title_tokens) as $title_title
+            | overlap($issue_title_tokens; $pr_body_tokens) as $title_body
+            | overlap($issue_body_tokens; $pr_title_tokens) as $body_title
+            | overlap($issue_body_tokens; $pr_body_tokens) as $body_body
+            | overlap(($issue_title_tokens + $issue_body_tokens | unique); $pr_file_tokens) as $file_matches
+            | (
+                (($title_title | length) * 5)
+                + (($title_body | length) * 3)
+                + (($body_title | length) * 2)
+                + ([($body_body | length), 4] | min)
+                + (($file_matches | length) * 2)
+              ) as $score
+            | {
+                number: $candidate.number,
+                title: $candidate.title,
+                sources: $candidate.sources,
+                url: $candidate.url,
+                state: $candidate.state,
+                draft: $candidate.draft,
+                merged: $candidate.merged,
+                body_excerpt: (($candidate.body_excerpt // "")[0:280]),
+                file_names: (($candidate.file_names // [])[0:12]),
+                file_names_truncated: (
+                  ($candidate.files_truncated == true)
+                  or (($candidate.file_names // []) | length > 12)
+                ),
+                open_inventory: (($candidate.sources | index("open_pr_inventory")) != null),
+                lexical_relevance: {
+                  version: 1,
+                  score: $score,
+                  plausible: (
+                    ($score >= 15)
+                    or (($title_title | length) >= 3)
+                  ),
+                  signals: {
+                    issue_title_to_pr_title: $title_title[0:10],
+                    issue_title_to_pr_body: $title_body[0:10],
+                    issue_body_to_pr_title: $body_title[0:10],
+                    issue_body_to_pr_body: $body_body[0:10],
+                    issue_identifiers_to_file_names: $file_matches[0:10]
+                  }
+                }
+              };
+        {
+          version: $version,
+          issue_number: ($issue | tonumber),
+          repository: $repo,
+          loaded: true,
+          complete: $complete,
+          success: $complete,
+          errors: ($errorlog | split("\n") | map(select(length > 0) | .[0:240]) | .[0:20]),
+          candidate_count: ($candidates[0] | length),
+          open_inventory_count: ([$candidates[0][] | select(.sources | index("open_pr_inventory"))] | length),
+          required_inspection_count: ([$candidates[0][] | select(is_required)] | length),
+          required_inspection_numbers: ([$candidates[0][] | select(is_required) | .number] | unique | sort),
+          required_inspection: [
+            $candidates[0][] | select(is_required) | compact_candidate
+          ],
+          open_inventory_screening: [
+            $candidates[0][] | select(is_required | not) | compact_candidate
+          ]
+        }
+      ' > "${INDEX_FILE}" 2>>"${ERRORS_FILE}" || {
+        record_error "screening index: jq generation failed"
+        write_failure_contracts "screening index generation failed"
+        rm -rf "${WORK_DIR}"
+        exit 0
+      }
+    if ! jq -e --argjson expected "${CANDIDATE_COUNT}" '
+      (.version == 1)
+      and (.candidate_count == $expected)
+      and (.required_inspection_count == (.required_inspection | length))
+      and (.required_inspection_numbers == ([.required_inspection[].number] | unique | sort))
+      and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | length == $expected)
+      and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | unique | length == $expected)
+      and (([.required_inspection[], .open_inventory_screening[]] | map(select(.open_inventory)) | length) == .open_inventory_count)
+      and (all(.required_inspection[]; (.sources | any(. != "open_pr_inventory"))))
+      and (all(.open_inventory_screening[]; (.sources == ["open_pr_inventory"])))
+      and (all(.required_inspection[], .open_inventory_screening[];
+        (.body_excerpt | length) <= 280 and (.file_names | length) <= 12
+      ))
+    ' "${INDEX_FILE}" >/dev/null 2>>"${ERRORS_FILE}"; then
+      record_error "screening index: count, uniqueness, or partition invariant failed"
+      write_failure_contracts "screening index invariant failed"
+      rm -rf "${WORK_DIR}"
+      exit 0
+    fi
+    jq -n \
+      --arg issue "${NUM}" \
+      --arg repo "${REPO}" \
+      --arg evidence_path "${EVIDENCE_FILE}" \
+      --arg index_path "${INDEX_FILE}" \
+      --argjson index_version "${INDEX_VERSION}" \
+      --argjson complete "${COMPLETE}" \
+      --slurpfile candidates "${WORK_DIR}/deduped.json" \
+      --rawfile errorlog "${ERRORS_FILE}" \
+      '
+        def numbers_with($sources):
+          [
+            $candidates[0][]
+            | select(any(.sources[]?; . as $source | ($sources | index($source)) != null))
+            | .number
+          ] | unique | sort;
+        (numbers_with([
+          "issue_number_search_title",
+          "issue_number_search_body",
+          "issue_number_search_comment"
+        ])) as $exact
+        | (numbers_with(["timeline_cross_reference"])) as $timeline
+        | (numbers_with(["commit_body_refs","commit_message_reference"])) as $commit
+        | (($exact + $timeline + $commit) | unique | sort) as $required
+        | (numbers_with(["open_pr_inventory"])) as $inventory
+        | {
+            issue_number: ($issue | tonumber),
+            repository: $repo,
+            loaded: true,
+            complete: $complete,
+            success: $complete,
+            errors: ($errorlog | split("\n") | map(select(length > 0) | .[0:240]) | .[0:20]),
+            candidate_count: ($candidates[0] | length),
+            open_inventory_count: ($inventory | length),
+            required_inspection_count: ($required | length),
+            required_inspection_numbers: $required,
+            exact_required_inspection_count: ($exact | length),
+            exact_required_inspection_numbers: $exact,
+            timeline_required_inspection_count: ($timeline | length),
+            timeline_required_inspection_numbers: $timeline,
+            commit_required_inspection_count: ($commit | length),
+            commit_required_inspection_numbers: $commit,
+            evidence_path: $evidence_path,
+            screening_index_path: $index_path,
+            index_version: $index_version
+          }
+      ' > "${STATUS_FILE}"
+    echo "PR candidate prefetch: candidates=${CANDIDATE_COUNT}, status=${STATUS_FILE}, index=${INDEX_FILE}, complete=${COMPLETE}"
     rm -rf "${WORK_DIR}"
 tools:
   cache-memory: true
@@ -440,26 +681,48 @@ Use the issue content to determine the most appropriate labels, but only apply l
 
 Before investigating a new fix, determine whether a PR or release already addresses the issue. Do not assume that the absence of a GitHub development link means no PR exists: contributors often omit closing keywords.
 
-### Deterministic PR Candidate Evidence (read this first)
+### Deterministic PR Candidate Contracts (read this first)
 
-A pre-agent step has already fetched deterministic PR candidate evidence for this issue into `/tmp/gh-aw/agent/pr-candidate-evidence.json`. **You MUST read this file before doing anything else in Step 4.**
+A pre-agent step has already fetched authoritative PR candidate evidence and written three files:
+
+- `/tmp/gh-aw/agent/pr-candidate-status.json` — the small status and count contract.
+- `/tmp/gh-aw/agent/pr-candidate-screening-index.json` — the compact inventory-screening index.
+- `/tmp/gh-aw/agent/pr-candidate-evidence.json` — authoritative full source evidence for candidate-specific follow-up only.
+
+**Use the status and index direct paths before doing anything else in Step 4.** Run these direct-path checks exactly (additional candidate-specific `jq` selectors are allowed):
+
+```bash
+jq -e '. as $status | type == "object" and .loaded == true and .complete == true and .success == true and (.errors == []) and (.candidate_count | type == "number") and (.open_inventory_count | type == "number") and (.required_inspection_count | type == "number") and (.required_inspection_numbers | type == "array") and (.exact_required_inspection_count | type == "number") and (.exact_required_inspection_numbers | type == "array") and (.timeline_required_inspection_count | type == "number") and (.timeline_required_inspection_numbers | type == "array") and (.commit_required_inspection_count | type == "number") and (.commit_required_inspection_numbers | type == "array") and (.required_inspection_count == (.required_inspection_numbers | length)) and (.exact_required_inspection_count == (.exact_required_inspection_numbers | length)) and (.timeline_required_inspection_count == (.timeline_required_inspection_numbers | length)) and (.commit_required_inspection_count == (.commit_required_inspection_numbers | length)) and (.required_inspection_numbers == ((.exact_required_inspection_numbers + .timeline_required_inspection_numbers + .commit_required_inspection_numbers) | unique | sort)) and (.required_inspection_count <= .candidate_count) and (.open_inventory_count <= .candidate_count) and (.screening_index_path | type == "string") and (.index_version == 1)' /tmp/gh-aw/agent/pr-candidate-status.json
+jq -e '. as $index | type == "object" and .loaded == true and .complete == true and .success == true and (.errors == []) and (.version == 1) and (.candidate_count | type == "number") and (.open_inventory_count | type == "number") and (.required_inspection_count | type == "number") and (.required_inspection_numbers | type == "array") and (.required_inspection | type == "array") and (.open_inventory_screening | type == "array") and (.required_inspection_count == (.required_inspection | length)) and (.required_inspection_numbers == ([.required_inspection[].number] | unique | sort)) and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | length == $index.candidate_count) and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | unique | length == $index.candidate_count) and (([.required_inspection[], .open_inventory_screening[]] | map(select(.open_inventory)) | length) == $index.open_inventory_count) and (all(.required_inspection[]; (.sources | any(. != "open_pr_inventory")))) and (all(.open_inventory_screening[]; (.sources == ["open_pr_inventory"]) and .open_inventory == true)) and (all(.required_inspection[], .open_inventory_screening[]; (.number | type == "number") and (.title | type == "string") and (.sources | type == "array") and (.url | type == "string") and (.state | type == "string") and (.draft | type == "boolean") and (.merged | type == "boolean") and (.body_excerpt | type == "string") and (.body_excerpt | length) <= 280 and (.file_names | type == "array") and (.file_names | length) <= 12 and (.file_names_truncated | type == "boolean") and (.open_inventory | type == "boolean") and (.lexical_relevance.score | type == "number") and (.lexical_relevance.plausible | type == "boolean") and (.lexical_relevance.signals | type == "object")))' /tmp/gh-aw/agent/pr-candidate-screening-index.json
+jq '{loaded,complete,success,errors,candidate_count,open_inventory_count,required_inspection_count,required_inspection_numbers,exact_required_inspection_count,exact_required_inspection_numbers,timeline_required_inspection_count,timeline_required_inspection_numbers,commit_required_inspection_count,commit_required_inspection_numbers,screening_index_path,index_version}' /tmp/gh-aw/agent/pr-candidate-status.json
+jq '{candidate_count,open_inventory_count,required_inspection_count,required_inspection_numbers,inventory_only_count:(.open_inventory_screening | length),plausible_numbers:[(.required_inspection + .open_inventory_screening)[] | select(.open_inventory and .lexical_relevance.plausible) | .number]}' /tmp/gh-aw/agent/pr-candidate-screening-index.json
+jq '.required_inspection[] | {number,title,sources,url,state,draft,merged,body_excerpt,file_names,open_inventory,lexical_relevance}' /tmp/gh-aw/agent/pr-candidate-screening-index.json
+jq '.open_inventory_screening[] | {number,title,sources,url,state,draft,merged,body_excerpt,file_names,open_inventory,lexical_relevance}' /tmp/gh-aw/agent/pr-candidate-screening-index.json
+```
+
+Never `cat`, concatenate, or print the complete evidence JSON to establish status or enumerate candidates. Never combine JSON files into one parser input. Parse each direct path independently; if source details are needed, query the evidence file for one candidate number and only the needed fields. Never parse a copied terminal/UI capture or a displayed/truncated rendering. **Visible output ending early is not evidence of truncation or failure.** Report a parser or API error only when a direct-path `jq` parse actually fails or the status contract/API error fields say it failed.
+
+Compare the two directly parsed summaries: `candidate_count`, `open_inventory_count`, `required_inspection_count`, and `required_inspection_numbers` must match between status and index. A disagreement is a count/inventory invariant failure.
 
 The file is produced by fixed `gh api`/GraphQL calls (not the model), so it deterministically covers, across **all PR states with no date limit**:
 
 - Timeline cross-references on the issue, **including non-closing mentions** (`source: timeline_cross_reference`).
 - Exact `#<issue-number>` and repository-qualified (`owner/repo#<issue-number>`) matches in PR titles (`issue_number_search_title`), bodies (`issue_number_search_body`), and PR/issue comments (`issue_number_search_comment`).
 - Commits whose message contains `#<issue-number>` or a qualified ref, mapped back to their associated PR — tagged `commit_body_refs` when the commit message uses a `Refs #<issue-number>` / `Fixes #<issue-number>` / `Closes #<issue-number>` / `Resolves #<issue-number>` style line, or `commit_message_reference` for any other mention. This is the only reliable way to catch a reference that lives in a commit body of an **open, unmerged** PR rather than in the PR's own title/body — those commits are not on the default branch and GitHub's commit search does not fully index commit bodies, so this cannot be found by ad-hoc searching alone.
-- A compact, paginated inventory of **every currently open PR** (`open_pr_inventory`), including title, body excerpt, draft state, and up to 30 changed-file names. This is deliberately reference-free.
+- A paginated inventory of **every currently open PR** (`open_pr_inventory`). The screening index bounds each body excerpt to 280 characters and each filename list to 12 entries, with an explicit truncation flag.
 
-Each candidate carries the PR `number`, `title`, `url`, `state`, `draft`, `merged`, a 600-character `body_excerpt`, compact `file_names`, the de-duplicated `sources`, and per-source `evidence` (including matching commit `sha`/`message`). The same PR can appear from multiple sources; nothing here is pre-filtered for relevance.
+Every candidate appears exactly once in the screening index: candidates carrying any exact, timeline, or commit source are in `required_inspection`; inventory-only candidates are in `open_inventory_screening`. An open required candidate has `open_inventory: true`, so it counts toward both required inspection and open-inventory screening without being duplicated between arrays.
 
-**Enumerate every candidate; never skip or sample.** References are discovery signals, never proof.
+The index also supplies deterministic lexical discovery signals. It normalizes nontrivial issue/PR title, body, and filename identifiers, removes common/template words, singularizes simple plurals, and scores bounded overlaps with fixed weights. `lexical_relevance.plausible: true` makes full inspection mandatory, but neither that boolean nor its score proves relevance, a fix, or a shared root cause.
 
-1. For every candidate with a timeline, exact title/body/comment, or commit source, open the PR and inspect its real diff, changed files, commits, tests, status, and review discussion.
-2. For candidates found only through `open_pr_inventory`, first screen the compact title/body/file evidence. Fully inspect the real diff and status of every plausible match; record irrelevant inventory entries as screened without spending tokens on their full diffs.
-3. Classify all fully inspected candidates using the **Fix Confidence Tiers** below. Report related and partial PRs even when they have no development link.
+Complete **both phases**, never skipping or sampling:
 
-If the file is missing, unreadable, or reports `loaded: false`, `complete: false`, or `success: false` (or a non-empty `errors` list), see **Incomplete or Failed Evidence Load** below before doing anything else in this step.
+1. **Required-inspection phase:** Fully inspect every PR in `required_inspection`, including its real diff, complete changed-file list, commits, tests/checks, status, base branch, and review discussion. Exact references, timeline links, and commit mentions are candidates, never proof.
+2. **Open-inventory screening phase:** Screen every open inventory candidate. Required candidates with `open_inventory: true` are screened by their mandatory full inspection; screen every entry in `open_inventory_screening` from its compact title/body/file signals. Fully inspect the real PR/diff for every entry marked lexically plausible and every additional candidate that your judgment finds plausible. Record inventory-only entries found irrelevant as screened without loading full diffs.
+
+Track `inventory_count` from status, `screened_count`, the plausible candidate numbers, and the fully inspected candidate numbers. `screened_count` must equal `open_inventory_count`; every `required_inspection_number` and every plausible number must be fully inspected. Classify all fully inspected candidates using the **Fix Confidence Tiers** below and report related/partial PRs even when they have no development link.
+
+If either status/index file is missing, unreadable, malformed, fails either direct `jq -e` check, reports `loaded: false`, `complete: false`, `success: false`, or non-empty `errors`, or if any count/inspection invariant mismatches, see **Incomplete or Failed Evidence Load or Screening** below.
 
 ### Candidate Discovery
 
@@ -488,18 +751,18 @@ Classify each candidate before taking any write action:
 
 **False-positive protection:** Never link or close based only on title similarity, shared labels, a common file, broad component overlap, or an AI-generated claim in another comment. If the issue is broader than the PR, the fix requires multiple PRs, the issue reports a new variant, or evidence conflicts, downgrade the candidate and leave the issue open.
 
-### Incomplete or Failed Evidence Load
+### Incomplete or Failed Evidence Load or Screening
 
-Check `/tmp/gh-aw/agent/pr-candidate-evidence.json` for `loaded`, `complete`, `success`, and `errors` before relying on it.
+Use the direct-path status/index checks and the two-phase counts above. Do not infer failure or truncation from how much output a terminal or UI happens to display.
 
-If the file is **missing, unreadable**, or reports **`loaded: false`, `complete: false`, or `success: false`** (or a non-empty `errors` array), the deterministic candidate list cannot be trusted as exhaustive. In that case:
+If status or index is **missing, unreadable, malformed**, reports **`loaded: false`, `complete: false`, or `success: false`** (or non-empty `errors`), fails its schema/count/uniqueness check, `screened_count != open_inventory_count`, a required candidate was not fully inspected, or a plausible candidate was not fully inspected, the deterministic load/screening is incomplete. In that case:
 
 - **Continue the full read-only investigation.** Keep searching and reading issues, PRs, commits, and releases exactly as described above — an incomplete prefetch never excuses skipping analysis.
 - **Conservatively block two specific write actions for this run:**
   1. Do not close the issue as `completed` under **Close an Issue That Is Already Fixed** below.
   2. Do not append `Fixes #<issue-number>` to any PR under **Link an Unlinked Fix PR** below.
 - **Labels, the issue type, and the triage comment are unaffected** — continue to apply `add-labels`, `set-issue-type`, and post the Step 6 comment normally.
-- **Explain the veto in the triage comment**: state plainly that confirmed-fix closure and PR linking were skipped this run because the deterministic PR-evidence prefetch did not complete, and summarize what you found through manual investigation instead so a maintainer can act on it.
+- **Explain the veto in the triage comment**: state the specific direct parse/API/status/count/inspection failure and that confirmed-fix closure and PR linking were skipped this run. Never claim that evidence was truncated merely because displayed output was shortened.
 
 This veto applies only to the two write actions above. It does **not** apply to and must never weaken the **Duplicate Closure Flow** in Step 2: a duplicate closure (`close-issue` with the `duplicate` state reason) is decided solely by the duplicate-confidence rules in Step 2, is independent of this file, and remains fully allowed when the duplicate match is conclusive **even if this evidence load is missing, incomplete, or failed** — including when a separately discovered fix candidate is still open or unmerged. Missing or inconclusive fix-PR evidence must never downgrade or skip an otherwise-conclusive duplicate closure.
 
@@ -515,11 +778,11 @@ If a PR is a **confirmed fix**, is clearly intended to resolve this issue, and i
 
 2. Mention the PR-body update in the triage summary.
 
-Do not add the marker to more than one PR per run. Do not add it when the PR only partially addresses the issue, when multiple PRs are jointly required, or when confidence is below the **confirmed fix** tier. An open confirmed-fix PR may be linked, but the issue must remain open until the PR is merged. Do not perform this action at all when the **Incomplete or Failed Evidence Load** veto above is active.
+Do not add the marker to more than one PR per run. Do not add it when the PR only partially addresses the issue, when multiple PRs are jointly required, or when confidence is below the **confirmed fix** tier. An open confirmed-fix PR may be linked, but the issue must remain open until the PR is merged. Do not perform this action at all when the **Incomplete or Failed Evidence Load or Screening** veto above is active.
 
 ### Close an Issue That Is Already Fixed
 
-Close the issue as `completed` only when the fix is **confirmed**, the Human Reopen Override is not active, the **Incomplete or Failed Evidence Load** veto above is not active, and one of the following is true:
+Close the issue as `completed` only when the fix is **confirmed**, the Human Reopen Override is not active, the **Incomplete or Failed Evidence Load or Screening** veto above is not active, and one of the following is true:
 
 - The fixing PR is merged into the default branch.
 - The fixing commit is present on the default branch and there is strong direct evidence that it resolves the issue.
@@ -602,7 +865,7 @@ The bullet points should include:
 - **Already fixed:** If a recent release or merged PR already addresses this issue, tell the user which version or PR contains the fix and recommend they upgrade.
 - **PR linked:** If you appended `Fixes #<issue-number>` to a confirmed-fix PR, identify the PR and state that it is now linked. Do not claim an ambiguous candidate was linked.
 - **Related or partial PRs:** Always report any PR you classified as **likely related fix** or **related-only** in Step 4, with a link and a one-line reason, even though you deliberately did not link or close against it. Do not omit these just because no write action was taken on them — surfacing them is the point, so a maintainer can judge candidates you intentionally left out of the automated decision.
-- **PR-evidence load status:** State whether `/tmp/gh-aw/agent/pr-candidate-evidence.json` loaded successfully. If it did not (missing, unreadable, or `loaded`/`complete`/`success: false`), say so explicitly and state that confirmed-fix closure and PR linking were skipped this run as a result (see Step 4 — Incomplete or Failed Evidence Load), while noting that duplicate-closure decisions were not affected by this.
+- **PR-evidence and screening status:** Report `candidate_count`, `inventory_count`, `screened_count`, `required_inspection_count`, the plausible candidate numbers, and the fully inspected candidate numbers from the two phases. State whether the direct status/index parses and all count/inspection invariants succeeded. If not, identify the actual direct parse/API/status/count/inspection failure and state that confirmed-fix closure and PR linking were skipped (see Step 4 — Incomplete or Failed Evidence Load or Screening), while noting that duplicate-closure decisions were not affected. Never report truncation based on display length.
 - **Closure:** If closing an issue that is conclusively fixed, state the evidence supporting closure and whether the fix is released or only present on the default branch. Include a note advising the author to reopen with evidence if the problem persists.
 - **Human reopen override:** If this workflow previously closed the issue and a person later reopened it, state that the issue will remain open for human review even if the agent found a duplicate or an existing fix.
 - **What this triage looked at (collapsed accordion):** At the very bottom of the comment, include a collapsed `<details>` block listing the actual search queries/terms you ran for the duplicate check, the deterministic PR-evidence sources that fired (e.g. timeline cross-reference, exact issue-number match in a title/body/comment, commit-message reference, commit-body `Refs #N`), and the key sources you inspected. This is for transparency — keep it out of the visible summary above.
