@@ -150,102 +150,74 @@ Add `.env` to your module's `.gitignore` so it is never committed.
 
 ## Example test retries
 
-End to end example tests deploy real Azure infrastructure, so they fail intermittently on region and SKU capacity rather than on module defects: `SkuNotAvailable`, zonal allocation failures, quota exhaustion, or `sku_selector` finding no deployable size in the randomly chosen region. [`test-examples.porch.yaml`](./test-examples.porch.yaml) retries those failures automatically, up to twice per example.
+End to end tests deploy real Azure infrastructure and fail intermittently on region and SKU capacity rather than on module defects. [`test-examples.porch.yaml`](./test-examples.porch.yaml) retries those failures automatically, up to twice per example.
 
-Porch has no retry primitive, so the attempts are unrolled as ordinary steps and chained together with exit codes:
-
-| Exit code | Meaning |
-| --------- | ------- |
-| `0` | Success. The remaining retry steps skip themselves. |
-| `90` | Failed, and the output matched the retryable error list. |
-| `1` | Failed for any other reason. Fail immediately. |
+Porch has no retry primitive, so attempts are unrolled as ordinary steps chained by exit code: `0` success, `90` retryable failure, `1` anything else.
 
 ### How the steps flow into each other
 
-Three ordinary steps behave like a retry loop because of two Porch behaviours:
+Two Porch behaviours make this work:
 
-- **`success_exit_codes` sets a step's _status_, but never rewrites its _exit code_.** An apply can exit `90`, be reported as a **success** so the run is not failed, and still expose `90` to the next step's gate. This is what separates "retryable failure" from "the example failed".
-- **A skipped step does not advance Porch's "previous result".** Gates keep comparing against the last step that *actually ran*, so a chain of skips all still see the same exit code.
+- `success_exit_codes` sets a step's **status**, not its **exit code**. An apply can exit `90`, count as a success so the run is not failed, and still expose `90` to the next gate.
+- A **skipped** step does not advance Porch's "previous result", so gates compare against the last step that actually ran.
 
-The steps are configured like this:
+| Step | Runs when | Success codes |
+| ---- | --------- | ------------- |
+| `Terraform Apply` | previous succeeded | `0`, `90` |
+| `Terraform Destroy and Retry (1)` | previous exit `90` | `0`, `90` |
+| `Terraform Destroy and Retry (2, final)` | previous exit `90` | `0` |
+| `Terraform Plan Idempotency Check` | previous succeeded | `0` |
 
-| Step | Runs when | Counts as success |
-| ---- | --------- | ----------------- |
-| `Terraform Apply` | previous step succeeded (default) | `0`, `90` |
-| `Terraform Destroy and Retry (1)` | previous exit code is `90` | `0`, `90` |
-| `Terraform Destroy and Retry (2, final)` | previous exit code is `90` | `0` only |
-| `Terraform Plan Idempotency Check` | previous step succeeded (default) | `0` only |
-
-Which produces these paths, where `~` means skipped:
+Paths, where `~` means skipped:
 
 | Outcome | Apply | Retry 1 | Retry 2 | Idempotency | Example |
 | ------- | ----- | ------- | ------- | ----------- | ------- |
 | Clean run | `0` | `~` | `~` | runs | passes |
 | One flaky failure | `90` | `0` | `~` | runs | passes |
 | Two flaky failures | `90` | `90` | `0` | runs | passes |
-| Retries exhausted | `90` | `90` | `90` **fails** | `~` | fails |
-| Real defect | `1` **fails** | `~` | `~` | `~` | fails |
+| Retries exhausted | `90` | `90` | `90` fails | `~` | fails |
+| Real defect | `1` fails | `~` | `~` | `~` | fails |
 
-Three things fall out of that table:
+Retry 2 does not fire on a clean run because Retry 1 was skipped and never advanced the previous result. Exhausting the retries fails because the final step omits `90` from its success codes. `Terraform Destroy` runs last with `runs_on_condition: always`, so cleanup happens on every path.
 
-- **Retry 2 does not fire on a clean run.** Retry 1 was skipped, so it never advanced the previous result — Retry 2's gate still sees the apply's `0`, not a `90`.
-- **A real defect never retries.** Exit `1` is not `90`, so both retry steps skip and the example fails on the first attempt, exactly as before this feature existed.
-- **Exhausting the retries fails the run.** The final step omits `90` from `success_exit_codes`, so its status is *error*; the idempotency check runs on success and therefore skips.
-
-`Terraform Destroy` sits at the end with `runs_on_condition: always`, so cleanup happens down every one of those paths.
-
-All three attempt steps share one script via a YAML anchor. The retry steps set `AVM_E2E_RETRY=1`, which switches the script from "apply the saved plan" to "destroy, then redeploy from scratch".
+All three attempt steps share one script via a YAML anchor; the retries set `AVM_E2E_RETRY=1` to switch it from "apply the saved plan" to "destroy, then redeploy".
 
 ### Retries destroy first
 
-Capacity errors are region and SKU specific, so a retry that redeploys into the same region fails identically. The region has to change, but it must not change *underneath a populated state*.
+Capacity errors are region specific, so the region must change — but not underneath a populated state.
 
-Re-planning in place with `-replace=random_integer.region_index` looks like the obvious fix and is wrong. Example resource names come from `module.naming`, which takes no region input, so the names do not change when the region does. The resource group is therefore replaced under the *same name*, while dependents that reference only `.name` — subnets, for example — are planned as unchanged. Azure cascade-deletes those along with the resource group, and the apply fails with `Provider produced inconsistent result after apply ... Root object was present, but now absent` and `Subnet ... was not found`.
+`-replace=random_integer.region_index` is the obvious fix and is **wrong**. Names come from `module.naming`, which takes no region input, so the resource group is replaced under the *same name* while name-only dependents such as subnets are planned as unchanged. Azure cascade-deletes them and the apply fails with `Root object was present, but now absent` and `Subnet ... was not found`.
 
-So each retry destroys before redeploying:
+Each retry therefore runs:
 
 ```shell
 terraform destroy -auto-approve
 terraform apply -auto-approve
 ```
 
-Destroying removes `random_integer.region_index` from state, so the following plan re-rolls the region on its own and no `-replace` is needed. The apply then creates the whole graph from scratch, which is consistent by construction.
-
-The retry apply deliberately does not reuse `tfplan`. A failed apply is usually a partial apply, which advances the state serial and makes the saved plan stale — `terraform apply tfplan` would fail with `Saved plan is stale` regardless of the underlying capacity problem.
-
-If `terraform destroy` itself fails the retry aborts with exit `1` rather than deploying on top of partial state.
+Destroy drops `random_integer.region_index` from state, so the next plan re-rolls the region by itself and the apply rebuilds the whole graph from scratch. Reusing `tfplan` is not an option either: a partial apply advances the state serial, so it fails with `Saved plan is stale`. If the destroy fails, the retry aborts with `1` rather than deploying over partial state.
 
 ### Tuning the error list
 
-The patterns live in the `retryable` variable in the shared script and are matched case insensitively against the combined terraform output. Keep them anchored to capacity and quota wording.
+Patterns live in the `retryable` variable in the shared script, matched case insensitively against combined terraform output. Keep them anchored to capacity and quota wording. Broad codes are excluded deliberately: `OperationNotAllowed` covers both quota exhaustion and "cannot delete resource while nested resources exist", and only the former should retry.
 
-Broad Azure error codes are deliberately excluded. `OperationNotAllowed`, for example, covers both quota exhaustion and "cannot delete resource while nested resources exist", and only the former should ever be retried.
+### Output handling
 
-### How the terraform output is handled
+Classifying failures means capturing terraform's output. The `run()` helper does this for both the destroy and the apply:
 
-Classifying the failure means the step has to capture its own output, which interacts with two Porch behaviours:
-
-- Porch only displays `stderr` for failed steps, so the step re-emits the captured output to `stderr` before exiting non-zero. Without this a genuine, non-retryable failure would report only an exit code and no diagnostics.
-- Porch's progress ticker reads `stdout`, so terraform is piped through `tee` rather than redirected to a file. Buffering the whole apply to a file would leave long-running deployments with no live output.
-
-Because `$?` after a pipeline is `tee`'s status, terraform's real exit code is stashed in a temporary file inside the pipeline and read back afterwards. The `run()` helper wraps both concerns so the destroy and the apply are handled identically.
+- Porch shows only `stderr` for failed steps, so the script re-emits captured output there before exiting non-zero. Without it a non-retryable failure reports an exit code and nothing else.
+- Porch's progress ticker reads `stdout`, so terraform is piped through `tee` rather than buffered to a file.
+- `$?` after a pipeline belongs to `tee`, so terraform's real exit code is stashed in a temp file.
 
 ### What is not retried
 
-- **The idempotency check.** Retrying it would hide genuinely non-idempotent modules.
-- **Plan failures.** Only the apply and retry steps classify their output.
-- **Anything not matching the list.** It fails on the first attempt, as before.
+The idempotency check (retrying would hide non-idempotent modules), plan failures, and anything not matching the list.
 
 ### Changing the number of attempts
 
-The attempt count is fixed by how many retry steps are unrolled. To add one, copy a `Terraform Destroy and Retry (N)` step. Note that `success_exit_codes` differs by position:
-
-- Every step **except the last** uses `success_exit_codes: [0, 90]`. Exit 90 must count as a success, otherwise a failed early attempt marks the whole example as failed even when a later attempt passes.
-- The **last** step omits `90`, which is what makes exhausting the retries fail the run.
-
-So when adding a step, the previously final one must gain `success_exit_codes: [0, 90]`.
+Copy a `Terraform Destroy and Retry (N)` step. Every step except the last uses `success_exit_codes: [0, 90]`; the last omits `90`, which is what makes exhausting the retries fail. When adding one, the previously final step must gain `[0, 90]`.
 
 ### Testing the retry path
 
-The mock module example [`retry-flaky`](../tests/terraform-azurerm-avm-res-mock/examples/retry-flaky) fails its first apply with a message matching the retryable list, then succeeds on the next attempt. It runs in the `governance - test` workflow, so a regression in the retry chain fails CI. The other mock examples never produce capacity errors, so without it the retry steps would only ever be skipped.
+[`retry-flaky`](../tests/terraform-azurerm-avm-res-mock/examples/retry-flaky) fails its first apply with a matching message, then succeeds. It runs in `governance - test`, so a regression in the chain fails CI. No other mock example produces capacity errors, so without it the retry steps would only ever skip.
 
