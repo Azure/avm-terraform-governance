@@ -230,6 +230,8 @@ $issueLog = Invoke-TerraformPlanAndApply `
     -orgAndRepoName $orgAndRepoName `
     -planOnly $planOnly `
     -resourceTypesThatCannotBeDestroyed $resourceTypesThatCannotBeDestroyed `
+    -stateStorageAccountName $stateStorageAccountName `
+    -stateContainerName $stateContainerName `
     -issueLog $issueLog
 
 # Sync managed files via a single clone -> branch -> PR -> merge flow.
