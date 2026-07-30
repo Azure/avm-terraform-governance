@@ -30,6 +30,8 @@ permissions:
   copilot-requests: write
 features:
   group-concurrency-queue: false
+engine:
+  model: claude-sonnet-5
 safe-outputs:
   add-comment:
     max: 1
