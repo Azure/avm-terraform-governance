@@ -1,5 +1,12 @@
 locals {
+  # This local is also consumed by required_provider_versions.mptf.hcl to gate the
+  # azapi provider version floor, so it is intentionally retained even though the
+  # headers are no longer injected.
   avm_headers_for_azapi_enabled = true
+
+  # Controls removal of the AVM-injected azapi telemetry headers. Set to false to
+  # temporarily disable the removal transform without deleting the rule.
+  remove_avm_headers_for_azapi_enabled = true
 }
 
 data "variable" enable_telemetry {
@@ -67,72 +74,62 @@ locals {
       for result_set in resource.result : flatten([
         for r in result_set : r
       ])
-    ] if local.avm_headers_for_azapi_enabled
+    ]
   ])
   all_azapi_resources_with_full_headers_map = {
     for r in local.all_azapi_resources_with_full_headers : r.mptf.block_address => r
   }
-  azapi_update_resource_addresses = toset(try([
-    for _, resource in data.resource.azapi_update_resource.result["azapi_update_resource"] : resource.mptf.block_address
-  ], []))
+  azapi_update_resources_map = {
+    for _, r in try(data.resource.azapi_update_resource.result["azapi_update_resource"], {}) :
+    r.mptf.block_address => r
+  }
 }
 
 locals {
+  # The canonical AVM-injected header expressions. The removal transform only
+  # strips a *_headers attribute when its rendered value exactly matches one of
+  # these, which guarantees that user-authored headers are never removed.
   first_version_of_azapi_user_headers = "{ \"User-Agent\" : local.avm_azapi_header }"
+  current_version_of_azapi_headers    = "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null"
+
+  # For each azapi resource, the list of *_headers attributes that were AVM
+  # injected and should therefore be removed.
+  full_headers_removals = {
+    for addr, r in local.all_azapi_resources_with_full_headers_map :
+    addr => [
+      for attr, value in {
+        create_headers = try(r.create_headers, "")
+        delete_headers = try(r.delete_headers, "")
+        read_headers   = try(r.read_headers, "")
+        update_headers = try(r.update_headers, "")
+      } : attr
+      if value == local.current_version_of_azapi_headers || value == local.first_version_of_azapi_user_headers
+    ]
+  }
+  azapi_update_resource_removals = {
+    for addr, r in local.azapi_update_resources_map :
+    addr => [
+      for attr, value in {
+        read_headers   = try(r.read_headers, "")
+        update_headers = try(r.update_headers, "")
+      } : attr
+      if value == local.current_version_of_azapi_headers || value == local.first_version_of_azapi_user_headers
+    ]
+  }
 }
 
-transform "update_in_place" full_headers {
-  for_each             = local.all_azapi_resources_with_full_headers_map
+transform "remove_block_element" full_headers {
+  for_each = local.remove_avm_headers_for_azapi_enabled ? {
+    for addr, attrs in local.full_headers_removals : addr => attrs if length(attrs) > 0
+  } : {}
   target_block_address = each.key
-  asstring {
-    create_headers = try(each.value.create_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.create_headers, "local.avm_azapi_header"), false) ? each.value.create_headers : (
-        try(each.value.create_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.create_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-    delete_headers = try(each.value.delete_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.delete_headers, "local.avm_azapi_header"), false) ? each.value.delete_headers : (
-        try(each.value.delete_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.delete_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-    read_headers = try(each.value.read_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.read_headers, "local.avm_azapi_header"), false) ? each.value.read_headers : (
-        try(each.value.read_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.read_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-    update_headers = try(each.value.update_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.update_headers, "local.avm_azapi_header"), false) ? each.value.update_headers : (
-        try(each.value.update_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.update_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-  }
+  paths                = each.value
 }
 
-transform "update_in_place" azapi_update_resource_headers {
-  for_each             = local.avm_headers_for_azapi_enabled ? local.azapi_update_resource_addresses : toset([])
-  target_block_address = each.value
-  asstring {
-    read_headers = try(each.value.read_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.read_headers, "local.avm_azapi_header"), false) ? each.value.read_headers : (
-        try(each.value.read_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.read_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-    update_headers = try(each.value.update_headers == local.first_version_of_azapi_user_headers, false) ? "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" : (
-      try(strcontains(each.value.update_headers, "local.avm_azapi_header"), false) ? each.value.update_headers : (
-        try(each.value.update_headers == "", true) ?
-        "var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : null" :
-        "merge(${each.value.update_headers}, (var.enable_telemetry ? { \"User-Agent\" : local.avm_azapi_header } : {}))"
-      )
-    )
-  }
+transform "remove_block_element" azapi_update_resource_headers {
+  for_each = local.remove_avm_headers_for_azapi_enabled ? {
+    for addr, attrs in local.azapi_update_resource_removals : addr => attrs if length(attrs) > 0
+  } : {}
+  target_block_address = each.key
+  paths                = each.value
 }

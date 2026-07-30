@@ -178,7 +178,7 @@ if (!$skipRepoCreation) {
 if(!$skipRepoSync){
   ./scripts/Get-AvmLabels.ps1
 
-  ./scripts/Invoke-RepositorySync.ps1 `
+  ./scripts/Invoke-RepositoryConfigSync.ps1 `
     -repositoryCreationModeEnabled `
     -planOnly $false `
     -repoId $moduleName `

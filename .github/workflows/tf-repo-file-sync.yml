@@ -1,0 +1,120 @@
+---
+name: Repository File Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      repositories:
+        description: 'Override the target repositories, use a comma separated list. Leave as All to run on all repositories.'
+        default: 'All'
+        type: string
+      repositories_to_skip:
+        description: 'Override the repositories to skip, use a comma separated list. Leave as empty to not skip any repositories.'
+        default: 'terraform-azurerm-avm-template'
+        type: string
+      plan_only:
+        description: 'Whether to only plan the changes'
+        default: true
+        type: boolean
+  schedule:
+    - cron: '13 */4 * * 1-5'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ./tf-repo-mgmt
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-latest
+    environment: avm
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      matrixParallel: ${{ steps.matrix.outputs.matrixParallel }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Generate Matrix
+        uses: ./.github/actions/avm-repos
+        id: matrix
+        with:
+          repositories: ${{ github.event_name == 'workflow_dispatch' && inputs.repositories || 'All' }}
+          repositoriesToSkip: ${{ github.event_name == 'workflow_dispatch' && inputs.repositories_to_skip || 'terraform-azurerm-avm-template' }}
+          clientId: ${{ secrets.AVM_APP_CLIENT_ID }}
+          privateKey: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+
+  run-file-sync:
+    name: ${{ matrix.repoId }} (${{ matrix.repoUrl }})
+    runs-on: ubuntu-latest
+    environment: avm
+    needs: generate-matrix
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJson(needs.generate-matrix.outputs.matrixParallel) }}
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Create GitHub App Token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Run File Sync for ${{ matrix.repoId }}
+        run: |
+
+          $triggerType = "${{ github.event_name }}"
+
+          $planOnly = $false
+
+          if($triggerType -eq "workflow_dispatch") {
+            $planOnly = "${{ inputs.plan_only }}".ToLower() -eq "true"
+          }
+
+          Write-Output "Repositories: ${{ inputs.repositories }}"
+          Write-Output "Plan Only: $planOnly"
+
+          ./scripts/Invoke-RepositoryFileSync.ps1 `
+            -planOnly $planOnly `
+            -repoId "${{ matrix.repoId }}" `
+            -repoUrl "${{ matrix.repoUrl }}" `
+            -outputDirectory "${{ github.workspace }}"
+
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Upload Issue Logs Json
+        if: always() && hashFiles('issue.log.json') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.repoId }}.issue.log.json
+          path: issue.log.json
+
+      - name: Issue Error
+        if: always() && hashFiles('issue.log.json') != ''
+        run: |
+          $issueLogJson = Get-Content -Path "${{ github.workspace }}/issue.log.json" -Raw
+          $issueLog = ConvertFrom-Json $issueLogJson
+          $hasError = $false
+          $issueLog | ForEach-Object {
+            $severity = if ($_.severity) { $_.severity } else { "error" }
+            if ($severity -eq "warning") {
+              echo "::warning title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+            } else {
+              echo "::error title=${{ matrix.repoId }} has issues::$($_.message) Check the log file artifact for ${{ matrix.repoId }} to see the full details."
+              $hasError = $true
+            }
+          }
+          if ($hasError) { exit 1 }
+        shell: pwsh

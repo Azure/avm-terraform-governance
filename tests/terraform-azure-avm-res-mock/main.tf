@@ -34,11 +34,6 @@ resource "azapi_resource" "example_rg" {
   body = {
     tags = local.default_tags
   }
-  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-
   lifecycle {
     ignore_changes = [
       body.tags,
@@ -56,11 +51,6 @@ resource "azapi_resource" "example_rg_singleton" {
   body = {
     tags = local.default_tags
   }
-  create_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  delete_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  read_headers   = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-  update_headers = var.enable_telemetry ? { "User-Agent" : local.avm_azapi_header } : null
-
   depends_on = [
     azapi_resource.example_rg,
   ]
