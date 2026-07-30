@@ -14,6 +14,7 @@
     {
       "name": "canary",
       "managedFilesAdditional": "canary",
+      "managedFilesOrder": 10,
       "repositories": [
         "avm-ptn-example-repo",
         "avm-res-devopsinfrastructure-pool",
@@ -32,6 +33,7 @@
     {
       "name": "canary-tooling",
       "managedFilesAdditional": "canary-tooling",
+      "managedFilesOrder": 20,
       "repositories": [
         "avm-ptn-example-repo"
       ],
@@ -72,6 +74,7 @@
     {
       "name": "azure-landing-zones",
       "managedFilesAdditional": "alz",
+      "managedFilesOrder": 10,
       "excludedManagedFiles": [
         ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
         ".github/ISSUE_TEMPLATE/avm_question_feedback.yml"

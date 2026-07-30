@@ -58,18 +58,36 @@ function Resolve-RepositorySettings {
     }
     $repositoryTopics = @($repositoryTopics | Select-Object -Unique)
 
-    # Collect the managed-files overlay sets declared on any matching
-    # repository group (e.g. `alz` for the azure-landing-zones group).
-    # Overlays stack: they are applied over `managed-files/root` in the order
-    # the groups are declared in config.json, so a later group's file wins for
-    # any path an earlier overlay (or root) also provides.
-    $managedFilesAdditional = @()
+    # Collect and order the managed-files overlay sets declared on any matching
+    # repository group (e.g. `alz` for the azure-landing-zones group). Lower
+    # orders are applied first, so a higher-order overlay wins for duplicate
+    # paths. This ordering is mirrored in Avm.Authoring's
+    # Sync-AvmManagedFile.ps1 and the two implementations must not diverge.
+    $overlayEntries = @()
+    $declarationIndex = 0
     foreach ($repositoryGroup in $repositoryGroups) {
-        if ($repositoryGroup.PSObject.Properties.Name -contains "managedFilesAdditional" -and $repositoryGroup.managedFilesAdditional) {
-            $managedFilesAdditional += $repositoryGroup.managedFilesAdditional
+        if ($repositoryGroup.PSObject.Properties.Name -contains 'managedFilesAdditional' -and $repositoryGroup.managedFilesAdditional) {
+            $order = 0
+            if ($repositoryGroup.PSObject.Properties.Name -contains 'managedFilesOrder' -and $null -ne $repositoryGroup.managedFilesOrder) {
+                $order = [int] $repositoryGroup.managedFilesOrder
+            }
+            foreach ($overlay in @($repositoryGroup.managedFilesAdditional)) {
+                $overlayEntries += [pscustomobject]@{
+                    Overlay = $overlay
+                    Order   = $order
+                    Index   = $declarationIndex
+                }
+            }
         }
+        $declarationIndex++
     }
-    $managedFilesAdditional = @($managedFilesAdditional | Select-Object -Unique)
+
+    $managedFilesAdditional = @(
+        $overlayEntries |
+            Sort-Object -Property Order, Index |
+            Select-Object -ExpandProperty Overlay |
+            Select-Object -Unique
+    )
 
     # Collect the set of managed files to exclude from the final map for
     # this repository. Excluded files are pulled in from every matching
