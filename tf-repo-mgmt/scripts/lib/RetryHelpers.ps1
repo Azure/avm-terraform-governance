@@ -26,15 +26,19 @@ function Invoke-TerraformWithRetry {
     # The repository sync is the only writer of each repo's state and runs on a
     # 4 hourly schedule, so any lock we hit is left over from a cancelled or
     # crashed run rather than a concurrent one. Break it and retry.
+    # State is passed through Context rather than a closure: GetNewClosure()
+    # rebinds the script block to a dynamic module, which cannot resolve the
+    # helper functions this file dot-sources into the caller's script scope.
     $recoveryActions = @(
         @{
             Name        = "terraform state lock"
             Pattern     = "Error acquiring the state lock"
             MaxAttempts = 3
+            Context     = @{ workingDirectory = $workingDirectory }
             Action      = {
-                param([string[]]$errorOutput)
-                Clear-TerraformStateLock -errorOutput $errorOutput -workingDirectory $workingDirectory
-            }.GetNewClosure()
+                param([string[]]$errorOutput, [hashtable]$context)
+                Clear-TerraformStateLock -errorOutput $errorOutput -workingDirectory $context.workingDirectory
+            }
         }
     )
 
@@ -208,7 +212,15 @@ function Invoke-CommandWithRetry {
 
                         $recovery.Attempts = [int]$recovery.Attempts + 1
                         Write-Host "Attempting recovery for '$($recovery.Name)' (attempt $($recovery.Attempts) of $maxRecoveryAttempts)."
-                        if (& $recovery.Action $errorOutput) {
+
+                        $recovered = $false
+                        try {
+                            $recovered = [bool](& $recovery.Action $errorOutput $recovery.Context)
+                        } catch {
+                            Write-Warning "Recovery for '$($recovery.Name)' threw an error: $_"
+                        }
+
+                        if ($recovered) {
                             $shouldRetry = $true
                             break
                         }
