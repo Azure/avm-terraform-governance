@@ -77,7 +77,7 @@ $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Jso
 $settings = Resolve-RepositorySettings -repositoryConfig $repositoryConfig -repoId $repoId
 $managedFiles = Build-ManagedFilesMap `
     -baseDir $managedFilesBaseDir `
-    -overlay $settings.ManagedFilesAdditional `
+    -overlays $settings.ManagedFilesAdditional `
     -excluded $settings.ExcludedManagedFiles `
     -repoId $repoId
 
@@ -202,6 +202,12 @@ $terraformVariables = @{
     codeowners_default_teams = $settings.CodeOwnersDefaultTeams
     codeowners_file_protection_teams = $settings.CodeOwnersFileProtectionTeams
     topics = $settings.Topics
+}
+
+# Only emit the override when a group actually sets it. Writing a null would
+# clobber the Terraform-side default for every other repository.
+if ($settings.WorkloadIdentityFederationSubjectClaimOverrides.ContainsKey("jobWorkflowRef")) {
+    $terraformVariables["github_job_workflow_ref"] = $settings.WorkloadIdentityFederationSubjectClaimOverrides["jobWorkflowRef"]
 }
 
 $terraformVariables | ConvertTo-Json -Depth 100 | Out-File "$terraformModulePath/terraform.tfvars.json"
