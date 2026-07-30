@@ -28,7 +28,7 @@ Submodules under `./modules/` follow the same pattern — each can have its own 
 | **Command** | `command = apply` (safe with mocks) | `command = apply` (default) |
 | **Speed** | Fast (seconds) | Slow (minutes) |
 | **Credentials needed** | No | Yes (Azure) |
-| **Run command** | `PORCH_NO_TUI=1 ./avm tf-test-unit` | `PORCH_NO_TUI=1 ./avm tf-test-integration` |
+| **Run command** | `avm test unit` | `avm test integration` |
 
 **Critical rule**: Unit tests use `command = apply` (NOT `command = plan`) because mocked providers make apply safe and allow testing resource creation logic.
 
@@ -355,25 +355,25 @@ run "test_module_b" {
 
 ### Optional Setup Script
 
-If `tests/unit/setup.sh` or `tests/integration/setup.sh` exists, it runs automatically before `terraform init`. Use this for environment preparation.
+If `tests/unit/setup.ps1` or `tests/integration/setup.ps1` exists, it runs automatically before `terraform init`. Use this for environment preparation. Shell hooks (`setup.sh`, `teardown.sh`) are **not** supported and cause the run to fail fast — port them to PowerShell.
 
 ## Running Tests
 
-Tests run inside the AVM container via the `./avm` wrapper. Always prefix with `PORCH_NO_TUI=1`.
+Tests run via the `Avm.Authoring` PowerShell module. Import it once per session (`Import-Module Avm.Authoring`); it acquires the pinned `terraform` binary on first use.
 
-```bash
+```pwsh
 # Unit tests
-PORCH_NO_TUI=1 ./avm tf-test-unit
+avm test unit
 
 # Integration tests
-PORCH_NO_TUI=1 ./avm tf-test-integration
+avm test integration
 ```
 
 The test runner automatically:
 1. Checks that `tests/unit/` or `tests/integration/` exists (skips gracefully if not)
 2. Copies the working directory to a temp location
 3. Cleans `.terraform`, lock files, and state files
-4. Runs `setup.sh` if present
+4. Runs `setup.ps1` if present
 5. Runs `terraform init -test-directory ./tests/<type>`
 6. Runs `terraform test -test-directory ./tests/<type>`
 7. Repeats for each submodule under `./modules/` (in parallel)
@@ -383,7 +383,7 @@ The test runner automatically:
 
 Resources created by integration tests are destroyed automatically in **reverse run block order** after test completion. This handles dependency ordering correctly.
 
-For debugging, the `terraform test -no-cleanup` flag prevents automatic destruction — but note that this must be run directly, not via `./avm`.
+For debugging, the `terraform test -no-cleanup` flag prevents automatic destruction — but note that this must be run against `terraform` directly, not via `avm test`.
 
 ## Best Practices
 
