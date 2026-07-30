@@ -103,14 +103,65 @@ function Resolve-RepositorySettings {
     }
     $excludedManagedFiles = @($excludedManagedFiles | Select-Object -Unique)
 
+    # Workload identity federation subject-claim overrides. The Azure federated
+    # identity credential subject pins `job_workflow_ref` to the governance
+    # managed-pr-check workflow by default; repositories piloting a different
+    # reusable workflow must override it or OIDC token exchange fails.
+    #
+    # Merged per key across every group containing the repo, using the same
+    # (managedFilesOrder, declaration index) precedence as managed-files
+    # overlays: higher order wins.
+    $supportedClaimOverrides = @{
+        jobWorkflowRef = "github_job_workflow_ref"
+    }
+
+    $claimOverrideEntries = @()
+    $claimDeclarationIndex = 0
+    foreach ($repositoryGroup in $repositoryGroups) {
+        if ($repositoryGroup.PSObject.Properties.Name -contains "workloadIdentityFederationSubjectClaimOverrides" -and $repositoryGroup.workloadIdentityFederationSubjectClaimOverrides) {
+            $order = 0
+            if ($repositoryGroup.PSObject.Properties.Name -contains "managedFilesOrder" -and $null -ne $repositoryGroup.managedFilesOrder) {
+                $order = [int]$repositoryGroup.managedFilesOrder
+            }
+            foreach ($claimOverride in $repositoryGroup.workloadIdentityFederationSubjectClaimOverrides.PSObject.Properties) {
+                if (-not $supportedClaimOverrides.ContainsKey($claimOverride.Name)) {
+                    throw "Repository group '$($repositoryGroup.name)' sets unsupported workloadIdentityFederationSubjectClaimOverrides key '$($claimOverride.Name)'. Supported keys: $($supportedClaimOverrides.Keys -join ', ')."
+                }
+                $claimOverrideEntries += [pscustomobject]@{
+                    Claim = $claimOverride.Name
+                    Value = $claimOverride.Value
+                    Order = $order
+                    Index = $claimDeclarationIndex
+                }
+            }
+        }
+        $claimDeclarationIndex++
+    }
+
+    $workloadIdentityFederationSubjectClaimOverrides = @{}
+    foreach ($claimOverrideEntry in ($claimOverrideEntries | Sort-Object -Property Order, Index)) {
+        $workloadIdentityFederationSubjectClaimOverrides[$claimOverrideEntry.Claim] = $claimOverrideEntry.Value
+    }
+
+    # A job_workflow_ref claim always carries a fully-qualified git ref
+    # (refs/heads/..., refs/tags/...) or a full commit SHA, even though `uses:`
+    # is normally written as `@main`. Fail here rather than at OIDC exchange.
+    if ($workloadIdentityFederationSubjectClaimOverrides.ContainsKey("jobWorkflowRef")) {
+        $jobWorkflowRefOverride = $workloadIdentityFederationSubjectClaimOverrides["jobWorkflowRef"]
+        if ($jobWorkflowRefOverride -notmatch "@(refs/.+|[0-9a-fA-F]{40})$") {
+            throw "workloadIdentityFederationSubjectClaimOverrides.jobWorkflowRef must end with a fully-qualified ref (for example '@refs/heads/main') or a full commit SHA, but was '$jobWorkflowRefOverride'."
+        }
+    }
+
     return @{
-        RepositoryGroups              = $repositoryGroups
-        RepositoryGroupNames          = $repositoryGroupNames
-        Teams                         = $teams
-        CodeOwnersDefaultTeams        = $codeOwnersDefaultTeams
-        CodeOwnersFileProtectionTeams = $codeOwnersFileProtectionTeams
-        Topics                        = $repositoryTopics
-        ManagedFilesAdditional        = $managedFilesAdditional
-        ExcludedManagedFiles          = $excludedManagedFiles
+        RepositoryGroups                                = $repositoryGroups
+        RepositoryGroupNames                            = $repositoryGroupNames
+        Teams                                           = $teams
+        CodeOwnersDefaultTeams                          = $codeOwnersDefaultTeams
+        CodeOwnersFileProtectionTeams                   = $codeOwnersFileProtectionTeams
+        Topics                                          = $repositoryTopics
+        ManagedFilesAdditional                          = $managedFilesAdditional
+        ExcludedManagedFiles                            = $excludedManagedFiles
+        WorkloadIdentityFederationSubjectClaimOverrides = $workloadIdentityFederationSubjectClaimOverrides
     }
 }
