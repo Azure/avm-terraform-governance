@@ -112,11 +112,98 @@ commands:
           set -a; [ -f .env ] && . ./.env; set +a
           terraform plan -out tfplan
 
+        # Exit 90 means "failed, but the error looks transient" and is what gates the
+        # retry steps below. It is listed in success_exit_codes so that a failed early
+        # attempt does not mark the whole example as failed when a later attempt passes.
+        # The final attempt omits it, so exhausting the retries fails the run.
+        #
+        # All three attempts share one script. Setting AVM_E2E_RETRY=1 switches it from
+        # "apply the saved plan" to "destroy, then redeploy from scratch".
       - type: shell
         name: Terraform Apply
-        command_line: |
+        command_line: &apply_with_retry |
           set -a; [ -f .env ] && . ./.env; set +a
-          terraform apply -auto-approve tfplan
+
+          # Matched case insensitively against the combined terraform output. Keep these
+          # anchored to capacity and quota wording. Bare Azure codes such as
+          # OperationNotAllowed are deliberately excluded, as they also cover genuine
+          # failures that a retry would only mask.
+          retryable='SkuNotAvailable|Capacity Restrictions|is currently not available in location|sku_selector found no deployable VM size|Allocation ?Failed|results in exceeding approved'
+
+          log="$(mktemp)"
+          rc_file="$(mktemp)"
+
+          # Output is piped through tee rather than redirected, so it still streams while
+          # terraform runs and porch's progress ticker keeps reporting. The exit code is
+          # stashed in a file because "$?" after a pipeline belongs to tee, not terraform.
+          run() {
+            { "$@" 2>&1; echo "$?" > "$rc_file"; } | tee "$log"
+            rc="$(cat "$rc_file" 2>/dev/null)"
+            return "${rc:-1}"
+          }
+
+          if [ "${AVM_E2E_RETRY:-0}" = "1" ]; then
+            # Destroy before retrying. Re-planning in place is not safe: example resource
+            # names come from module.naming and do not depend on the region, so changing
+            # region replaces the resource group under the same name while name-only
+            # dependents such as subnets are planned as unchanged. Azure cascade-deletes
+            # those with the resource group and the apply then fails with
+            # "Root object was present, but now absent".
+            #
+            # Destroying also drops random_integer.region_index from state, so the next
+            # plan re-rolls the region on its own. That is why no -replace is needed.
+            if ! run terraform destroy -auto-approve; then
+              echo "Retry aborted for $ITEM: terraform destroy failed, refusing to redeploy over partial state." 1>&2
+              cat "$log" 1>&2
+              rm -f "$log" "$rc_file"
+              exit 1
+            fi
+
+            # No saved plan: a fresh apply re-plans against the now empty state and picks
+            # a new region. Reusing tfplan here would fail with "Saved plan is stale".
+            run terraform apply -auto-approve
+          else
+            run terraform apply -auto-approve tfplan
+          fi
+          rc=$?
+
+          rm -f "$rc_file"
+
+          if [ "$rc" -eq 0 ]; then
+            rm -f "$log"
+            exit 0
+          fi
+
+          # Porch only prints stderr for failed steps unless it is run with --stdout,
+          # so re-emit the captured output there to keep failures diagnosable.
+          cat "$log" 1>&2
+
+          if grep -qEi "$retryable" "$log"; then
+            echo "Example $ITEM hit a retryable capacity error." 1>&2
+            rm -f "$log"
+            exit 90
+          fi
+
+          rm -f "$log"
+          exit 1
+        success_exit_codes: [0, 90]
+
+      - type: shell
+        name: Terraform Destroy and Retry (1)
+        command_line: *apply_with_retry
+        env:
+          AVM_E2E_RETRY: "1"
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [90]
+        success_exit_codes: [0, 90]
+
+      - type: shell
+        name: Terraform Destroy and Retry (2, final)
+        command_line: *apply_with_retry
+        env:
+          AVM_E2E_RETRY: "1"
+        runs_on_condition: exit-codes
+        runs_on_exit_codes: [90]
 
       - type: shell
         name: Terraform Plan Idempotency Check
