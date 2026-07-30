@@ -30,6 +30,16 @@
       ]
     },
     {
+      "name": "canary-tooling",
+      "managedFilesAdditional": "canary-tooling",
+      "repositories": [
+        "avm-ptn-example-repo"
+      ],
+      "topics": [
+        "canary-tooling"
+      ]
+    },
+    {
       "name": "azure-verified-modules-tier-1",
       "repositories": [
         "avm-ptn-example-repo"

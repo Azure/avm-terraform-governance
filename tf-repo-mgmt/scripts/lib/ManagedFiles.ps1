@@ -1,8 +1,8 @@
 # Builds the managed-files map
 # (target path -> @{ Source = absolute source path; Mode = git index mode })
 # that is passed to Sync-RepoFiles. Walking the filesystem here keeps the
-# rest of the sync free of directory traversal and lets us apply overlay
-# merging + exclusions in one place.
+# rest of the sync free of directory traversal and lets us apply overlays in
+# order (with later overlays winning) plus exclusions in one place.
 #
 # `Mode` is the git tree-entry mode ("100644" or "100755") read from this
 # governance repo's own git index, so the executable bit recorded here is
@@ -70,21 +70,18 @@ function Add-ManagedFilesFromDir {
 function Build-ManagedFilesMap {
     param(
         [string]$baseDir,
-        [string]$overlay,
+        [string[]]$overlays,
         [string[]]$excluded,
         [string]$repoId
     )
 
     $rootDir = Join-Path $baseDir "root"
-    $overlayDir = ""
-    if ($overlay -ne "") {
-        $overlayDir = Join-Path $baseDir $overlay
-    }
 
     $map = @{}
     Add-ManagedFilesFromDir -baseDir $rootDir -map $map
-    if ($overlayDir -ne "") {
-        Add-ManagedFilesFromDir -baseDir $overlayDir -map $map
+    foreach ($overlay in @($overlays)) {
+        if ([string]::IsNullOrWhiteSpace($overlay)) { continue }
+        Add-ManagedFilesFromDir -baseDir (Join-Path $baseDir $overlay) -map $map
     }
 
     foreach ($excludedPath in $excluded) {
@@ -94,7 +91,7 @@ function Build-ManagedFilesMap {
         }
     }
 
-    Write-Host "Resolved $($map.Count) managed file(s) for repository '$repoId' (overlay='$overlay', exclusions=$($excluded.Count))."
+    Write-Host "Resolved $($map.Count) managed file(s) for repository '$repoId' (overlays='$(@($overlays) -join ", ")', exclusions=$($excluded.Count))."
 
     return $map
 }

@@ -77,7 +77,7 @@ $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Jso
 $settings = Resolve-RepositorySettings -repositoryConfig $repositoryConfig -repoId $repoId
 $managedFiles = Build-ManagedFilesMap `
     -baseDir $managedFilesBaseDir `
-    -overlay $settings.ManagedFilesAdditional `
+    -overlays $settings.ManagedFilesAdditional `
     -excluded $settings.ExcludedManagedFiles `
     -repoId $repoId
 

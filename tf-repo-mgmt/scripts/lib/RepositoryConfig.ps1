@@ -58,22 +58,18 @@ function Resolve-RepositorySettings {
     }
     $repositoryTopics = @($repositoryTopics | Select-Object -Unique)
 
-    # Collect the managed-files overlay set declared on any matching
-    # repository group (e.g. `alz` for the azure-landing-zones group). At
-    # most one distinct value is allowed; conflicting overlays across groups
-    # for the same repo are a configuration error.
-    $managedFilesAdditionalValues = @()
+    # Collect the managed-files overlay sets declared on any matching
+    # repository group (e.g. `alz` for the azure-landing-zones group).
+    # Overlays stack: they are applied over `managed-files/root` in the order
+    # the groups are declared in config.json, so a later group's file wins for
+    # any path an earlier overlay (or root) also provides.
+    $managedFilesAdditional = @()
     foreach ($repositoryGroup in $repositoryGroups) {
         if ($repositoryGroup.PSObject.Properties.Name -contains "managedFilesAdditional" -and $repositoryGroup.managedFilesAdditional) {
-            $managedFilesAdditionalValues += $repositoryGroup.managedFilesAdditional
+            $managedFilesAdditional += $repositoryGroup.managedFilesAdditional
         }
     }
-    $managedFilesAdditionalValues = @($managedFilesAdditionalValues | Select-Object -Unique)
-    if ($managedFilesAdditionalValues.Count -gt 1) {
-        Write-Error "Repository '$repoId' belongs to multiple repository groups that declare conflicting 'managedFilesAdditional' overlay sets: $($managedFilesAdditionalValues -join ', '). At most one is allowed."
-        exit 1
-    }
-    $managedFilesAdditional = if ($managedFilesAdditionalValues.Count -eq 1) { $managedFilesAdditionalValues[0] } else { "" }
+    $managedFilesAdditional = @($managedFilesAdditional | Select-Object -Unique)
 
     # Collect the set of managed files to exclude from the final map for
     # this repository. Excluded files are pulled in from every matching
