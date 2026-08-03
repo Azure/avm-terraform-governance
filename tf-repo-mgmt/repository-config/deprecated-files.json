@@ -6,6 +6,7 @@
     ".agents/skills/AVM-Terraform-Development/tfpluginschema.md",
     ".agents/skills/avm-terraform-module-development/scripts/azure-schema",
     ".agents/skills/avm-terraform-module-development/scripts/azure-schema.ps1",
+    ".github/actions/1es-runner-auth-docker/action.yml",
     ".github/actions/avmfix/action.yml",
     ".github/actions/docs-check/action.yml",
     ".github/actions/e2e-getexamples/action.yml",
