@@ -41,7 +41,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Import-Module Avm.Authoring
-          avm pre-commit -Ecosystem terraform
+          avm pre-commit
 
       # Runs even when a fixer reports a failure so any fixes that were applied
       # reach the branch instead of being discarded.
