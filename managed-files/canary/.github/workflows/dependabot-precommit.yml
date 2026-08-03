@@ -25,19 +25,32 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
+      - name: Install Avm.Authoring
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Get-Module -ListAvailable -Name 'Microsoft.PowerShell.PSResourceGet')) {
+            Install-Module -Name 'Microsoft.PowerShell.PSResourceGet' -Scope CurrentUser -Force -AllowClobber
+          }
+          Import-Module 'Microsoft.PowerShell.PSResourceGet'
+          Install-PSResource -Name Avm.Authoring -Scope CurrentUser -TrustRepository
+          Import-Module Avm.Authoring
+          avm version
+
       - name: Run pre-commit
         shell: pwsh
         env:
+          AVM_HOME: ${{ runner.temp }}/avm-home
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          chmod a+x ./avm
-          # pre-commit exits non-zero when it rewrites files, so run again to verify.
-          ./avm pre-commit
-          if ($LASTEXITCODE -ne 0) {
-            ./avm pre-commit
-          }
+          $ErrorActionPreference = 'Stop'
+          Import-Module Avm.Authoring
+          avm pre-commit -Ecosystem terraform
 
+      # Runs even when pre-commit reports a failure so any fixes it did apply
+      # reach the branch instead of being discarded.
       - name: Commit and push pre-commit fixes
+        if: ${{ !cancelled() }}
         shell: pwsh
         run: |
           if (-not (git status --porcelain)) {

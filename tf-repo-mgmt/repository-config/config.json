@@ -15,6 +15,9 @@
       "name": "canary",
       "managedFilesAdditional": "canary",
       "managedFilesOrder": 10,
+      "workloadIdentityFederationSubjectClaimOverrides": {
+        "jobWorkflowRef": "Azure/azure-verified-modules-tools/.github/workflows/terraform-module.yml@refs/heads/main"
+      },
       "repositories": [
         "avm-ptn-example-repo",
         "avm-res-devopsinfrastructure-pool",
@@ -34,9 +37,6 @@
       "name": "canary-tooling",
       "managedFilesAdditional": "canary-tooling",
       "managedFilesOrder": 20,
-      "workloadIdentityFederationSubjectClaimOverrides": {
-        "jobWorkflowRef": "Azure/azure-verified-modules-tools/.github/workflows/terraform-module.yml@refs/heads/main"
-      },
       "repositories": [
         "avm-ptn-example-repo"
       ],
