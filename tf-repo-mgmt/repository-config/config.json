@@ -18,6 +18,9 @@
       "workloadIdentityFederationSubjectClaimOverrides": {
         "jobWorkflowRef": "Azure/azure-verified-modules-tools/.github/workflows/terraform-module.yml@refs/heads/main"
       },
+      "excludedManagedFiles": [
+        "Makefile"
+      ],
       "repositories": [
         "avm-ptn-example-repo",
         "avm-res-devopsinfrastructure-pool",
