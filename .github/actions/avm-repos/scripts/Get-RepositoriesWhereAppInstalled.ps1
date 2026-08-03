@@ -149,6 +149,23 @@ foreach ($installedRepository in $installedRepositories | Sort-Object -Property 
   }
 }
 
+# Two repositories can publish the same module during a provider migration, for
+# example terraform-azurerm-avm-res-x alongside terraform-azure-avm-res-x. They
+# no longer collide in Terraform state, which is keyed per repository, but they
+# do share a meta-data.csv entry and repository group configuration.
+$duplicateModules = $repos | Group-Object -Property { $_.repoId } | Where-Object { $_.Count -gt 1 }
+foreach ($duplicate in $duplicateModules)
+{
+  $duplicateRepoNames = ($duplicate.Group | ForEach-Object { $_.repoName } | Sort-Object) -join ", "
+  $issue = @{
+    repoId   = $duplicate.Name
+    message  = "Module '$($duplicate.Name)' is published from more than one repository: $duplicateRepoNames. They share a meta-data.csv entry and repository group configuration. Confirm this is intentional, such as a provider migration, or archive the redundant repository."
+    severity = "warning"
+  }
+  Write-Warning $issue.message
+  $issues += $issue
+}
+
 if (!$issues.Count -eq 0)
 {
   Write-Host "Issues found for"

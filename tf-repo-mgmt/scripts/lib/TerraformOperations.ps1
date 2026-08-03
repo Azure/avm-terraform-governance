@@ -24,6 +24,134 @@ function Clear-TerraformWorkspace {
     }
 }
 
+# Returns $true or $false for blob existence, or $null when the check itself
+# failed, so the caller can tell "not there" apart from "could not tell".
+function Test-TerraformStateBlob {
+    param(
+        [string]$storageAccountName,
+        [string]$containerName,
+        [string]$blobName
+    )
+
+    $output = az storage blob exists `
+        --account-name $storageAccountName `
+        --container-name $containerName `
+        --name $blobName `
+        --auth-mode login `
+        --query exists -o tsv 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Could not check whether state blob '$blobName' exists. $($output | Out-String)"
+        return $null
+    }
+
+    return (($output | Out-String).Trim() -eq "true")
+}
+
+# Migrates a repository's state from the legacy module-scoped blob key to the
+# repository-scoped one. The legacy key dropped the provider segment from the
+# repository name, so every repository publishing the same module shared a single
+# state blob and rewrote the others' resources on each run. The copy is only made
+# when the legacy state actually describes this repository, so a repository that
+# never owned that state starts empty rather than adopting another's resources.
+function Copy-TerraformStateToRepositoryKey {
+    param(
+        [string]$legacyBlobName,
+        [string]$repositoryBlobName,
+        [string]$repoName,
+        [string]$storageAccountName,
+        [string]$containerName
+    )
+
+    if (!$storageAccountName -or !$containerName) {
+        Write-Warning "No state storage details were supplied, so the state key migration was skipped."
+        return $true
+    }
+
+    if ($legacyBlobName -eq $repositoryBlobName) {
+        return $true
+    }
+
+    $repositoryBlobExists = Test-TerraformStateBlob -storageAccountName $storageAccountName -containerName $containerName -blobName $repositoryBlobName
+    if ($null -eq $repositoryBlobExists) {
+        return $false
+    }
+
+    if ($repositoryBlobExists) {
+        return $true
+    }
+
+    $legacyBlobExists = Test-TerraformStateBlob -storageAccountName $storageAccountName -containerName $containerName -blobName $legacyBlobName
+    if ($null -eq $legacyBlobExists) {
+        return $false
+    }
+
+    if (!$legacyBlobExists) {
+        Write-Host "No existing state for '$repoName'. Starting from an empty state."
+        return $true
+    }
+
+    $legacyStateFile = Join-Path ([System.IO.Path]::GetTempPath()) "$([guid]::NewGuid()).tfstate"
+
+    try {
+        $downloadOutput = az storage blob download `
+            --account-name $storageAccountName `
+            --container-name $containerName `
+            --name $legacyBlobName `
+            --file $legacyStateFile `
+            --auth-mode login `
+            --no-progress 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not download legacy state blob '$legacyBlobName'. $($downloadOutput | Out-String)"
+            return $false
+        }
+
+        $legacyState = Get-Content -Path $legacyStateFile -Raw | ConvertFrom-Json
+
+        $legacyRepository = $legacyState.resources |
+            Where-Object { $_.mode -eq "managed" -and $_.type -eq "github_repository" } |
+            Select-Object -First 1
+
+        $legacyRepositoryName = $null
+        if ($legacyRepository -and $legacyRepository.instances.Count -gt 0) {
+            $legacyRepositoryName = $legacyRepository.instances[0].attributes.name
+        }
+
+        if ($legacyRepositoryName -ne $repoName) {
+            Write-Warning "Legacy state blob '$legacyBlobName' describes '$legacyRepositoryName', not '$repoName'. Starting '$repoName' from an empty state so it does not adopt another repository's resources."
+            return $true
+        }
+
+        Write-Host "Migrating state for '$repoName' from '$legacyBlobName' to '$repositoryBlobName'."
+
+        $uploadOutput = az storage blob upload `
+            --account-name $storageAccountName `
+            --container-name $containerName `
+            --name $repositoryBlobName `
+            --file $legacyStateFile `
+            --auth-mode login `
+            --no-progress 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not write state blob '$repositoryBlobName'. $($uploadOutput | Out-String)"
+            return $false
+        }
+
+        Write-Host "Migrated state for '$repoName' to '$repositoryBlobName'."
+        return $true
+    }
+    catch {
+        Write-Warning "State key migration for '$repoName' failed. $($_.Exception.Message)"
+        return $false
+    }
+    finally {
+        if (Test-Path $legacyStateFile) {
+            Remove-Item $legacyStateFile -Force
+        }
+    }
+}
+
 # Runs `terraform init`. In repository-creation mode this is a local-backend
 # bootstrap (writes `backend_override.tf` first); otherwise it points at the
 # remote AzureRM backend using the supplied state-storage parameters.
@@ -32,6 +160,7 @@ function Invoke-TerraformInit {
         [string]$terraformModulePath,
         [bool]$repositoryCreationModeEnabled,
         [string]$repoId,
+        [string]$repoName,
         [string]$orgAndRepoName,
         [string]$stateResourceGroupName,
         [string]$stateStorageAccountName,
@@ -56,6 +185,21 @@ terraform {
             -workingDirectory $terraformModulePath `
             -printOutput
     } else {
+        $stateBlobName = "$($repoName).tfstate"
+
+        $migrated = Copy-TerraformStateToRepositoryKey `
+            -legacyBlobName "$($repoId).tfstate" `
+            -repositoryBlobName $stateBlobName `
+            -repoName $repoName `
+            -storageAccountName $stateStorageAccountName `
+            -containerName $stateContainerName
+
+        if (!$migrated) {
+            Write-Warning "Terraform state key migration failed for $orgAndRepoName. Exiting."
+            $issueLog = Add-IssueToLog -orgAndRepoName $orgAndRepoName -type "state-migration-failed" -message "Terraform state key migration failed for $orgAndRepoName." -data $null -issueLog $issueLog
+            exit 1
+        }
+
         $result = Invoke-TerraformWithRetry `
             -commands @(
                 @{
@@ -64,7 +208,7 @@ terraform {
                         "-backend-config=`"resource_group_name=$stateResourceGroupName`"",
                         "-backend-config=`"storage_account_name=$stateStorageAccountName`"",
                         "-backend-config=`"container_name=$stateContainerName`"",
-                        "-backend-config=`"key=$($repoId).tfstate`""
+                        "-backend-config=`"key=$stateBlobName`""
                     )
                     OutputLog = "init.log"
                 }
@@ -72,7 +216,7 @@ terraform {
             -workingDirectory $terraformModulePath `
             -stateStorageAccountName $stateStorageAccountName `
             -stateContainerName $stateContainerName `
-            -stateBlobName "$($repoId).tfstate" `
+            -stateBlobName $stateBlobName `
             -printOutput
     }
 
@@ -91,7 +235,7 @@ terraform {
 function Invoke-TerraformPlanAndApply {
     param(
         [string]$terraformModulePath,
-        [string]$repoId,
+        [string]$repoName,
         [string]$orgAndRepoName,
         [bool]$planOnly,
         [string[]]$resourceTypesThatCannotBeDestroyed,
@@ -100,17 +244,20 @@ function Invoke-TerraformPlanAndApply {
         [array]$issueLog
     )
 
+    $stateBlobName = "$($repoName).tfstate"
+    $planFileName = "$($repoName).tfplan"
+
     $result = Invoke-TerraformWithRetry `
         -commands @(
             @{
-                Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
+                Arguments = @("plan", "-out=`"$planFileName`"")
                 OutputLog = "plan.log"
             }
         ) `
         -workingDirectory $terraformModulePath `
         -stateStorageAccountName $stateStorageAccountName `
         -stateContainerName $stateContainerName `
-        -stateBlobName "$($repoId).tfstate" `
+        -stateBlobName $stateBlobName `
         -printOutput
 
     if (!$result.success) {
@@ -119,7 +266,7 @@ function Invoke-TerraformPlanAndApply {
         exit 1
     }
 
-    $plan = $(terraform -chdir="$terraformModulePath" show -json "$($repoId).tfplan") | ConvertFrom-Json
+    $plan = $(terraform -chdir="$terraformModulePath" show -json "$planFileName") | ConvertFrom-Json
 
     if (!$plan -or !$plan.resource_changes) {
         Write-Warning "Failed to parse Terraform plan for $orgAndRepoName. Exiting."
@@ -155,14 +302,14 @@ function Invoke-TerraformPlanAndApply {
         $result = Invoke-TerraformWithRetry `
             -commands @(
                 @{
-                    Arguments = @("apply", "$($repoId).tfplan")
+                    Arguments = @("apply", "$planFileName")
                     OutputLog = "apply.log"
                 }
             ) `
             -workingDirectory $terraformModulePath `
             -stateStorageAccountName $stateStorageAccountName `
             -stateContainerName $stateContainerName `
-            -stateBlobName "$($repoId).tfstate" `
+            -stateBlobName $stateBlobName `
             -printOutput `
             -maxRetries 0
 
@@ -171,18 +318,18 @@ function Invoke-TerraformPlanAndApply {
             $result = Invoke-TerraformWithRetry `
                 -commands @(
                     @{
-                        Arguments = @("plan", "-out=`"$($repoId).tfplan`"")
+                        Arguments = @("plan", "-out=`"$planFileName`"")
                         OutputLog = "plan.log"
                     },
                     @{
-                        Arguments = @("apply", "$($repoId).tfplan")
+                        Arguments = @("apply", "$planFileName")
                         OutputLog = "apply.log"
                     }
                 ) `
                 -workingDirectory $terraformModulePath `
                 -stateStorageAccountName $stateStorageAccountName `
                 -stateContainerName $stateContainerName `
-                -stateBlobName "$($repoId).tfstate" `
+                -stateBlobName $stateBlobName `
                 -printOutput
         }
 
