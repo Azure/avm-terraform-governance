@@ -218,6 +218,7 @@ $issueLog = Invoke-TerraformInit `
     -terraformModulePath $terraformModulePath `
     -repositoryCreationModeEnabled $repositoryCreationModeEnabled.IsPresent `
     -repoId $repoId `
+    -repoName $repoName `
     -orgAndRepoName $orgAndRepoName `
     -stateResourceGroupName $stateResourceGroupName `
     -stateStorageAccountName $stateStorageAccountName `
@@ -226,7 +227,7 @@ $issueLog = Invoke-TerraformInit `
 
 $issueLog = Invoke-TerraformPlanAndApply `
     -terraformModulePath $terraformModulePath `
-    -repoId $repoId `
+    -repoName $repoName `
     -orgAndRepoName $orgAndRepoName `
     -planOnly $planOnly `
     -resourceTypesThatCannotBeDestroyed $resourceTypesThatCannotBeDestroyed `
