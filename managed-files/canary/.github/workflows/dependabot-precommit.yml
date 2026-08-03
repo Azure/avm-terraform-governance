@@ -33,10 +33,7 @@ jobs:
           Import-Module Avm.Authoring
           avm version
 
-      # The fixer verbs are run directly rather than via `avm pre-commit`,
-      # whose leading `sync` step rewrites managed workflow files, which
-      # GITHUB_TOKEN is not permitted to push.
-      - name: Run pre-commit fixers
+      - name: Run pre-commit
         shell: pwsh
         env:
           AVM_HOME: ${{ runner.temp }}/avm-home
@@ -44,9 +41,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Import-Module Avm.Authoring
-          avm transform -Ecosystem terraform
-          avm format -Ecosystem terraform
-          avm docs -Ecosystem terraform
+          avm pre-commit -Ecosystem terraform
 
       # Runs even when a fixer reports a failure so any fixes that were applied
       # reach the branch instead of being discarded.
