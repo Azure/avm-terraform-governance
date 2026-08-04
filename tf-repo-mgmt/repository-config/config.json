@@ -30,7 +30,8 @@
         "avm-res-documentdb-mongocluster",
         "avm-res-compute-disk",
         "avm-res-dbformysql-flexibleserver",
-        "avm-res-cdn-profile"
+        "avm-res-cdn-profile",
+        "avm-res-avs-privatecloud"
       ],
       "topics": [
         "canary"
