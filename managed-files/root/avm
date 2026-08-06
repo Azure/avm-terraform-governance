@@ -57,9 +57,16 @@ if [ -n "${AVM_TMP_DIR}" ]; then
   TMP_MOUNT="-v ${AVM_TMP_DIR}:/tmp"
 fi
 
-# If the host Docker socket exists, mount it into the container so the container can talk to the host docker daemon
-if [ -S /var/run/docker.sock ]; then
-  DOCKER_SOCK_MOUNT="-v /var/run/docker.sock:/var/run/docker.sock"
+# Mount the container engine socket so examples using the docker provider can reach it.
+# AVM_DOCKER_SOCKET overrides; otherwise default to the standard docker socket path.
+if [ -n "${AVM_DOCKER_SOCKET}" ]; then
+  DOCKER_SOCKET_PATH="${AVM_DOCKER_SOCKET}"
+elif [ "${CONTAINER_RUNTIME}" = "docker" ]; then
+  DOCKER_SOCKET_PATH="/var/run/docker.sock"
+fi
+
+if [ -n "${DOCKER_SOCKET_PATH}" ] && [ -S "${DOCKER_SOCKET_PATH}" ]; then
+  DOCKER_SOCK_MOUNT="-v ${DOCKER_SOCKET_PATH}:/var/run/docker.sock"
 fi
 
 # SSL certificate handling:

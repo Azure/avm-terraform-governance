@@ -78,6 +78,27 @@ if ($env:PORCH_BASE_URL) {
   $PORCH_BASE_URL_MAKE_ADD = "PORCH_BASE_URL=$($env:PORCH_BASE_URL)"
 }
 
+# Mount the container engine socket so examples using the docker provider can reach it.
+# AVM_DOCKER_SOCKET overrides; otherwise default to the standard docker socket path.
+$DOCKER_SOCKET_PATH = $null
+if ($env:AVM_DOCKER_SOCKET) {
+  $DOCKER_SOCKET_PATH = $env:AVM_DOCKER_SOCKET
+}
+elseif ($CONTAINER_RUNTIME -eq "docker" -and -not $IsWindows) {
+  $DOCKER_SOCKET_PATH = "/var/run/docker.sock"
+}
+
+$DOCKER_SOCK_MOUNT = $null
+if ($DOCKER_SOCKET_PATH) {
+  if ($IsWindows) {
+    # Windows: path is inside the runtime's VM, existence can't be checked here.
+    $DOCKER_SOCK_MOUNT = @("-v", "${DOCKER_SOCKET_PATH}:/var/run/docker.sock")
+  }
+  elseif (Test-Path $DOCKER_SOCKET_PATH) {
+    $DOCKER_SOCK_MOUNT = @("-v", "${DOCKER_SOCKET_PATH}:/var/run/docker.sock")
+  }
+}
+
 # Check if we are running in a container
 # If we are then just run make directly
 if (-not $env:AVM_IN_CONTAINER) {
@@ -110,6 +131,10 @@ if (-not $env:AVM_IN_CONTAINER) {
 
   if ($AZURE_CONFIG_MOUNT -and $AZURE_CONFIG_MOUNT_PATH) {
     $dockerArgs += @($AZURE_CONFIG_MOUNT, $AZURE_CONFIG_MOUNT_PATH)
+  }
+
+  if ($DOCKER_SOCK_MOUNT) {
+    $dockerArgs += $DOCKER_SOCK_MOUNT
   }
 
   # Add environment variables
