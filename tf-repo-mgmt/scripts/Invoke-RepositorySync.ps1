@@ -97,7 +97,7 @@ $repoTree = if (!$repositoryCreationModeEnabled) {
 # Remove any legacy classic branch-protection rule from the target repo
 # before anything else - every AVM repo must be governed exclusively by
 # the rulesets defined in modules/github/github.rulesets.tf.
-if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+if(!$repositoryCreationModeEnabled) {
     $branchProtectionResult = Remove-LegacyBranchProtection `
         -orgAndRepoName $orgAndRepoName `
         -defaultBranch $repoTree.DefaultBranch `
@@ -113,7 +113,7 @@ if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
 # Org-level rulesets are NOT enumerated (includes_parents=false) and are
 # additionally filtered out by source_type, so the org-wide governance
 # ruleset is never at risk.
-if(!$repositoryCreationModeEnabled) {
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
     $unmanagedRulesetsResult = Remove-UnmanagedRulesets `
         -orgAndRepoName $orgAndRepoName `
         -planOnly $planOnly `
@@ -129,7 +129,7 @@ if(!$repositoryCreationModeEnabled) {
 # and (b) cannot satisfy the customized OIDC subject template because its
 # dynamic jobs do not attach to a deployment environment, so it fails on
 # every push. The PATCH is idempotent (no-op if already off).
-if(!$repositoryCreationModeEnabled) {
+if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
     $codeQlDefaultSetupResult = Disable-CodeQlDefaultSetup `
         -orgAndRepoName $orgAndRepoName `
         -planOnly $planOnly `
@@ -224,6 +224,7 @@ if(!$repositoryCreationModeEnabled) {
             -repoId $repoId `
             -managedFilesBaseDir (Resolve-Path $managedFilesBaseDir).Path `
             -repositoryConfigDir (Split-Path -Parent (Resolve-Path $repoConfigFilePath).Path) `
+            -defaultBranch $repoTree.DefaultBranch `
             -planOnly $planOnly `
             -issueLog $issueLog
         $issueLog = $preCommitResult.IssueLog

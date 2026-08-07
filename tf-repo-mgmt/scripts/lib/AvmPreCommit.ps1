@@ -4,6 +4,7 @@ function Invoke-AvmPreCommitForRepository {
         [string]$repoId,
         [string]$managedFilesBaseDir,
         [string]$repositoryConfigDir,
+        [string]$defaultBranch,
         [bool]$planOnly,
         [array]$issueLog
     )
@@ -15,16 +16,9 @@ function Invoke-AvmPreCommitForRepository {
     }
 
     $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ("avm-pre-commit-" + [System.Guid]::NewGuid().ToString())
-    $defaultBranch = $null
-
     try {
         gh auth setup-git
         if ($LASTEXITCODE -ne 0) { throw "gh auth setup-git exited $LASTEXITCODE" }
-
-        $defaultBranch = (gh repo view $orgAndRepoName --json defaultBranchRef --jq '.defaultBranchRef.name').Trim()
-        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($defaultBranch)) {
-            throw "Unable to resolve the default branch for $orgAndRepoName."
-        }
 
         Write-Host "$modeTag Cloning $orgAndRepoName into $tempDir..." -ForegroundColor DarkGray
         gh repo clone $orgAndRepoName $tempDir -- --quiet --depth 1 --branch $defaultBranch
@@ -33,12 +27,11 @@ function Invoke-AvmPreCommitForRepository {
         Push-Location $tempDir
         try {
             Import-Module Avm.Authoring -Force
-            avm pre-commit `
-                --ecosystem terraform `
-                --repo-id $repoId `
-                --managed-files-local-path $managedFilesBaseDir `
-                --config-local-path $repositoryConfigDir
-            if ($LASTEXITCODE -ne 0) { throw "avm pre-commit exited $LASTEXITCODE" }
+            Invoke-AvmPreCommit `
+                -Ecosystem terraform `
+                -RepoId $repoId `
+                -ManagedFilesLocalPath $managedFilesBaseDir `
+                -ConfigLocalPath $repositoryConfigDir
 
             $status = git status --porcelain
             $result.HasChanges = -not [string]::IsNullOrWhiteSpace($status)
