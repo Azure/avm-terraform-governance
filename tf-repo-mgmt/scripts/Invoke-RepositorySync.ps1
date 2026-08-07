@@ -42,7 +42,6 @@ Write-Host "Running repo sync script"
 $libDir = Join-Path $PSScriptRoot "lib"
 . (Join-Path $libDir "Logging.ps1")
 . (Join-Path $libDir "RetryHelpers.ps1")
-. (Join-Path $libDir "ManagedFiles.ps1")
 . (Join-Path $libDir "RepositoryConfig.ps1")
 . (Join-Path $libDir "RepoTree.ps1")
 . (Join-Path $libDir "AvmPreCommit.ps1")
