@@ -1,6 +1,6 @@
 # Builds the managed-files map
 # (target path -> @{ Source = absolute source path; Mode = git index mode })
-# that is passed to Sync-RepoFiles. Walking the filesystem here keeps the
+# that describes the managed files selected for a repository. Walking the filesystem here keeps the
 # rest of the sync free of directory traversal and lets us apply overlays in
 # order (with later overlays winning) plus exclusions in one place.
 #

@@ -18,7 +18,6 @@ param(
     [string]$repoUrl = "https://github.com/Azure/terraform-azurerm-avm-ptn-example-repo",
     [string]$outputDirectory = ".",
     [string]$repoConfigFilePath = "./repository-config/config.json",
-    [string]$deprecatedFilesConfigFilePath = "./repository-config/deprecated-files.json",
     [string]$managedFilesBaseDir = "../managed-files",
     [object]$repoMetaData = $null,
     [string]$terraformModulePath = "./repository_sync",
@@ -46,7 +45,7 @@ $libDir = Join-Path $PSScriptRoot "lib"
 . (Join-Path $libDir "ManagedFiles.ps1")
 . (Join-Path $libDir "RepositoryConfig.ps1")
 . (Join-Path $libDir "RepoTree.ps1")
-. (Join-Path $libDir "RepoFilesSync.ps1")
+. (Join-Path $libDir "AvmPreCommit.ps1")
 . (Join-Path $libDir "BranchProtection.ps1")
 . (Join-Path $libDir "UnmanagedRulesets.ps1")
 . (Join-Path $libDir "CodeQlDefaultSetup.ps1")
@@ -75,22 +74,6 @@ if(!$repositoryCreationModeEnabled){
 
 $repositoryConfig = Get-Content -Path $repoConfigFilePath -Raw | ConvertFrom-Json
 $settings = Resolve-RepositorySettings -repositoryConfig $repositoryConfig -repoId $repoId
-$managedFiles = Build-ManagedFilesMap `
-    -baseDir $managedFilesBaseDir `
-    -overlays $settings.ManagedFilesAdditional `
-    -excluded $settings.ExcludedManagedFiles `
-    -repoId $repoId
-
-# Load deprecated-file paths once. Each path is matched against the target
-# repo's default-branch tree later; matching paths are removed before any
-# Terraform runs so that the import bootstrap and plan operate against the
-# already-cleaned repo.
-$deprecatedPaths = @()
-if(!$repositoryCreationModeEnabled -and (Test-Path $deprecatedFilesConfigFilePath)) {
-    $deprecatedPaths = @(Get-Content -Path $deprecatedFilesConfigFilePath -Raw | ConvertFrom-Json)
-    Write-Host "Loaded $($deprecatedPaths.Count) deprecated path(s) from $deprecatedFilesConfigFilePath."
-}
-
 Write-Host "$([Environment]::NewLine)Checking $($repoId)"
 
 if(!$skipCleanup) {
@@ -106,14 +89,10 @@ Write-Host "$([Environment]::NewLine)<--->" -ForegroundColor Green
 Write-Host "$([Environment]::NewLine)Updating: $orgAndRepoName.$([Environment]::NewLine)" -ForegroundColor Green
 Write-Host "<--->$([Environment]::NewLine)" -ForegroundColor Green
 
-# Fetch the default-branch tree once per repo. The repo-file sync uses the
-# cached blob SHAs to detect which managed files need creating/updating and
-# which deprecated paths are actually present, all without making any
-# additional GitHub REST calls per file.
-$repoTree = $null
-$needRepoTree = (!$repositoryCreationModeEnabled) -and (($deprecatedPaths.Count -gt 0) -or ($managedFiles.Keys.Count -gt 0))
-if($needRepoTree) {
-    $repoTree = Get-RepositoryDefaultBranchTree -orgAndRepoName $orgAndRepoName
+$repoTree = if (!$repositoryCreationModeEnabled) {
+    Get-RepositoryDefaultBranchTree -orgAndRepoName $orgAndRepoName
+} else {
+    $null
 }
 
 # Remove any legacy classic branch-protection rule from the target repo
@@ -234,30 +213,21 @@ $issueLog = Invoke-TerraformPlanAndApply `
     -stateContainerName $stateContainerName `
     -issueLog $issueLog
 
-# Sync managed files via a single clone -> branch -> PR -> merge flow.
-# Runs AFTER terraform so that a broken terraform run does not produce a
-# merged commit on the target repo for nothing, and so that any teams,
-# rulesets, or bypass actors that terraform needs to create exist before
-# the bot pushes a CODEOWNERS file that references them. Skipped entirely
-# if terraform reported new issues for this repo.
-if(!$repositoryCreationModeEnabled -and $repoTree -and $repoTree.Success) {
+# Run the complete authoring pre-commit gauntlet after Terraform succeeds.
+# The local managed-files and config paths avoid refetching this governance
+# repository for every target module.
+if(!$repositoryCreationModeEnabled) {
     if($issueLog.Count -gt $preTerraformIssueCount) {
-        Write-Host "Skipping managed-file sync for $orgAndRepoName because terraform reported issues for this run." -ForegroundColor Yellow
+        Write-Host "Skipping avm pre-commit for $orgAndRepoName because terraform reported issues for this run." -ForegroundColor Yellow
     } else {
-        $codeownersContent = Get-RenderedCodeownersContent `
-            -ownerSlug $orgName `
-            -defaultTeams $settings.CodeOwnersDefaultTeams `
-            -fileProtectionTeams $settings.CodeOwnersFileProtectionTeams
-
-        $syncResult = Sync-RepoFiles `
+        $preCommitResult = Invoke-AvmPreCommitForRepository `
             -orgAndRepoName $orgAndRepoName `
-            -deprecatedPaths $deprecatedPaths `
-            -managedFiles $managedFiles `
-            -codeownersContent $codeownersContent `
-            -repoTree $repoTree `
+            -repoId $repoId `
+            -managedFilesBaseDir (Resolve-Path $managedFilesBaseDir).Path `
+            -repositoryConfigDir (Split-Path -Parent (Resolve-Path $repoConfigFilePath).Path) `
             -planOnly $planOnly `
             -issueLog $issueLog
-        $issueLog = $syncResult.IssueLog
+        $issueLog = $preCommitResult.IssueLog
     }
 }
 
@@ -268,4 +238,3 @@ if($issueLog.Count -eq 0) {
     $issueLogJson = ConvertTo-Json $issueLog -Depth 100
     $issueLogJson | Out-File "$outputDirectory/issue.log.json"
 }
-
