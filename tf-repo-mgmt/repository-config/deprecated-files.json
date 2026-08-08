@@ -1,4 +1,5 @@
 [
+    ".devcontainer/devcontainer.json",
     ".agents/skills/AVM-Terraform-Development/AzAPI.md",
     ".agents/skills/AVM-Terraform-Development/SKILL.md",
     ".agents/skills/AVM-Terraform-Development/azure-schema",
@@ -21,6 +22,10 @@
     ".github/workflows/test-examples-template.yml",
     ".github/workflows/version-check.yml",
     ".vscode/mcp.json",
+    "Makefile",
+    "avm",
+    "avm.bat",
+    "avm.ps1",
     "avm.config.json",
     "locals.telemetry.tf",
     "locals.version.tf.json"

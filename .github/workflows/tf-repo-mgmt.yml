@@ -211,7 +211,7 @@ jobs:
         shell: pwsh
 
       - name: Add Repository Items to AVM All Up Project
-        if: ${{ always() && (github.event_name != 'workflow_dispatch' || inputs.sync_project_items) }}
+        if: ${{ success() && (github.event_name != 'workflow_dispatch' || inputs.sync_project_items) }}
         run: |
 
           $triggerType = "${{ github.event_name }}"

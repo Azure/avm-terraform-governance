@@ -17,7 +17,7 @@ function Resolve-RepositorySettings {
 
     $teams = @()
     foreach ($repositoryGroupName in $repositoryGroupNames) {
-        $teamMappings = $repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
+        $teamMappings = @($repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName })
         if ($teamMappings.Count -gt 0) {
             $teams += $teamMappings
         }
@@ -103,10 +103,8 @@ function Resolve-RepositorySettings {
     }
     $excludedManagedFiles = @($excludedManagedFiles | Select-Object -Unique)
 
-    # Workload identity federation subject-claim overrides. The Azure federated
-    # identity credential subject pins `job_workflow_ref` to the governance
-    # managed-pr-check workflow by default; repositories piloting a different
-    # reusable workflow must override it or OIDC token exchange fails.
+    # Workload identity federation subject-claim overrides. Root values apply
+    # to every repository, and repository groups can override individual keys.
     #
     # Merged per key across every group containing the repo, using the same
     # (managedFilesOrder, declaration index) precedence as managed-files
@@ -116,6 +114,20 @@ function Resolve-RepositorySettings {
     }
 
     $claimOverrideEntries = @()
+    if ($repositoryConfig.PSObject.Properties.Name -contains "workloadIdentityFederationSubjectClaimOverrides" -and $repositoryConfig.workloadIdentityFederationSubjectClaimOverrides) {
+        foreach ($claimOverride in $repositoryConfig.workloadIdentityFederationSubjectClaimOverrides.PSObject.Properties) {
+            if (-not $supportedClaimOverrides.ContainsKey($claimOverride.Name)) {
+                throw "Repository config root sets unsupported workloadIdentityFederationSubjectClaimOverrides key '$($claimOverride.Name)'. Supported keys: $($supportedClaimOverrides.Keys -join ', ')."
+            }
+            $claimOverrideEntries += [pscustomobject]@{
+                Claim = $claimOverride.Name
+                Value = $claimOverride.Value
+                Order = [int]::MinValue
+                Index = -1
+            }
+        }
+    }
+
     $claimDeclarationIndex = 0
     foreach ($repositoryGroup in $repositoryGroups) {
         if ($repositoryGroup.PSObject.Properties.Name -contains "workloadIdentityFederationSubjectClaimOverrides" -and $repositoryGroup.workloadIdentityFederationSubjectClaimOverrides) {
@@ -148,8 +160,9 @@ function Resolve-RepositorySettings {
     # is normally written as `@main`. Fail here rather than at OIDC exchange.
     if ($workloadIdentityFederationSubjectClaimOverrides.ContainsKey("jobWorkflowRef")) {
         $jobWorkflowRefOverride = $workloadIdentityFederationSubjectClaimOverrides["jobWorkflowRef"]
-        if ($jobWorkflowRefOverride -notmatch "@(refs/.+|[0-9a-fA-F]{40})$") {
-            throw "workloadIdentityFederationSubjectClaimOverrides.jobWorkflowRef must end with a fully-qualified ref (for example '@refs/heads/main') or a full commit SHA, but was '$jobWorkflowRefOverride'."
+        $jobWorkflowRefPattern = "^[^/\s@]+/[^/\s@]+/\.github/workflows/[^/\s@]+\.ya?ml@(?:refs/[^\s]+|[0-9a-fA-F]{40})$"
+        if ($jobWorkflowRefOverride -notmatch $jobWorkflowRefPattern) {
+            throw "workloadIdentityFederationSubjectClaimOverrides.jobWorkflowRef must use the form 'owner/repository/.github/workflows/workflow.yml@refs/heads/branch' (a tag ref or full commit SHA is also supported), but was '$jobWorkflowRefOverride'."
         }
     }
 
