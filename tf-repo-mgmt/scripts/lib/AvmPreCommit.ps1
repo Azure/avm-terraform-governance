@@ -27,7 +27,7 @@ function Invoke-AvmPreCommitForRepository {
         Push-Location $tempDir
         try {
             Import-Module Avm.Authoring -Force
-            Invoke-AvmPreCommit `
+            $null = Invoke-AvmPreCommit `
                 -Ecosystem terraform `
                 -RepoId $repoId `
                 -ManagedFilesLocalPath $managedFilesBaseDir `
