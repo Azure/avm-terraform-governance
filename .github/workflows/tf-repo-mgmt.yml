@@ -99,6 +99,15 @@ jobs:
           terraform_version: latest
           terraform_wrapper: false
 
+      - name: Install Avm.Authoring
+        shell: pwsh
+        run: |
+          Install-PSResource -Name Avm.Authoring -Scope CurrentUser -TrustRepository
+          Import-Module Avm.Authoring
+          if (-not (Get-Command Invoke-AvmPreCommit).Parameters.ContainsKey('RepoId')) {
+            throw 'The released Avm.Authoring version does not support repository sync options on avm pre-commit.'
+          }
+
       - name: Create GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
