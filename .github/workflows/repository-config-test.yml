@@ -1,0 +1,30 @@
+---
+name: repository config - test
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/repository-config-test.yml
+      - tf-repo-mgmt/repository-config/config.json
+      - tf-repo-mgmt/scripts/lib/AvmPreCommit.ps1
+      - tf-repo-mgmt/scripts/lib/RepositoryConfig.ps1
+      - tf-repo-mgmt/scripts/Test-AvmPreCommit.ps1
+      - tf-repo-mgmt/scripts/Test-RepositoryConfig.ps1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test repository configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Test repository configuration
+        shell: pwsh
+        run: |
+          ./tf-repo-mgmt/scripts/Test-RepositoryConfig.ps1
+          ./tf-repo-mgmt/scripts/Test-AvmPreCommit.ps1
