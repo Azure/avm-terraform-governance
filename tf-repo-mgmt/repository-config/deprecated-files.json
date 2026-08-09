@@ -23,8 +23,6 @@
     ".github/workflows/version-check.yml",
     ".vscode/mcp.json",
     "Makefile",
-    "avm",
-    "avm.bat",
     "avm.ps1",
     "avm.config.json",
     "locals.telemetry.tf",
