@@ -42,21 +42,3 @@ updates:
     commit-message:
       prefix: chore
       include: scope
-
-  # Base images and pinned tool versions in the container/ Dockerfiles.
-  - package-ecosystem: docker
-    directory: "/container"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "06:00"
-      timezone: Etc/UTC
-    groups:
-      docker:
-        patterns:
-          - "*"
-    labels:
-      - "Type: CI :rocket:"
-    commit-message:
-      prefix: chore
-      include: scope

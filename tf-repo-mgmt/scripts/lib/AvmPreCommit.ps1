@@ -1,3 +1,41 @@
+function Assert-AvmPreCommitResult {
+    param(
+        [AllowNull()]
+        [object]$preCommitResult
+    )
+
+    $status = if ($preCommitResult -and $preCommitResult.PSObject.Properties.Name -contains "Status") {
+        [string]$preCommitResult.Status
+    } else {
+        "missing"
+    }
+
+    if ($status -eq "pass") {
+        return
+    }
+
+    $failedSteps = @(
+        if ($preCommitResult -and $preCommitResult.PSObject.Properties.Name -contains "Steps") {
+            $preCommitResult.Steps |
+                Where-Object { $_.Status -in @("fail", "error") } |
+                ForEach-Object {
+                    if ([string]::IsNullOrWhiteSpace($_.Error)) {
+                        "$($_.Step): $($_.Status)"
+                    } else {
+                        "$($_.Step): $($_.Status) - $($_.Error)"
+                    }
+                }
+        }
+    )
+
+    $detail = if ($failedSteps.Count -gt 0) {
+        " Failed steps: $($failedSteps -join '; ')."
+    } else {
+        ""
+    }
+    throw "avm pre-commit returned status '$status'.$detail"
+}
+
 function Invoke-AvmPreCommitForRepository {
     param(
         [string]$orgAndRepoName,
@@ -27,11 +65,12 @@ function Invoke-AvmPreCommitForRepository {
         Push-Location $tempDir
         try {
             Import-Module Avm.Authoring -Force
-            $null = Invoke-AvmPreCommit `
+            $preCommitResult = Invoke-AvmPreCommit `
                 -Ecosystem terraform `
                 -RepoId $repoId `
                 -ManagedFilesLocalPath $managedFilesBaseDir `
                 -ConfigLocalPath $repositoryConfigDir
+            Assert-AvmPreCommitResult -preCommitResult $preCommitResult
 
             $status = git status --porcelain
             $result.HasChanges = -not [string]::IsNullOrWhiteSpace($status)
@@ -96,13 +135,8 @@ This PR is opened and merged by the AVM bot. ``[skip ci]`` is set on the commit 
             Pop-Location
         }
     } catch {
-        Write-Warning "Failed to run avm pre-commit for $orgAndRepoName : $_"
-        $result.IssueLog = Add-IssueToLog `
-            -orgAndRepoName $orgAndRepoName `
-            -type "avm-pre-commit-failed" `
-            -message "Failed to run avm pre-commit for $orgAndRepoName." `
-            -data $_.Exception.Message `
-            -issueLog $result.IssueLog
+        Write-Error "avm pre-commit failed for $orgAndRepoName. Administrative corrective action is required. $($_.Exception.Message)"
+        throw
     } finally {
         if (Test-Path $tempDir) {
             try {
