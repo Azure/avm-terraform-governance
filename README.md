@@ -1,16 +1,11 @@
-# Azure Verified Modules Governance Repo
+# Azure Verified Modules Terraform Governance
 
-This project centralizes the governance of Azure Verified Modules, ensuring compliance with best practices and organizational policies.
+This repository manages the GitHub configuration and shared repository files for Azure Verified Modules Terraform repositories.
 
-It is currently a work in progress, the following assets live here:
+The Terraform authoring toolchain, pinned tool and policy assets, and reusable module workflow are maintained in [Azure/azure-verified-modules-tools](https://github.com/Azure/azure-verified-modules-tools) and delivered through the `Avm.Authoring` PowerShell module.
 
-- **Dockerfile**: Standard container image for AVM Terraform based on Azure Linux 3.0.
-- **tflint config**: Configuration for TFLint to enforce coding standards and best practices.
-- **managed files**: Repository files (workflows, CODEOWNERS, dependabot config, etc.) synced into each AVM Terraform repository by the central governance Terraform run (`tf-repo-mgmt/repository_sync`).
-- **porch configs**: standard process orchestration templates to ensure consistent testing and validation of Terraform modules.
-- **managed github workflows**: GitHub Actions workflows to automate the testing and validation of Terraform modules.
-- **makefile**: A centralized Makefile to streamline the development process across all AVM repositories.
+The governance assets that remain here are:
 
-## Testing the tests
-
-See the [Testing](./tests/README.md) documentation for details on how we test the governance framework.
+- `managed-files`: files synchronized into AVM Terraform repositories.
+- `tf-repo-mgmt`: repository, identity, environment, ruleset, and team configuration.
+- `.github/actions/avm-repos`: repository discovery used by fleet workflows.

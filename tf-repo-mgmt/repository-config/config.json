@@ -10,10 +10,12 @@
       "avm"
     ]
   },
+  "workloadIdentityFederationSubjectClaimOverrides": {
+    "jobWorkflowRef": "Azure/azure-verified-modules-tools/.github/workflows/terraform-module.yml@refs/heads/main"
+  },
   "repositoryGroups": [
     {
       "name": "canary",
-      "managedFilesAdditional": "canary",
       "repositories": [
         "avm-ptn-example-repo",
         "avm-res-devopsinfrastructure-pool",
@@ -23,7 +25,8 @@
         "avm-res-documentdb-mongocluster",
         "avm-res-compute-disk",
         "avm-res-dbformysql-flexibleserver",
-        "avm-res-cdn-profile"
+        "avm-res-cdn-profile",
+        "avm-res-avs-privatecloud"
       ],
       "topics": [
         "canary"
@@ -62,6 +65,7 @@
     {
       "name": "azure-landing-zones",
       "managedFilesAdditional": "alz",
+      "managedFilesOrder": 10,
       "excludedManagedFiles": [
         ".github/ISSUE_TEMPLATE/avm_module_issue.yml",
         ".github/ISSUE_TEMPLATE/avm_question_feedback.yml"

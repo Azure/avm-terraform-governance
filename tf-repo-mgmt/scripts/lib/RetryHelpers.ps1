@@ -14,6 +14,9 @@ function Invoke-TerraformWithRetry {
         [int]$maxRetries = 50,
         [int]$retryDelayIncremental = 10,
         [string[]]$retryOn = @("429 Too Many Requests", "Client.Timeout exceeded while awaiting headers", "Error: Failed to install provider", "Error: Failed to query available provider packages", "403 API rate limit"),
+        [string]$stateStorageAccountName,
+        [string]$stateContainerName,
+        [string]$stateBlobName,
         [switch]$printOutput,
         [switch]$printOutputOnError,
         [switch]$returnOutputParsedFromJson
@@ -26,15 +29,29 @@ function Invoke-TerraformWithRetry {
     # The repository sync is the only writer of each repo's state and runs on a
     # 4 hourly schedule, so any lock we hit is left over from a cancelled or
     # crashed run rather than a concurrent one. Break it and retry.
+    # State is passed through Context rather than a closure: GetNewClosure()
+    # rebinds the script block to a dynamic module, which cannot resolve the
+    # helper functions this file dot-sources into the caller's script scope.
     $recoveryActions = @(
         @{
             Name        = "terraform state lock"
-            Pattern     = "Error acquiring the state lock"
+            Pattern     = @("Error acquiring the state lock", "Error releasing the state lock")
             MaxAttempts = 3
+            Context     = @{
+                workingDirectory   = $workingDirectory
+                storageAccountName = $stateStorageAccountName
+                containerName      = $stateContainerName
+                blobName           = $stateBlobName
+            }
             Action      = {
-                param([string[]]$errorOutput)
-                Clear-TerraformStateLock -errorOutput $errorOutput -workingDirectory $workingDirectory
-            }.GetNewClosure()
+                param([string[]]$errorOutput, [hashtable]$context)
+                Clear-TerraformStateLock `
+                    -errorOutput $errorOutput `
+                    -workingDirectory $context.workingDirectory `
+                    -storageAccountName $context.storageAccountName `
+                    -containerName $context.containerName `
+                    -blobName $context.blobName
+            }
         }
     )
 
@@ -52,14 +69,21 @@ function Invoke-TerraformWithRetry {
         -returnOutputParsedFromJson:$returnOutputParsedFromJson.IsPresent
 }
 
-# Parses the lock ID out of a Terraform "Error acquiring the state lock"
-# message and releases it with `terraform force-unlock`. Returns $true only
-# when the lock was actually released, so the caller can fall through to the
-# normal failure path when the lock cannot be parsed or broken.
+# Clears the state lock left behind by a cancelled or crashed run. Prefers
+# `terraform force-unlock`, which clears the lock metadata as well as the blob
+# lease, and falls back to breaking the lease directly. The fallback matters
+# because a killed run often leaves the lease held with an empty
+# "terraformlockid" metadata value: there is then no ID for force-unlock to
+# match, and breaking the lease is the only way to release the blob. Returns
+# $true only when the lock was actually released, so the caller can fall
+# through to the normal failure path when it cannot be broken.
 function Clear-TerraformStateLock {
     param(
         [string[]]$errorOutput,
         [string]$workingDirectory,
+        [string]$storageAccountName,
+        [string]$containerName,
+        [string]$blobName,
         [string]$outputLog = "force-unlock.log",
         [string]$errorLog = "force-unlock.error.log"
     )
@@ -77,16 +101,65 @@ function Clear-TerraformStateLock {
         }
     }
 
-    if (!$lockId) {
-        Write-Warning "Could not parse a Terraform state lock ID from the error output. Leaving the lock in place."
+    if ($lockId) {
+        Write-Host "Found stale Terraform state lock '$lockId'. Forcing unlock."
+
+        $process = Start-Process `
+            -FilePath "terraform" `
+            -ArgumentList @("-chdir=$workingDirectory", "force-unlock", "-force", $lockId) `
+            -RedirectStandardOutput $outputLog `
+            -RedirectStandardError $errorLog `
+            -PassThru `
+            -NoNewWindow `
+            -Wait
+
+        if ($process.ExitCode -eq 0) {
+            Write-Host "Released Terraform state lock '$lockId'."
+            return $true
+        }
+
+        Write-Warning "terraform force-unlock failed with exit code $($process.ExitCode). Falling back to breaking the state blob lease."
+        Get-Content -Path $errorLog | Write-Host
+    }
+    else {
+        Write-Host "No Terraform state lock ID in the error output. Falling back to breaking the state blob lease."
+    }
+
+    return Clear-TerraformStateBlobLease `
+        -storageAccountName $storageAccountName `
+        -containerName $containerName `
+        -blobName $blobName
+}
+
+# Breaks the Azure Storage blob lease that backs a Terraform state lock. Used
+# when `terraform force-unlock` cannot help, either because the lock metadata
+# is empty or because the lease no longer matches the one Terraform holds.
+function Clear-TerraformStateBlobLease {
+    param(
+        [string]$storageAccountName,
+        [string]$containerName,
+        [string]$blobName,
+        [string]$outputLog = "lease-break.log",
+        [string]$errorLog = "lease-break.error.log"
+    )
+
+    if (!$storageAccountName -or !$containerName -or !$blobName) {
+        Write-Warning "No state blob details were supplied, so the state lock cannot be broken. Leaving the lock in place."
         return $false
     }
 
-    Write-Host "Found stale Terraform state lock '$lockId'. Forcing unlock."
+    Write-Host "Breaking the lease on state blob '$blobName' in '$storageAccountName/$containerName'."
 
     $process = Start-Process `
-        -FilePath "terraform" `
-        -ArgumentList @("-chdir=$workingDirectory", "force-unlock", "-force", $lockId) `
+        -FilePath "az" `
+        -ArgumentList @(
+            "storage", "blob", "lease", "break",
+            "--account-name", $storageAccountName,
+            "--container-name", $containerName,
+            "--blob-name", $blobName,
+            "--lease-break-period", "0",
+            "--auth-mode", "login"
+        ) `
         -RedirectStandardOutput $outputLog `
         -RedirectStandardError $errorLog `
         -PassThru `
@@ -94,12 +167,12 @@ function Clear-TerraformStateLock {
         -Wait
 
     if ($process.ExitCode -ne 0) {
-        Write-Warning "terraform force-unlock failed with exit code $($process.ExitCode)."
+        Write-Warning "Breaking the lease on state blob '$blobName' failed with exit code $($process.ExitCode)."
         Get-Content -Path $errorLog | Write-Host
         return $false
     }
 
-    Write-Host "Released Terraform state lock '$lockId'."
+    Write-Host "Broke the lease on state blob '$blobName'."
     return $true
 }
 
@@ -193,7 +266,14 @@ function Invoke-CommandWithRetry {
                 # when the action reports that it actually fixed the problem.
                 if (!$shouldRetry) {
                     foreach ($recovery in $recoveryActions) {
-                        if (!($errorOutput | Where-Object { $_ -like "*$($recovery.Pattern)*" })) {
+                        $matchedPattern = $false
+                        foreach ($pattern in @($recovery.Pattern)) {
+                            if ($errorOutput | Where-Object { $_ -like "*$pattern*" }) {
+                                $matchedPattern = $true
+                                break
+                            }
+                        }
+                        if (!$matchedPattern) {
                             continue
                         }
 
@@ -208,7 +288,15 @@ function Invoke-CommandWithRetry {
 
                         $recovery.Attempts = [int]$recovery.Attempts + 1
                         Write-Host "Attempting recovery for '$($recovery.Name)' (attempt $($recovery.Attempts) of $maxRecoveryAttempts)."
-                        if (& $recovery.Action $errorOutput) {
+
+                        $recovered = $false
+                        try {
+                            $recovered = [bool](& $recovery.Action $errorOutput $recovery.Context)
+                        } catch {
+                            Write-Warning "Recovery for '$($recovery.Name)' threw an error: $_"
+                        }
+
+                        if ($recovered) {
                             $shouldRetry = $true
                             break
                         }

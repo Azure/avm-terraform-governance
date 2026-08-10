@@ -17,7 +17,7 @@ function Resolve-RepositorySettings {
 
     $teams = @()
     foreach ($repositoryGroupName in $repositoryGroupNames) {
-        $teamMappings = $repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName }
+        $teamMappings = @($repositoryConfig.teamMappings | Where-Object { $_.repositoryGroups -contains $repositoryGroupName })
         if ($teamMappings.Count -gt 0) {
             $teams += $teamMappings
         }
@@ -58,22 +58,36 @@ function Resolve-RepositorySettings {
     }
     $repositoryTopics = @($repositoryTopics | Select-Object -Unique)
 
-    # Collect the managed-files overlay set declared on any matching
-    # repository group (e.g. `alz` for the azure-landing-zones group). At
-    # most one distinct value is allowed; conflicting overlays across groups
-    # for the same repo are a configuration error.
-    $managedFilesAdditionalValues = @()
+    # Collect and order the managed-files overlay sets declared on any matching
+    # repository group (e.g. `alz` for the azure-landing-zones group). Lower
+    # orders are applied first, so a higher-order overlay wins for duplicate
+    # paths. This ordering is mirrored in Avm.Authoring's
+    # Sync-AvmManagedFile.ps1 and the two implementations must not diverge.
+    $overlayEntries = @()
+    $declarationIndex = 0
     foreach ($repositoryGroup in $repositoryGroups) {
-        if ($repositoryGroup.PSObject.Properties.Name -contains "managedFilesAdditional" -and $repositoryGroup.managedFilesAdditional) {
-            $managedFilesAdditionalValues += $repositoryGroup.managedFilesAdditional
+        if ($repositoryGroup.PSObject.Properties.Name -contains 'managedFilesAdditional' -and $repositoryGroup.managedFilesAdditional) {
+            $order = 0
+            if ($repositoryGroup.PSObject.Properties.Name -contains 'managedFilesOrder' -and $null -ne $repositoryGroup.managedFilesOrder) {
+                $order = [int] $repositoryGroup.managedFilesOrder
+            }
+            foreach ($overlay in @($repositoryGroup.managedFilesAdditional)) {
+                $overlayEntries += [pscustomobject]@{
+                    Overlay = $overlay
+                    Order   = $order
+                    Index   = $declarationIndex
+                }
+            }
         }
+        $declarationIndex++
     }
-    $managedFilesAdditionalValues = @($managedFilesAdditionalValues | Select-Object -Unique)
-    if ($managedFilesAdditionalValues.Count -gt 1) {
-        Write-Error "Repository '$repoId' belongs to multiple repository groups that declare conflicting 'managedFilesAdditional' overlay sets: $($managedFilesAdditionalValues -join ', '). At most one is allowed."
-        exit 1
-    }
-    $managedFilesAdditional = if ($managedFilesAdditionalValues.Count -eq 1) { $managedFilesAdditionalValues[0] } else { "" }
+
+    $managedFilesAdditional = @(
+        $overlayEntries |
+            Sort-Object -Property Order, Index |
+            Select-Object -ExpandProperty Overlay |
+            Select-Object -Unique
+    )
 
     # Collect the set of managed files to exclude from the final map for
     # this repository. Excluded files are pulled in from every matching
@@ -89,14 +103,78 @@ function Resolve-RepositorySettings {
     }
     $excludedManagedFiles = @($excludedManagedFiles | Select-Object -Unique)
 
+    # Workload identity federation subject-claim overrides. Root values apply
+    # to every repository, and repository groups can override individual keys.
+    #
+    # Merged per key across every group containing the repo, using the same
+    # (managedFilesOrder, declaration index) precedence as managed-files
+    # overlays: higher order wins.
+    $supportedClaimOverrides = @{
+        jobWorkflowRef = "github_job_workflow_ref"
+    }
+
+    $claimOverrideEntries = @()
+    if ($repositoryConfig.PSObject.Properties.Name -contains "workloadIdentityFederationSubjectClaimOverrides" -and $repositoryConfig.workloadIdentityFederationSubjectClaimOverrides) {
+        foreach ($claimOverride in $repositoryConfig.workloadIdentityFederationSubjectClaimOverrides.PSObject.Properties) {
+            if (-not $supportedClaimOverrides.ContainsKey($claimOverride.Name)) {
+                throw "Repository config root sets unsupported workloadIdentityFederationSubjectClaimOverrides key '$($claimOverride.Name)'. Supported keys: $($supportedClaimOverrides.Keys -join ', ')."
+            }
+            $claimOverrideEntries += [pscustomobject]@{
+                Claim = $claimOverride.Name
+                Value = $claimOverride.Value
+                Order = [int]::MinValue
+                Index = -1
+            }
+        }
+    }
+
+    $claimDeclarationIndex = 0
+    foreach ($repositoryGroup in $repositoryGroups) {
+        if ($repositoryGroup.PSObject.Properties.Name -contains "workloadIdentityFederationSubjectClaimOverrides" -and $repositoryGroup.workloadIdentityFederationSubjectClaimOverrides) {
+            $order = 0
+            if ($repositoryGroup.PSObject.Properties.Name -contains "managedFilesOrder" -and $null -ne $repositoryGroup.managedFilesOrder) {
+                $order = [int]$repositoryGroup.managedFilesOrder
+            }
+            foreach ($claimOverride in $repositoryGroup.workloadIdentityFederationSubjectClaimOverrides.PSObject.Properties) {
+                if (-not $supportedClaimOverrides.ContainsKey($claimOverride.Name)) {
+                    throw "Repository group '$($repositoryGroup.name)' sets unsupported workloadIdentityFederationSubjectClaimOverrides key '$($claimOverride.Name)'. Supported keys: $($supportedClaimOverrides.Keys -join ', ')."
+                }
+                $claimOverrideEntries += [pscustomobject]@{
+                    Claim = $claimOverride.Name
+                    Value = $claimOverride.Value
+                    Order = $order
+                    Index = $claimDeclarationIndex
+                }
+            }
+        }
+        $claimDeclarationIndex++
+    }
+
+    $workloadIdentityFederationSubjectClaimOverrides = @{}
+    foreach ($claimOverrideEntry in ($claimOverrideEntries | Sort-Object -Property Order, Index)) {
+        $workloadIdentityFederationSubjectClaimOverrides[$claimOverrideEntry.Claim] = $claimOverrideEntry.Value
+    }
+
+    # A job_workflow_ref claim always carries a fully-qualified git ref
+    # (refs/heads/..., refs/tags/...) or a full commit SHA, even though `uses:`
+    # is normally written as `@main`. Fail here rather than at OIDC exchange.
+    if ($workloadIdentityFederationSubjectClaimOverrides.ContainsKey("jobWorkflowRef")) {
+        $jobWorkflowRefOverride = $workloadIdentityFederationSubjectClaimOverrides["jobWorkflowRef"]
+        $jobWorkflowRefPattern = "^[^/\s@]+/[^/\s@]+/\.github/workflows/[^/\s@]+\.ya?ml@(?:refs/[^\s]+|[0-9a-fA-F]{40})$"
+        if ($jobWorkflowRefOverride -notmatch $jobWorkflowRefPattern) {
+            throw "workloadIdentityFederationSubjectClaimOverrides.jobWorkflowRef must use the form 'owner/repository/.github/workflows/workflow.yml@refs/heads/branch' (a tag ref or full commit SHA is also supported), but was '$jobWorkflowRefOverride'."
+        }
+    }
+
     return @{
-        RepositoryGroups              = $repositoryGroups
-        RepositoryGroupNames          = $repositoryGroupNames
-        Teams                         = $teams
-        CodeOwnersDefaultTeams        = $codeOwnersDefaultTeams
-        CodeOwnersFileProtectionTeams = $codeOwnersFileProtectionTeams
-        Topics                        = $repositoryTopics
-        ManagedFilesAdditional        = $managedFilesAdditional
-        ExcludedManagedFiles          = $excludedManagedFiles
+        RepositoryGroups                                = $repositoryGroups
+        RepositoryGroupNames                            = $repositoryGroupNames
+        Teams                                           = $teams
+        CodeOwnersDefaultTeams                          = $codeOwnersDefaultTeams
+        CodeOwnersFileProtectionTeams                   = $codeOwnersFileProtectionTeams
+        Topics                                          = $repositoryTopics
+        ManagedFilesAdditional                          = $managedFilesAdditional
+        ExcludedManagedFiles                            = $excludedManagedFiles
+        WorkloadIdentityFederationSubjectClaimOverrides = $workloadIdentityFederationSubjectClaimOverrides
     }
 }

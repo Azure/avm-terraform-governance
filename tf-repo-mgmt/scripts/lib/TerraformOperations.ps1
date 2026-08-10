@@ -70,6 +70,9 @@ terraform {
                 }
             ) `
             -workingDirectory $terraformModulePath `
+            -stateStorageAccountName $stateStorageAccountName `
+            -stateContainerName $stateContainerName `
+            -stateBlobName "$($repoId).tfstate" `
             -printOutput
     }
 
@@ -92,6 +95,8 @@ function Invoke-TerraformPlanAndApply {
         [string]$orgAndRepoName,
         [bool]$planOnly,
         [string[]]$resourceTypesThatCannotBeDestroyed,
+        [string]$stateStorageAccountName,
+        [string]$stateContainerName,
         [array]$issueLog
     )
 
@@ -103,6 +108,9 @@ function Invoke-TerraformPlanAndApply {
             }
         ) `
         -workingDirectory $terraformModulePath `
+        -stateStorageAccountName $stateStorageAccountName `
+        -stateContainerName $stateContainerName `
+        -stateBlobName "$($repoId).tfstate" `
         -printOutput
 
     if (!$result.success) {
@@ -152,6 +160,9 @@ function Invoke-TerraformPlanAndApply {
                 }
             ) `
             -workingDirectory $terraformModulePath `
+            -stateStorageAccountName $stateStorageAccountName `
+            -stateContainerName $stateContainerName `
+            -stateBlobName "$($repoId).tfstate" `
             -printOutput `
             -maxRetries 0
 
@@ -169,6 +180,9 @@ function Invoke-TerraformPlanAndApply {
                     }
                 ) `
                 -workingDirectory $terraformModulePath `
+                -stateStorageAccountName $stateStorageAccountName `
+                -stateContainerName $stateContainerName `
+                -stateBlobName "$($repoId).tfstate" `
                 -printOutput
         }
 

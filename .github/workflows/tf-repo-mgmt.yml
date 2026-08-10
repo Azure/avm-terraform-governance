@@ -40,6 +40,13 @@ permissions:
   id-token: write
   contents: read
 
+# Each repo's Terraform state is a single blob, and a cancelled run leaves its
+# lease behind. Queue overlapping runs rather than cancelling them, so the sync
+# stays the only writer and any lock it does find is genuinely stale.
+concurrency:
+  group: repository-sync
+  cancel-in-progress: false
+
 env:
   # The GitHub Project (ProjectV2) that every AVM Terraform repo's issues and PRs
   # are synced into ("AVM All Up"). A central, fixed target, so it lives here as a
@@ -92,6 +99,15 @@ jobs:
           terraform_version: latest
           terraform_wrapper: false
 
+      - name: Install Avm.Authoring
+        shell: pwsh
+        run: |
+          Install-PSResource -Name Avm.Authoring -Scope CurrentUser -TrustRepository
+          Import-Module Avm.Authoring
+          if (-not (Get-Command Invoke-AvmPreCommit).Parameters.ContainsKey('RepoId')) {
+            throw 'The released Avm.Authoring version does not support repository sync options on avm pre-commit.'
+          }
+
       - name: Create GitHub App Token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -99,6 +115,16 @@ jobs:
           client-id: ${{ secrets.AVM_APP_CLIENT_ID }}
           private-key: ${{ secrets.AVM_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+
+      # Terraform authenticates on its own via the ARM_* variables below. The
+      # Azure CLI needs its own login so state lock recovery can break the
+      # lease on a state blob left locked by a cancelled run.
+      - name: Azure Login (OIDC)
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
 
       - name: Download Labels CSV File
         run: |
