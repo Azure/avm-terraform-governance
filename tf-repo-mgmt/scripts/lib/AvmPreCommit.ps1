@@ -19,10 +19,40 @@ function Assert-AvmPreCommitResult {
             $preCommitResult.Steps |
                 Where-Object { $_.Status -in @("fail", "error") } |
                 ForEach-Object {
-                    if ([string]::IsNullOrWhiteSpace($_.Error)) {
-                        "$($_.Step): $($_.Status)"
+                    $details = @(
+                        $errorProperty = $_.PSObject.Properties["Error"]
+                        if ($null -ne $errorProperty -and -not [string]::IsNullOrWhiteSpace([string]$errorProperty.Value)) {
+                            [string]$errorProperty.Value
+                        }
+
+                        $resultProperty = $_.PSObject.Properties["Result"]
+                        if ($null -ne $resultProperty -and $null -ne $resultProperty.Value) {
+                            $issuesProperty = $resultProperty.Value.PSObject.Properties["Issues"]
+                            if ($null -ne $issuesProperty) {
+                                foreach ($issue in @($issuesProperty.Value)) {
+                                    if ($null -eq $issue) {
+                                        continue
+                                    }
+
+                                    $messageProperty = $issue.PSObject.Properties["Message"]
+                                    $message = if ($null -ne $messageProperty) {
+                                        [string]$messageProperty.Value
+                                    } else {
+                                        [string]$issue
+                                    }
+                                    if (-not [string]::IsNullOrWhiteSpace($message)) {
+                                        $message
+                                    }
+                                }
+                            }
+                        }
+                    )
+
+                    $stepSummary = "$($_.Step): $($_.Status)"
+                    if ($details.Count -eq 0) {
+                        $stepSummary
                     } else {
-                        "$($_.Step): $($_.Status) - $($_.Error)"
+                        "$stepSummary - $($details -join ' | ')"
                     }
                 }
         }
