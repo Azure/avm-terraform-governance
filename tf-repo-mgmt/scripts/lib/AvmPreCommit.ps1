@@ -19,10 +19,36 @@ function Assert-AvmPreCommitResult {
             $preCommitResult.Steps |
                 Where-Object { $_.Status -in @("fail", "error") } |
                 ForEach-Object {
-                    if ([string]::IsNullOrWhiteSpace($_.Error)) {
-                        "$($_.Step): $($_.Status)"
+                    $step = $_
+                    $stepSummary = if ([string]::IsNullOrWhiteSpace($step.Error)) {
+                        "$($step.Step): $($step.Status)"
                     } else {
-                        "$($_.Step): $($_.Status) - $($_.Error)"
+                        "$($step.Step): $($step.Status) - $($step.Error)"
+                    }
+
+                    $issueMessages = @(
+                        if (
+                            $step.PSObject.Properties.Name -contains "Result" -and
+                            $step.Result -and
+                            $step.Result.PSObject.Properties.Name -contains "Issues"
+                        ) {
+                            @($step.Result.Issues) |
+                                ForEach-Object {
+                                    $issue = $_
+                                    if ($issue -is [string]) {
+                                        $issue
+                                    } elseif ($issue -and $issue.PSObject.Properties.Name -contains "Message") {
+                                        [string]$issue.Message
+                                    }
+                                } |
+                                Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+                        }
+                    )
+
+                    if ($issueMessages.Count -gt 0) {
+                        "$stepSummary - Issues: $($issueMessages -join ' | ')"
+                    } else {
+                        $stepSummary
                     }
                 }
         }
