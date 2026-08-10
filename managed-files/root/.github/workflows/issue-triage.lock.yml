@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"675641cfce25a1c9f7ee8a6a118c1bff941cc28397cb3b03ffb828a9063aeb1d","body_hash":"fb5d9c14d4a56bb6db909c5b4aad31049ecc2358ddfad3e54778b972f8d0af7d","compiler_version":"v0.80.9","strict":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.63"}}
-# gh-aw-manifest: {"version":1,"secrets":["GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"8c7d04ebf1ece56cd381446125da3e0f6896294a","version":"v0.80.9"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7","digest":"sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7","digest":"sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7@sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7","digest":"sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7@sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.4.0","digest":"sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036","pinned_image":"ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036"}]}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"24cb9f4a650e3053dfe6e9746cd7dc293f0baaea6cc3e32500baa12608d85152","body_hash":"a5686f659ef2c95967e5b617b4d2e6e1c8647e66243d790927e4c0486429e06c","compiler_version":"v0.80.9","strict":true,"agent_id":"copilot","agent_model":"claude-sonnet-5","engine_versions":{"copilot":"1.0.63"}}
+# gh-aw-manifest: {"version":1,"secrets":["GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN"],"actions":[{"repo":"actions/cache/restore","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/cache/save","sha":"27d5ce7f107fe9357f9df03efb73ab90386fccae","version":"v5.0.5"},{"repo":"actions/checkout","sha":"9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0","version":"v7.0.0"},{"repo":"actions/download-artifact","sha":"3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c","version":"v8.0.1"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e","version":"v6.4.0"},{"repo":"actions/upload-artifact","sha":"043fb46d1a93c77aae656e7c1c64a875d1fc6a0a","version":"v7.0.1"},{"repo":"github/gh-aw-actions/setup","sha":"v0.80.9","version":"v0.80.9"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7","digest":"sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7","digest":"sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.27.7@sha256:009caf2e3d88fa77b64e9a03a95a228fc58db0f1701c6d324b29ba5a3c7c79b6"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7","digest":"sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.27.7@sha256:deb1d4e19de62d51cee0508057a596a19315c3423ada4d675cad136dc8037c96"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.3.27","digest":"sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.3.27@sha256:fe984bddde4ec05d756d9043edb0a32912e6b7b72f6a121b1082f29221421cc7"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b","pinned_image":"ghcr.io/github/gh-aw-node@sha256:529d02eb970b1161aa25c593a9c3df57fdfad5a8add328cb3b6eccef66f3183b"},{"image":"ghcr.io/github/github-mcp-server:v1.4.0","digest":"sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036","pinned_image":"ghcr.io/github/github-mcp-server:v1.4.0@sha256:2afb26356481d1a350e14544a6e160f7f7ec1561a1ea309b823665abf0309036"}]}
 # This file was automatically generated by gh-aw (v0.80.9). DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _      
@@ -23,7 +23,7 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# Automated issue triage for Azure Verified Modules Terraform module repositories. Checks for duplicates, classifies issues with existing repo labels, checks whether a newer release fixes the issue, and posts a triage summary comment on new or reopened issues.
+# Automated issue triage for Azure Verified Modules Terraform module repositories. Checks for duplicates, classifies issues with existing repo labels, discovers related pull requests, links clear fixes, closes issues that are conclusively resolved, and posts a triage summary comment on new, reopened, or manually selected issues.
 #
 # Secrets used:
 #   - GH_AW_GITHUB_MCP_SERVER_TOKEN
@@ -38,7 +38,7 @@
 #   - actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
 #   - actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
 #   - actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-#   - github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+#   - github/gh-aw-actions/setup@v0.80.9
 #
 # Container images used:
 #   - ghcr.io/github/gh-aw-firewall/agent:0.27.7@sha256:aae231e4635c8999d039c132f1602d3df850fe9b84a00aa2b5ac981179b5661c
@@ -101,7 +101,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -117,7 +117,7 @@ jobs:
         env:
           GH_AW_INFO_ENGINE_ID: "copilot"
           GH_AW_INFO_ENGINE_NAME: "GitHub Copilot CLI"
-          GH_AW_INFO_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || vars.GH_AW_DEFAULT_MODEL_COPILOT || 'claude-sonnet-4.6' }}
+          GH_AW_INFO_MODEL: "claude-sonnet-5"
           GH_AW_INFO_VERSION: "1.0.63"
           GH_AW_INFO_AGENT_VERSION: "1.0.63"
           GH_AW_INFO_CLI_VERSION: "v0.80.9"
@@ -254,21 +254,21 @@ jobs:
         run: |
           bash "${RUNNER_TEMP}/gh-aw/actions/create_prompt_first.sh"
           {
-          cat << 'GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF'
+          cat << 'GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF'
           <system>
-          GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF
+          GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/xpia.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/temp_folder_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/markdown.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/cache_memory_prompt.md"
           cat "${RUNNER_TEMP}/gh-aw/prompts/safe_outputs_prompt.md"
-          cat << 'GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF'
+          cat << 'GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF'
           <safe-output-tools>
-          Tools: add_comment, close_issue, add_labels(max:10), missing_tool, missing_data, noop
+          Tools: add_comment, close_issue, update_issue, update_pull_request, add_labels(max:10), set_issue_type, missing_tool, missing_data, noop
           </safe-output-tools>
-          GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF
+          GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/mcp_cli_tools_prompt.md"
-          cat << 'GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF'
+          cat << 'GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF'
           <github-context>
           The following GitHub context information is available for this workflow:
           {{#if github.actor}}
@@ -297,12 +297,12 @@ jobs:
           {{/if}}
           </github-context>
           
-          GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF
+          GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF
           cat "${RUNNER_TEMP}/gh-aw/prompts/github_mcp_tools_with_safeoutputs_prompt.md"
-          cat << 'GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF'
+          cat << 'GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF'
           </system>
           {{#runtime-import .github/workflows/issue-triage.md}}
-          GH_AW_PROMPT_cca7d6bcdcfd6d03_EOF
+          GH_AW_PROMPT_c10ee1e87a5fbb7a_EOF
           } > "$GH_AW_PROMPT"
       - name: Interpolate variables and render templates
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -429,7 +429,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -488,7 +488,493 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
           NODE_EXTRA_CA_CERTS: /tmp/gh-aw/proxy-logs/proxy-tls/ca.crt
         name: Resolve target issue number
-        run: echo "${ISSUE_NUMBER}" > /tmp/gh-aw/agent/issue-number.txt
+        run: |
+          echo "${ISSUE_NUMBER}" > /tmp/gh-aw/agent/issue-number.txt
+      - env:
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_HOST: ${{ env.GH_HOST || 'github.com' }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_API_URL: https://localhost:18443/api/v3
+          GITHUB_GRAPHQL_URL: https://localhost:18443/api/graphql
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+          NODE_EXTRA_CA_CERTS: /tmp/gh-aw/proxy-logs/proxy-tls/ca.crt
+        name: Fetch issue close and reopen history
+        run: |
+          set -o pipefail
+          HISTORY_FILE=/tmp/gh-aw/agent/issue-state-history.json
+          EVENTS_FILE=$(mktemp)
+          if gh api --paginate "repos/${GH_AW_GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}/events?per_page=100" \
+            | jq -s '[.[][] | select(.event == "closed" or .event == "reopened") | {
+                event,
+                created_at,
+                actor: {
+                  login: .actor.login,
+                  type: .actor.type
+                }
+              }]' > "${EVENTS_FILE}"; then
+            jq -n --slurpfile events "${EVENTS_FILE}" '{loaded: true, events: $events[0]}' > "${HISTORY_FILE}"
+          else
+            echo '{"loaded":false,"events":[]}' > "${HISTORY_FILE}"
+          fi
+          rm -f "${EVENTS_FILE}"
+      - env:
+          GH_AW_GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_HOST: ${{ env.GH_HOST || 'github.com' }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_API_URL: https://localhost:18443/api/v3
+          GITHUB_GRAPHQL_URL: https://localhost:18443/api/graphql
+          ISSUE_NUMBER: ${{ github.event.inputs.issue_number || github.event.issue.number }}
+          NODE_EXTRA_CA_CERTS: /tmp/gh-aw/proxy-logs/proxy-tls/ca.crt
+        name: Prefetch PR candidate evidence for target issue
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/gh-aw/agent
+          EVIDENCE_FILE=/tmp/gh-aw/agent/pr-candidate-evidence.json
+          STATUS_FILE=/tmp/gh-aw/agent/pr-candidate-status.json
+          INDEX_FILE=/tmp/gh-aw/agent/pr-candidate-screening-index.json
+          INDEX_VERSION=1
+          REPO="${GH_AW_GITHUB_REPOSITORY}"
+          NUM="${ISSUE_NUMBER}"
+          write_failure_contracts() {
+            FAILURE_MESSAGE="$1"
+            jq -n --arg issue "${NUM}" --arg repo "${REPO}" --arg error "${FAILURE_MESSAGE}" \
+              '{issue_number:($issue | tonumber? // $issue),repository:$repo,loaded:false,complete:false,success:false,errors:[$error],candidate_count:0,candidates:[]}' \
+              > "${EVIDENCE_FILE}"
+            jq -n --arg issue "${NUM}" --arg repo "${REPO}" --arg error "${FAILURE_MESSAGE}" --argjson version "${INDEX_VERSION}" \
+              '{
+                version:$version,
+                issue_number:($issue | tonumber? // $issue),
+                repository:$repo,
+                loaded:false,
+                complete:false,
+                success:false,
+                errors:[$error],
+                candidate_count:0,
+                required_inspection:[],
+                open_inventory_screening:[]
+              }' > "${INDEX_FILE}"
+            jq -n \
+              --arg issue "${NUM}" \
+              --arg repo "${REPO}" \
+              --arg error "${FAILURE_MESSAGE}" \
+              --arg evidence_path "${EVIDENCE_FILE}" \
+              --arg index_path "${INDEX_FILE}" \
+              --argjson index_version "${INDEX_VERSION}" \
+              '{
+                issue_number:($issue | tonumber? // $issue),
+                repository:$repo,
+                loaded:false,
+                complete:false,
+                success:false,
+                errors:[$error],
+                candidate_count:0,
+                open_inventory_count:0,
+                required_inspection_count:0,
+                required_inspection_numbers:[],
+                exact_required_inspection_count:0,
+                exact_required_inspection_numbers:[],
+                timeline_required_inspection_count:0,
+                timeline_required_inspection_numbers:[],
+                commit_required_inspection_count:0,
+                commit_required_inspection_numbers:[],
+                evidence_path:$evidence_path,
+                screening_index_path:$index_path,
+                index_version:$index_version
+              }' > "${STATUS_FILE}"
+          }
+          if ! printf '%s' "${REPO}" | grep -Eq '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' \
+            || ! printf '%s' "${NUM}" | grep -Eq '^[1-9][0-9]*$'; then
+            write_failure_contracts "invalid repository or issue number"
+            exit 0
+          fi
+          WORK_DIR=$(mktemp -d)
+          CANDIDATES_JSONL="${WORK_DIR}/candidates.jsonl"
+          ERRORS_FILE="${WORK_DIR}/errors.txt"
+          : > "${CANDIDATES_JSONL}"
+          : > "${ERRORS_FILE}"
+          COMPLETE=true
+          # Conservative fallback written up front: if this step dies before the final
+          # write below, the agent still finds an honest "incomplete" file rather than a
+          # stale or missing one, so it never treats a failed load as a false success.
+          write_failure_contracts "prefetch step did not finish"
+          record_error() {
+            echo "$1" >> "${ERRORS_FILE}"
+            COMPLETE=false
+          }
+          ISSUE_RAW="${WORK_DIR}/issue.json"
+          if ! gh api "repos/${REPO}/issues/${NUM}" > "${ISSUE_RAW}" 2>>"${ERRORS_FILE}"; then
+            echo '{"title":"","body":""}' > "${ISSUE_RAW}"
+            record_error "issue metadata: gh api fetch failed for issue #${NUM}"
+          fi
+          # Source 1: issue timeline - cross-referenced PRs, including non-closing mentions.
+          TIMELINE_RAW="${WORK_DIR}/timeline.jsonl"
+          if gh api --paginate "repos/${REPO}/issues/${NUM}/timeline?per_page=100" > "${TIMELINE_RAW}" 2>>"${ERRORS_FILE}"; then
+            jq -c -s --arg repo "${REPO}" '
+              add // []
+              | .[]
+              | select(.event == "cross-referenced")
+              | (.source.issue? // empty)
+              | select(.repository_url == ("https://api.github.com/repos/" + $repo))
+              | select(.pull_request != null)
+              | {
+                  number: .number,
+                  title: .title,
+                  url: .html_url,
+                  state: (.state // "unknown" | ascii_upcase),
+                  draft: (.draft // false),
+                  merged: (.pull_request.merged_at != null),
+                  body: (.body // ""),
+                  source: "timeline_cross_reference",
+                  detail: "Timeline cross-reference on the issue (includes non-closing mentions)"
+                }
+            ' "${TIMELINE_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "timeline: jq processing failed for issue #${NUM}"
+          else
+            record_error "timeline: gh api fetch failed for issue #${NUM}"
+          fi
+          # Sources 2-4: an exhaustive, paginated PR scan. It provides exact title/body
+          # matches and commit references across every PR state, plus a compact inventory
+          # of every currently open PR so reference-free fixes remain discoverable.
+          GRAPHQL_QUERY="${WORK_DIR}/pr-scan.graphql"
+          cat > "${GRAPHQL_QUERY}" <<'GRAPHQL_EOF'
+          query($owner: String!, $repo: String!, $endCursor: String) {
+            repository(owner: $owner, name: $repo) {
+              pullRequests(first: 50, after: $endCursor, states: [OPEN, CLOSED, MERGED], orderBy: {field: UPDATED_AT, direction: DESC}) {
+                pageInfo { hasNextPage endCursor }
+                nodes {
+                  number
+                  title
+                  url
+                  state
+                  isDraft
+                  merged
+                  body
+                  commits(first: 100) {
+                    pageInfo { hasNextPage }
+                    nodes { commit { oid message } }
+                  }
+                  files(first: 30) {
+                    pageInfo { hasNextPage }
+                    nodes { path }
+                  }
+                }
+              }
+            }
+          }
+          GRAPHQL_EOF
+          OWNER_NAME="${REPO%%/*}"
+          REPO_NAME="${REPO##*/}"
+          PR_SCAN_RAW="${WORK_DIR}/pr-scan.jsonl"
+          if gh api graphql --paginate -F query="@${GRAPHQL_QUERY}" -f owner="${OWNER_NAME}" -f repo="${REPO_NAME}" > "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}"; then
+            jq -c -s --arg num "${NUM}" --arg repo "${REPO}" '
+              ("#" + $num + "\\b") as $numRef
+              | ($repo + "#" + $num + "\\b") as $qualRef
+              | ("(?i)\\b(refs?|fixes?|closes?|resolves?)\\b[[:space:]]*#" + $num + "\\b") as $bodyRef
+              | [.[].data.repository.pullRequests.nodes[]?]
+              | .[]
+              | . as $pr
+              | (
+                  (if $pr.state == "OPEN" then
+                    [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""),
+                      source:"open_pr_inventory", detail:"Current open PR; screen title, body excerpt, and changed-file names for relevance",
+                      file_names:[$pr.files.nodes[]?.path], files_truncated:($pr.files.pageInfo.hasNextPage // false)}]
+                  else [] end)
+                  +
+                  (if (($pr.title // "") | test($numRef) or (($pr.title // "") | test($qualRef))) then
+                    [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""), source:"issue_number_search_title", detail:("PR title contains #" + $num + " or a repo-qualified reference")}]
+                  else [] end)
+                  +
+                  (if (($pr.body // "") | test($numRef) or (($pr.body // "") | test($qualRef))) then
+                    [{number:$pr.number, title:$pr.title, url:$pr.url, state:$pr.state, draft:$pr.isDraft, merged:$pr.merged, body:($pr.body // ""), source:"issue_number_search_body", detail:("PR body contains #" + $num + " or a repo-qualified reference")}]
+                  else [] end)
+                  +
+                  [
+                    ($pr.commits.nodes[]? | .commit
+                     | select((.message | test($numRef)) or (.message | test($qualRef)))
+                     | {
+                         number: $pr.number, title: $pr.title, url: $pr.url, state: $pr.state, draft: $pr.isDraft, merged: $pr.merged, body: ($pr.body // ""),
+                         source: (if (.message | test($bodyRef)) then "commit_body_refs" else "commit_message_reference" end),
+                         sha: .oid, message: .message,
+                         detail: ("Commit message references #" + $num)
+                       }
+                    )
+                  ]
+                )
+                | .[]
+            ' "${PR_SCAN_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "graphql pr scan: jq processing failed for issue #${NUM}"
+            TRUNCATED_COMMITS=$(jq -s '[.[].data.repository.pullRequests.nodes[]? | select(.commits.pageInfo.hasNextPage == true)] | length' "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}") \
+              || { TRUNCATED_COMMITS=1; record_error "graphql pr scan: jq commit-pagination check failed"; }
+            if [ "${TRUNCATED_COMMITS}" -gt 0 ]; then
+              record_error "graphql pr scan: ${TRUNCATED_COMMITS} PR(s) have more than 100 commits; commit-reference evidence is incomplete"
+            fi
+            LAST_HAS_NEXT=$(jq -s '[.[].data.repository.pullRequests.pageInfo.hasNextPage] | last // false' "${PR_SCAN_RAW}" 2>>"${ERRORS_FILE}")
+            if [ "${LAST_HAS_NEXT}" = "true" ]; then
+              record_error "graphql pr scan: pagination did not complete (hasNextPage still true) - results may be partial"
+            fi
+          else
+            record_error "graphql pr scan: gh api graphql fetch failed for repo ${REPO}"
+          fi
+          # Source 3: exact issue-number search across PR comments (all states, no date limit).
+          for VARIANT in "#${NUM}" "${REPO}#${NUM}"; do
+            SAFE_NAME=$(echo "${VARIANT}" | tr -c 'a-zA-Z0-9' '_')
+            COMMENT_SEARCH_RAW="${WORK_DIR}/comment-search-${SAFE_NAME}.jsonl"
+            if gh api --paginate --method GET search/issues -f q="repo:${REPO} is:pr in:comments \"${VARIANT}\"" > "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}"; then
+              jq -c -s '
+                [.[] | (.items // [])[]?]
+                | .[]
+                | {
+                    number: .number, title: .title, url: .html_url, state: (.state | ascii_upcase),
+                    draft: (.draft // false), merged: (.pull_request.merged_at != null),
+                    body: (.body // ""), source: "issue_number_search_comment",
+                    detail: "Matched via GitHub search in a PR comment"
+                  }
+              ' "${COMMENT_SEARCH_RAW}" >> "${CANDIDATES_JSONL}" 2>>"${ERRORS_FILE}" || record_error "comment search: jq processing failed for variant ${VARIANT}"
+              SEARCH_TOTAL=$(jq -s '[.[].total_count // 0] | max // 0' "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}") \
+                || { SEARCH_TOTAL=1; record_error "comment search: jq total-count check failed for variant ${VARIANT}"; }
+              SEARCH_COLLECTED=$(jq -s '[.[] | (.items // []) | length] | add // 0' "${COMMENT_SEARCH_RAW}" 2>>"${ERRORS_FILE}") \
+                || { SEARCH_COLLECTED=0; record_error "comment search: jq result-count check failed for variant ${VARIANT}"; }
+              if [ "${SEARCH_TOTAL}" -gt "${SEARCH_COLLECTED}" ]; then
+                record_error "comment search: GitHub search returned ${SEARCH_COLLECTED} of ${SEARCH_TOTAL} results for ${VARIANT} (1000-result cap or incomplete pagination)"
+              fi
+            else
+              record_error "comment search: gh api search fetch failed for variant ${VARIANT}"
+            fi
+          done
+          # Merge and de-dupe by PR number, preserving every source and its evidence so
+          # Step 6 can report related/partial PRs even when they are not linked.
+          if [ -s "${CANDIDATES_JSONL}" ]; then
+            jq -c -s '
+              group_by(.number)
+              | map({
+                  number: .[0].number,
+                  title: (first(.[] | select(.title != null and .title != "") | .title) // .[0].title),
+                  url: (first(.[] | select(.url != null and .url != "") | .url) // .[0].url),
+                  state: (first(.[] | select(.state != null and .state != "") | .state) // .[0].state),
+                  draft: (any(.[]; .draft == true)),
+                  merged: (any(.[]; .merged == true)),
+                  body_excerpt: ((first(.[] | select(.body != null and .body != "") | .body) // "")[0:600]),
+                  sources: ([.[] | .source] | unique),
+                  file_names: ([.[] | .file_names[]?] | unique),
+                  files_truncated: (any(.[]; .files_truncated == true)),
+                  evidence: [.[] | {source, detail, sha, message} | with_entries(select(.value != null))]
+                })
+              | sort_by(.number)
+            ' "${CANDIDATES_JSONL}" > "${WORK_DIR}/deduped.json" 2>>"${ERRORS_FILE}" || record_error "dedupe: jq processing failed"
+          else
+            echo '[]' > "${WORK_DIR}/deduped.json"
+          fi
+          if [ ! -s "${WORK_DIR}/deduped.json" ]; then
+            echo '[]' > "${WORK_DIR}/deduped.json"
+          fi
+          CANDIDATE_COUNT=$(jq 'length' "${WORK_DIR}/deduped.json" 2>/dev/null || echo 0)
+          jq -n \
+            --arg issue "${NUM}" \
+            --arg repo "${REPO}" \
+            --argjson complete "${COMPLETE}" \
+            --slurpfile candidates "${WORK_DIR}/deduped.json" \
+            --rawfile errorlog "${ERRORS_FILE}" \
+            '{
+              issue_number: ($issue | tonumber),
+              repository: $repo,
+              loaded: true,
+              complete: $complete,
+              success: $complete,
+              errors: ($errorlog | split("\n") | map(select(length > 0))),
+              candidate_count: ($candidates[0] | length),
+              candidates: $candidates[0]
+            }' > "${EVIDENCE_FILE}"
+          # Build a compact index for inventory screening. The evidence file above remains
+          # authoritative; this bounded view exists so the agent never has to print it.
+          jq -n \
+            --arg issue "${NUM}" \
+            --arg repo "${REPO}" \
+            --argjson complete "${COMPLETE}" \
+            --argjson version "${INDEX_VERSION}" \
+            --slurpfile issue_data "${ISSUE_RAW}" \
+            --slurpfile candidates "${WORK_DIR}/deduped.json" \
+            --rawfile errorlog "${ERRORS_FILE}" \
+            '
+              def tokens:
+                ascii_downcase
+                | gsub("[^a-z0-9_]+"; " ")
+                | split(" ")
+                | map(select(length >= 4))
+                | map(
+                    if test("^[a-z][a-z0-9_]*s$") and length > 4 and (endswith("ss") | not)
+                    then .[0:-1]
+                    else .
+                    end
+                  )
+                | . as $tokens
+                | [
+                    "about","above","across","after","again","against","already","also","although","always",
+                    "among","another","appear","applied","apply","available","because","before","being","below",
+                    "between","body","branch","change","changes","check","checked","clear","code","configuration",
+                    "continue","correlation","could","current","default","description","details","during","each",
+                    "error","example","existing","fails","from","github","have","having","include","issue","later",
+                    "main","make","module","more","need","needed","other","passes","please","provider","request",
+                    "resource","should","state","still","than","that","their","then","there","these","they","this",
+                    "through","type","update","using","value","version","when","where","which","while","with","would"
+                  ] as $stop
+                | $tokens
+                | map(. as $token | select(($stop | index($token)) == null))
+                | unique;
+              def overlap($left; $right):
+                [$left[] as $token | select(($right | index($token)) != null) | $token] | unique | sort;
+              def has_source($names): any(.sources[]?; . as $source | ($names | index($source)) != null);
+              def is_required:
+                has_source([
+                  "timeline_cross_reference",
+                  "issue_number_search_title",
+                  "issue_number_search_body",
+                  "issue_number_search_comment",
+                  "commit_body_refs",
+                  "commit_message_reference"
+                ]);
+              (($issue_data[0].title // "") | tokens) as $issue_title_tokens
+              | (($issue_data[0].body // "") | tokens) as $issue_body_tokens
+              | def compact_candidate:
+                  . as $candidate
+                  | (($candidate.title // "") | tokens) as $pr_title_tokens
+                  | (($candidate.body_excerpt // "") | tokens) as $pr_body_tokens
+                  | ([($candidate.file_names[]? // "") | tokens[]] | unique) as $pr_file_tokens
+                  | overlap($issue_title_tokens; $pr_title_tokens) as $title_title
+                  | overlap($issue_title_tokens; $pr_body_tokens) as $title_body
+                  | overlap($issue_body_tokens; $pr_title_tokens) as $body_title
+                  | overlap($issue_body_tokens; $pr_body_tokens) as $body_body
+                  | overlap(($issue_title_tokens + $issue_body_tokens | unique); $pr_file_tokens) as $file_matches
+                  | (
+                      (($title_title | length) * 5)
+                      + (($title_body | length) * 3)
+                      + (($body_title | length) * 2)
+                      + ([($body_body | length), 4] | min)
+                      + (($file_matches | length) * 2)
+                    ) as $score
+                  | {
+                      number: $candidate.number,
+                      title: $candidate.title,
+                      sources: $candidate.sources,
+                      url: $candidate.url,
+                      state: $candidate.state,
+                      draft: $candidate.draft,
+                      merged: $candidate.merged,
+                      body_excerpt: (($candidate.body_excerpt // "")[0:280]),
+                      file_names: (($candidate.file_names // [])[0:12]),
+                      file_names_truncated: (
+                        ($candidate.files_truncated == true)
+                        or (($candidate.file_names // []) | length > 12)
+                      ),
+                      open_inventory: (($candidate.sources | index("open_pr_inventory")) != null),
+                      lexical_relevance: {
+                        version: 1,
+                        score: $score,
+                        plausible: (
+                          ($score >= 15)
+                          or (($title_title | length) >= 3)
+                        ),
+                        signals: {
+                          issue_title_to_pr_title: $title_title[0:10],
+                          issue_title_to_pr_body: $title_body[0:10],
+                          issue_body_to_pr_title: $body_title[0:10],
+                          issue_body_to_pr_body: $body_body[0:10],
+                          issue_identifiers_to_file_names: $file_matches[0:10]
+                        }
+                      }
+                    };
+              {
+                version: $version,
+                issue_number: ($issue | tonumber),
+                repository: $repo,
+                loaded: true,
+                complete: $complete,
+                success: $complete,
+                errors: ($errorlog | split("\n") | map(select(length > 0) | .[0:240]) | .[0:20]),
+                candidate_count: ($candidates[0] | length),
+                open_inventory_count: ([$candidates[0][] | select(.sources | index("open_pr_inventory"))] | length),
+                required_inspection_count: ([$candidates[0][] | select(is_required)] | length),
+                required_inspection_numbers: ([$candidates[0][] | select(is_required) | .number] | unique | sort),
+                required_inspection: [
+                  $candidates[0][] | select(is_required) | compact_candidate
+                ],
+                open_inventory_screening: [
+                  $candidates[0][] | select(is_required | not) | compact_candidate
+                ]
+              }
+            ' > "${INDEX_FILE}" 2>>"${ERRORS_FILE}" || {
+              record_error "screening index: jq generation failed"
+              write_failure_contracts "screening index generation failed"
+              rm -rf "${WORK_DIR}"
+              exit 0
+            }
+          if ! jq -e --argjson expected "${CANDIDATE_COUNT}" '
+            (.version == 1)
+            and (.candidate_count == $expected)
+            and (.required_inspection_count == (.required_inspection | length))
+            and (.required_inspection_numbers == ([.required_inspection[].number] | unique | sort))
+            and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | length == $expected)
+            and (([.required_inspection[].number] + [.open_inventory_screening[].number]) | unique | length == $expected)
+            and (([.required_inspection[], .open_inventory_screening[]] | map(select(.open_inventory)) | length) == .open_inventory_count)
+            and (all(.required_inspection[]; (.sources | any(. != "open_pr_inventory"))))
+            and (all(.open_inventory_screening[]; (.sources == ["open_pr_inventory"])))
+            and (all(.required_inspection[], .open_inventory_screening[];
+              (.body_excerpt | length) <= 280 and (.file_names | length) <= 12
+            ))
+          ' "${INDEX_FILE}" >/dev/null 2>>"${ERRORS_FILE}"; then
+            record_error "screening index: count, uniqueness, or partition invariant failed"
+            write_failure_contracts "screening index invariant failed"
+            rm -rf "${WORK_DIR}"
+            exit 0
+          fi
+          jq -n \
+            --arg issue "${NUM}" \
+            --arg repo "${REPO}" \
+            --arg evidence_path "${EVIDENCE_FILE}" \
+            --arg index_path "${INDEX_FILE}" \
+            --argjson index_version "${INDEX_VERSION}" \
+            --argjson complete "${COMPLETE}" \
+            --slurpfile candidates "${WORK_DIR}/deduped.json" \
+            --rawfile errorlog "${ERRORS_FILE}" \
+            '
+              def numbers_with($sources):
+                [
+                  $candidates[0][]
+                  | select(any(.sources[]?; . as $source | ($sources | index($source)) != null))
+                  | .number
+                ] | unique | sort;
+              (numbers_with([
+                "issue_number_search_title",
+                "issue_number_search_body",
+                "issue_number_search_comment"
+              ])) as $exact
+              | (numbers_with(["timeline_cross_reference"])) as $timeline
+              | (numbers_with(["commit_body_refs","commit_message_reference"])) as $commit
+              | (($exact + $timeline + $commit) | unique | sort) as $required
+              | (numbers_with(["open_pr_inventory"])) as $inventory
+              | {
+                  issue_number: ($issue | tonumber),
+                  repository: $repo,
+                  loaded: true,
+                  complete: $complete,
+                  success: $complete,
+                  errors: ($errorlog | split("\n") | map(select(length > 0) | .[0:240]) | .[0:20]),
+                  candidate_count: ($candidates[0] | length),
+                  open_inventory_count: ($inventory | length),
+                  required_inspection_count: ($required | length),
+                  required_inspection_numbers: $required,
+                  exact_required_inspection_count: ($exact | length),
+                  exact_required_inspection_numbers: $exact,
+                  timeline_required_inspection_count: ($timeline | length),
+                  timeline_required_inspection_numbers: $timeline,
+                  commit_required_inspection_count: ($commit | length),
+                  commit_required_inspection_numbers: $commit,
+                  evidence_path: $evidence_path,
+                  screening_index_path: $index_path,
+                  index_version: $index_version
+                }
+            ' > "${STATUS_FILE}"
+          echo "PR candidate prefetch: candidates=${CANDIDATE_COUNT}, status=${STATUS_FILE}, index=${INDEX_FILE}, complete=${COMPLETE}"
+          rm -rf "${WORK_DIR}"
 
       # Cache memory file share configuration from frontmatter processed below
       - name: Create cache-memory directory
@@ -570,17 +1056,19 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/gh-aw/safeoutputs"
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
-          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_d1fbe2f5ecbe200b_EOF'
-          {"add_comment":{"max":1},"add_labels":{"max":10},"close_issue":{"max":1,"state_reason":"duplicate"},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{}}
-          GH_AW_SAFE_OUTPUTS_CONFIG_d1fbe2f5ecbe200b_EOF
+          cat > "${RUNNER_TEMP}/gh-aw/safeoutputs/config.json" << 'GH_AW_SAFE_OUTPUTS_CONFIG_a0608311d9dfe294_EOF'
+          {"add_comment":{"hide_older_comments":true,"max":1,"target":"*"},"add_labels":{"max":10,"target":"*"},"close_issue":{"max":1,"state_reason":"duplicate","target":"*"},"create_report_incomplete_issue":{},"missing_data":{},"missing_tool":{},"noop":{"max":1,"report-as-issue":"true"},"report_incomplete":{},"set_issue_type":{"allowed":["Bug","Feature","Task"],"max":1,"target":"*"},"update_issue":{"allow_body":true,"allow_status":true,"max":1},"update_pull_request":{"allow_body":true,"allow_title":false,"default_operation":"append","footer":false,"max":1,"target":"*","update_branch":false}}
+          GH_AW_SAFE_OUTPUTS_CONFIG_a0608311d9dfe294_EOF
       - name: Generate Safe Outputs Tools
         env:
           GH_AW_TOOLS_META_JSON: |
             {
               "description_suffixes": {
-                "add_comment": " CONSTRAINTS: Maximum 1 comment(s) can be added. Supports reply_to_id for discussion threading.",
-                "add_labels": " CONSTRAINTS: Maximum 10 label(s) can be added.",
-                "close_issue": " CONSTRAINTS: Maximum 1 issue(s) can be closed."
+                "add_comment": " CONSTRAINTS: Maximum 1 comment(s) can be added. Target: *. Supports reply_to_id for discussion threading.",
+                "add_labels": " CONSTRAINTS: Maximum 10 label(s) can be added. Target: *.",
+                "close_issue": " CONSTRAINTS: Maximum 1 issue(s) can be closed. Target: *.",
+                "update_issue": " CONSTRAINTS: Maximum 1 issue(s) can be updated.",
+                "update_pull_request": " CONSTRAINTS: Maximum 1 pull request(s) can be updated. Target: *."
               },
               "repo_params": {},
               "dynamic_tools": []
@@ -717,6 +1205,115 @@ jobs:
                     "maxLength": 1024
                   }
                 }
+              },
+              "set_issue_type": {
+                "defaultMax": 5,
+                "fields": {
+                  "issue_number": {
+                    "issueOrPRNumber": true
+                  },
+                  "issue_type": {
+                    "required": true,
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 128
+                  },
+                  "repo": {
+                    "type": "string",
+                    "maxLength": 256
+                  }
+                }
+              },
+              "update_issue": {
+                "defaultMax": 1,
+                "fields": {
+                  "assignees": {
+                    "type": "array",
+                    "itemType": "string",
+                    "itemSanitize": true,
+                    "itemMaxLength": 39
+                  },
+                  "body": {
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 65000
+                  },
+                  "issue_number": {
+                    "issueOrPRNumber": true
+                  },
+                  "labels": {
+                    "type": "array",
+                    "itemType": "string",
+                    "itemSanitize": true,
+                    "itemMaxLength": 128
+                  },
+                  "milestone": {
+                    "optionalPositiveInteger": true
+                  },
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend",
+                      "replace-island"
+                    ]
+                  },
+                  "repo": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "closed"
+                    ]
+                  },
+                  "title": {
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 128
+                  }
+                },
+                "customValidation": "requiresOneOf:status,title,body"
+              },
+              "update_pull_request": {
+                "defaultMax": 1,
+                "fields": {
+                  "body": {
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 65000
+                  },
+                  "draft": {
+                    "type": "boolean"
+                  },
+                  "operation": {
+                    "type": "string",
+                    "enum": [
+                      "replace",
+                      "append",
+                      "prepend"
+                    ]
+                  },
+                  "pull_request_number": {
+                    "issueOrPRNumber": true
+                  },
+                  "repo": {
+                    "type": "string",
+                    "maxLength": 256
+                  },
+                  "title": {
+                    "type": "string",
+                    "sanitize": true,
+                    "maxLength": 256
+                  },
+                  "update_branch": {
+                    "type": "boolean"
+                  }
+                },
+                "customValidation": "requiresOneOf:title,body,update_branch"
               }
             }
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -916,7 +1513,7 @@ jobs:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           COPILOT_DUMMY_BYOK: dummy-byok-key-for-offline-mode
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
-          COPILOT_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || vars.GH_AW_DEFAULT_MODEL_COPILOT || 'claude-sonnet-4.6' }}
+          COPILOT_MODEL: claude-sonnet-5
           GH_AW_MAX_AI_CREDITS: ${{ vars.GH_AW_DEFAULT_MAX_AI_CREDITS || '1000' }}
           GH_AW_MAX_TURNS: ${{ vars.GH_AW_DEFAULT_MAX_TURNS || '' }}
           GH_AW_PHASE: agent
@@ -1137,7 +1734,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1376,7 +1973,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1457,7 +2054,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           WORKFLOW_NAME: "Azure Verified Modules Terraform Module Issue Triage"
-          WORKFLOW_DESCRIPTION: "Automated issue triage for Azure Verified Modules Terraform module repositories. Checks for duplicates, classifies issues with existing repo labels, checks whether a newer release fixes the issue, and posts a triage summary comment on new or reopened issues."
+          WORKFLOW_DESCRIPTION: "Automated issue triage for Azure Verified Modules Terraform module repositories. Checks for duplicates, classifies issues with existing repo labels, discovers related pull requests, links clear fixes, closes issues that are conclusively resolved, and posts a triage summary comment on new, reopened, or manually selected issues."
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
         with:
           script: |
@@ -1529,7 +2126,7 @@ jobs:
           COPILOT_AGENT_RUNNER_TYPE: STANDALONE
           COPILOT_DUMMY_BYOK: dummy-byok-key-for-offline-mode
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
-          COPILOT_MODEL: ${{ vars.GH_AW_MODEL_DETECTION_COPILOT || vars.GH_AW_DEFAULT_MODEL_COPILOT || 'claude-sonnet-4.6' }}
+          COPILOT_MODEL: claude-sonnet-5
           GH_AW_MAX_AI_CREDITS: ${{ vars.GH_AW_DEFAULT_DETECTION_MAX_AI_CREDITS || '400' }}
           GH_AW_MAX_TURNS: ${{ vars.GH_AW_DEFAULT_MAX_TURNS || '' }}
           GH_AW_PHASE: detection
@@ -1625,7 +2222,7 @@ jobs:
       GH_AW_DETECTION_REASON: ${{ needs.detection.outputs.detection_reason }}
       GH_AW_EFFECTIVE_TOKENS: ${{ needs.agent.outputs.effective_tokens }}
       GH_AW_ENGINE_ID: "copilot"
-      GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
+      GH_AW_ENGINE_MODEL: "claude-sonnet-5"
       GH_AW_ENGINE_VERSION: "1.0.63"
       GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "issue-triage"
@@ -1643,7 +2240,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
@@ -1687,7 +2284,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "*.githubusercontent.com,api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,apt.releases.hashicorp.com,archive.ubuntu.com,azure.archive.ubuntu.com,codeload.github.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,docs.github.com,github-cloud.githubusercontent.com,github-cloud.s3.amazonaws.com,github.blog,github.com,github.githubassets.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,learn.microsoft.com,lfs.github.com,objects.githubusercontent.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,patch-diff.githubusercontent.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,registry.terraform.io,releases.hashicorp.com,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,www.googleapis.com,yum.releases.hashicorp.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"max\":1},\"add_labels\":{\"max\":10},\"close_issue\":{\"max\":1,\"state_reason\":\"duplicate\"},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"report_incomplete\":{}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"hide_older_comments\":true,\"max\":1,\"target\":\"*\"},\"add_labels\":{\"max\":10,\"target\":\"*\"},\"close_issue\":{\"max\":1,\"state_reason\":\"duplicate\",\"target\":\"*\"},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":1,\"report-as-issue\":\"true\"},\"report_incomplete\":{},\"set_issue_type\":{\"allowed\":[\"Bug\",\"Feature\",\"Task\"],\"max\":1,\"target\":\"*\"},\"update_issue\":{\"allow_body\":true,\"allow_status\":true,\"max\":1},\"update_pull_request\":{\"allow_body\":true,\"allow_title\":false,\"default_operation\":\"append\",\"footer\":false,\"max\":1,\"target\":\"*\",\"update_branch\":false}}"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
@@ -1718,7 +2315,7 @@ jobs:
     steps:
       - name: Setup Scripts
         id: setup
-        uses: github/gh-aw-actions/setup@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup@v0.80.9
         with:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
