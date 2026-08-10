@@ -12,7 +12,7 @@ avm-ptn-alz-application-landing-zone-cicd-bootstrap-azure-devops,,,ALZ Applicati
 avm-ptn-alz-application-landing-zone-cicd-bootstrap-github,,,ALZ Application Landing Zone CI/CD Bootstrap - GitHub,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-alz-application-landing-zone-identity-and-access,,,ALZ Identity and Access Management,,jaredfholgate,Jared Holgate,,,false
 avm-ptn-alz-connectivity-hub-and-spoke-vnet,,,ALZ Connectivity Hub and Spoke,Azure Landing Zones - Hub and Spoke,jaredfholgate,Jared Holgate,,,false
-avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,,false
+avm-ptn-alz-connectivity-virtual-wan,,,ALZ Connectivity vWAN,Azure Landing Zones - vWAN,jaredfholgate,Jared Holgate,,,true
 avm-ptn-alz-management,,,ALZ Management,Azure Landing Zones - Management,luke-taylor,Luke Taylor,,,false
 avm-ptn-alz-sub-vending,,,Subscription Vending,Application Landing Zones Vending,matt-FFFFFF,Matt White,jaredfholgate,Jared Holgate,false
 avm-ptn-app-iaas-vm-cosmosdb-tier-four,,,Corporate Line of Business application architecture using IaaS components (VMs) and PaaS DB from the perspective of Enterprise Scale Landing Zones,,mikestiers,Mike Stiers,,,false
@@ -46,7 +46,7 @@ avm-ptn-monitoring-amba-alz,,,AMBA ALZ Pattern,Azure Monitor Baseline Alerts - A
 avm-ptn-network-private-link-private-dns-zones,,,Private Link Private DNS Zones,,jtracey93,Jack Tracey,,,false
 avm-ptn-network-routeserver,,,Azure Route Server,,jchancellor-ms,Jon Chancellor,,,false
 avm-ptn-odaa,,,Oracle Exedata Workload,,terrymandin,Terry Mandin,,,false
-avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,,false
+avm-ptn-odaa-identity,,,Oracle Identity,,terrymandin,Terry Mandin,,,true
 avm-ptn-openai-cognitivesearch,,,Corporate Line of Business (LoB) ChatBot ,,mikestiers,Mike Stiers,,,false
 avm-ptn-pipeline-agent-container-job,,,This module will be used to deploy self hosted Azure Pipeline Agent in Azure Container Apps with autoscaling capabilities,,mathewsg,Mathews George,,,false
 avm-ptn-policyassignment,,,Policy assignment,,bjornhofer,Bjorn Hofer,,,false
@@ -55,7 +55,7 @@ avm-ptn-subscription-service-health-alerts,,,Subscription Service Health Alerts,
 avm-ptn-virtualwan,,,Virtual WAN,vWAN,khushal08,Khush Kaviraj,,,true
 avm-ptn-vnetgateway,,,Virtual Network Gateway,VNET GW,matt-FFFFFF,Matt White,,,true
 avm-res-aad-domainservice,Microsoft.AAD,domainServices,Entra ID Domain Services,,itamarh,Itamar Hirosh,,,false
-avm-res-alertsmanagement-actionrule,Microsoft.AlertsManagement,actionRules,Alert Action Rules,,JoeyBarnes,Joseph Barnes,ASHR4,Rhys Ash,false
+avm-res-alertsmanagement-actionrule,Microsoft.AlertsManagement,actionRules,Alert Action Rules,,JoeyBarnes,Joseph Barnes,ASHR4,Rhys Ash,true
 avm-res-analysisservices-server,Microsoft.AnalysisServices,servers,Analysis Services Server,,Bhavyasree08,Bhavyasree Damarla,,,false
 avm-res-apimanagement-service,Microsoft.ApiManagement,service,API Management Service,,swatilekhapaul,Swatilekha Paul,,,false
 avm-res-app-containerapp,Microsoft.App,containerApps,Container App,,lonegunmanb,Zijie He,,,false
@@ -64,7 +64,7 @@ avm-res-app-managedenvironment,Microsoft.App,managedEnvironments,App Managed Env
 avm-res-appconfiguration-configurationstore,Microsoft.AppConfiguration,configurationStores,App Configuration Store,,matt-FFFFFF,Matt White,,,false
 avm-res-authorization-roleassignment,Microsoft.Authorization,roleAssignments,Role Assignment,,jaredfholgate,Jared Holgate,,,false
 avm-res-automation-automationaccount,Microsoft.Automation,automationAccounts,Automation Account,,poven,Poornima Venkataramanan,,,false
-avm-res-avs-privatecloud,Microsoft.AVS,privateClouds,AVS Private Cloud,,jchancellor-ms,Jon Chancellor,,,false
+avm-res-avs-privatecloud,Microsoft.AVS,privateClouds,AVS Private Cloud,,jchancellor-ms,Jon Chancellor,,,true
 avm-res-azurestackhci-cluster,Microsoft.AzureStackHCI,clusters,Azure Stack HCI Cluster,,xhy8759,Hangyu Xu,,,false
 avm-res-azurestackhci-logicalnetwork,Microsoft.AzureStackHCI,logicalNetworks,AzureStackHCI logical network,,xhy8759,Hangyu Xu,,,false
 avm-res-azurestackhci-virtualmachineinstance,Microsoft.AzureStackHCI,virtualMachineInstances,Stack HCI Virtual Machine Instance,,xhy8759,Hangyu Xu,,,false
@@ -76,7 +76,7 @@ avm-res-cdn-profile,Microsoft.Cdn,profiles,CDN Profile,,Poven795909,Poornima Ven
 avm-res-certificateregistration-certificateorder,Microsoft.CertificateRegistration,certificateOrders,Certificate Order,,lonegunmanb,Zijie He,,,false
 avm-res-cognitiveservices-account,Microsoft.CognitiveServices,accounts,Cognitive Service,,lonegunmanb,Zijie He,,,false
 avm-res-communication-emailservice,Microsoft.Communication,emailServices,Email Communication Service,,lonegunmanb,Zijie He,,,false
-avm-res-compute-capacityreservationgroup,,,Compute Capacity Reservation Group,,chianw,Chian Wong,,,false
+avm-res-compute-capacityreservationgroup,,,Compute Capacity Reservation Group,,chianw,Chian Wong,,,true
 avm-res-compute-disk,Microsoft.Compute,disks,Compute Disk,,terrymandin,Terry Mandin,,,false
 avm-res-compute-diskencryptionset,Microsoft.Compute,diskEncryptionSets,Disk Encryption Set,,Akashc0807,Akash Choudhary,,,false
 avm-res-compute-gallery,Microsoft.Compute,galleries,Azure Compute Gallery,,Akashc0807,Akash Choudhary,,,false
@@ -137,7 +137,7 @@ avm-res-iotoperations-instance,Microsoft.IoTOperations,instances,IOT Operations 
 avm-res-keyvault-managedhsm,Microsoft.KeyVault,managedHSMs,Managed HSM,"Key Vault Managed HSM, MHSM",benvbr,Benjamin Van Brussel,,,false
 avm-res-keyvault-vault,Microsoft.KeyVault,vaults,Key Vault,KV,matt-FFFFFF,Matt White,,,false
 avm-res-kubernetesconfiguration-extension,Microsoft.KubernetesConfiguration,extensions,Kubernetes Configuration Extension,,lonegunmanb,Zijie He,,,false
-avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,,false
+avm-res-kusto-cluster,Microsoft.Kusto,clusters,Kusto Clusters,,LaurentLesle,Laurent Lesle,,,true
 avm-res-loadtestservice-loadtest,Microsoft.LoadTestService,loadTests,Load Testing Service,,LaurentLesle,Laurent Lesle,,,false
 avm-res-logic-workflow,Microsoft.Logic,workflows,Logic Apps (Workflow),,bakrish,Bala Krishnamoorthy,,,false
 avm-res-machinelearningservices-workspace,Microsoft.MachineLearningServices,workspaces,Machine Learning Services Workspace,ML Workspace,Nepomuceno,Gabriel Monteiro Nepomuceno,,,false
