@@ -20,6 +20,7 @@
     ".github/workflows/grept_cronjob.yml",
     ".github/workflows/linting.yml",
     ".github/workflows/test-examples-template.yml",
+    ".github/workflows/terraform-test.yml",
     ".github/workflows/version-check.yml",
     ".vscode/mcp.json",
     "Makefile",
