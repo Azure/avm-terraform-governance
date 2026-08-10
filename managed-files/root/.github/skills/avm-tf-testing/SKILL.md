@@ -59,6 +59,8 @@ Use mocked `apply` so computed values and resource creation paths can be asserte
 - parent-to-submodule propagation; and
 - `resource_types`, `retry`, `timeouts`, and `ignore_body_changes` wiring.
 
+For detailed `.tftest.hcl` syntax, mocking, assertions, and troubleshooting patterns, see the [Terraform test reference](references/terraform-test.md).
+
 ## Integration tests
 
 Place real-Azure Terraform tests in `tests/integration`. Do not mock providers. Keep each run focused, use unique names, and verify behaviors that cannot be proven from a mocked plan.
@@ -83,6 +85,8 @@ Without `--example`, runnable examples execute sequentially. A `.e2eignore` mark
 5. bounded retries for recognized capacity failures.
 
 An idempotency diff is a failure and is never hidden by a retry.
+
+For exceptional manual workflows such as distributing examples across subscriptions or retaining deployments for inspection, see the [manual example-testing reference](references/example-test.md).
 
 ## PowerShell hooks
 

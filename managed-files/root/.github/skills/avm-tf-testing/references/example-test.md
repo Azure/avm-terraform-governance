@@ -1,4 +1,4 @@
-# Testing Examples Manually
+# Manual AVM Example Testing
 
 > **When to use this reference:**
 >

@@ -1,6 +1,6 @@
 # Writing Terraform Tests for AVM Modules
 
-This sub-skill covers writing `.tftest.hcl` files for Azure Verified Modules (AVM). It adapts Terraform's built-in testing framework to AVM conventions.
+This reference covers writing `.tftest.hcl` files for Azure Verified Modules (AVM). It adapts Terraform's built-in testing framework to AVM conventions.
 
 ## AVM Test Directory Structure
 

@@ -23,7 +23,7 @@ At the start of an AVM task:
 
 1. Fetch <https://azure.github.io/Azure-Verified-Modules/llms.txt>.
 2. Locate and read the current raw page for every specification ID relevant to the change.
-3. Read `.agents/skills/avm-terraform-module-development/SKILL.md` and only the references needed for the task.
+3. Read only the relevant `.github/skills/avm-tf-*/SKILL.md` files and their bundled references or scripts.
 4. When guidance conflicts, the current specification text takes precedence.
 
 Keep RFC 2119 severity exact. Do not turn a SHOULD into a MUST or cite a rule from memory.

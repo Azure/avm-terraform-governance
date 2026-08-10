@@ -225,11 +225,13 @@ Put secrets in `sensitive_body`, make secret inputs ephemeral where required by 
 Use the repository's PowerShell schema helper rather than guessing:
 
 ```pwsh
-.agents/skills/avm-terraform-module-development/scripts/Get-AzureSchema.ps1 versions Microsoft.Example/widgets
-.agents/skills/avm-terraform-module-development/scripts/Get-AzureSchema.ps1 get Microsoft.Example/widgets 2024-01-01
+pwsh .github/skills/avm-tf-azapi/scripts/Get-AzureSchema.ps1 versions Microsoft.Example/widgets
+pwsh .github/skills/avm-tf-azapi/scripts/Get-AzureSchema.ps1 get Microsoft.Example/widgets 2024-01-01
 ```
 
 Include required writable properties in `body`, exclude read-only properties, export needed read-only values, and put write-only secret properties in `sensitive_body`. Prefer a stable API version unless the resource or required feature is preview-only.
+
+For Terraform provider schema inspection beyond ARM body schemas, see the [tfpluginschema reference](references/tfpluginschema.md).
 
 ## Migration checks
 
