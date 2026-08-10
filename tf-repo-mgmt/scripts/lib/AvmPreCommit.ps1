@@ -62,6 +62,40 @@ function Assert-AvmPreCommitResult {
     throw "avm pre-commit returned status '$status'.$detail"
 }
 
+function Invoke-AvmPreCommitWithUpgradeRetry {
+    param(
+        [string]$repoId,
+        [string]$managedFilesBaseDir,
+        [string]$repositoryConfigDir
+    )
+
+    $preCommitParameters = @{
+        Ecosystem             = "terraform"
+        RepoId                = $repoId
+        ManagedFilesLocalPath = $managedFilesBaseDir
+        ConfigLocalPath       = $repositoryConfigDir
+    }
+
+    Import-Module Avm.Authoring -Force -ErrorAction Stop
+    try {
+        return Invoke-AvmPreCommit @preCommitParameters
+    } catch {
+        $exception = $_.Exception
+        $isModuleUpgradeRequired = (
+            $exception.PSObject.Properties.Name -contains "Code" -and
+            [string]$exception.Code -eq "AVM1050"
+        )
+        if (-not $isModuleUpgradeRequired) {
+            throw
+        }
+
+        Write-Host "A newer Avm.Authoring release became available. Upgrading the module and retrying avm pre-commit once." -ForegroundColor Yellow
+        Update-PSResource -Name Avm.Authoring -Scope CurrentUser -TrustRepository -ErrorAction Stop | Out-Null
+        Import-Module Avm.Authoring -Force -ErrorAction Stop
+        return Invoke-AvmPreCommit @preCommitParameters
+    }
+}
+
 function Invoke-AvmPreCommitForRepository {
     param(
         [string]$orgAndRepoName,
@@ -90,12 +124,10 @@ function Invoke-AvmPreCommitForRepository {
 
         Push-Location $tempDir
         try {
-            Import-Module Avm.Authoring -Force
-            $preCommitResult = Invoke-AvmPreCommit `
-                -Ecosystem terraform `
-                -RepoId $repoId `
-                -ManagedFilesLocalPath $managedFilesBaseDir `
-                -ConfigLocalPath $repositoryConfigDir
+            $preCommitResult = Invoke-AvmPreCommitWithUpgradeRetry `
+                -repoId $repoId `
+                -managedFilesBaseDir $managedFilesBaseDir `
+                -repositoryConfigDir $repositoryConfigDir
             Assert-AvmPreCommitResult -preCommitResult $preCommitResult
 
             $status = git status --porcelain
