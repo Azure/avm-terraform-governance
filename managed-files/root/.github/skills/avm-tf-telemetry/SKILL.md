@@ -5,20 +5,20 @@ description: Use this skill whenever an Azure Verified Module (AVM) for Terrafor
 
 # AVM Terraform telemetry
 
-Every AVM Terraform module collects anonymous deployment/usage telemetry, on by default, with a single opt-out variable. The wiring lives in one file (`main.telemetry.tf`) and is shipped from the AVM template unchanged. This skill explains how it works, when (rarely) you'd edit it, and the consumer story.
+Every AVM Terraform module that deploys resources collects anonymous deployment/usage telemetry, on by default, with a single opt-out variable. The wiring lives in `main.telemetry.tf` and is maintained by the Mapotf transforms bundled with `Avm.Authoring`.
 
-Authoritative sources:
+Fetch <https://azure.github.io/Azure-Verified-Modules/llms.txt> and confirm the current versions of these sources:
 - [SFR3](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR3.md) — Deployment/Usage Telemetry
 - [SFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR4.md) — Telemetry Enablement Flexibility
 - <https://registry.terraform.io/providers/Azure/modtm/latest>
-- The template's `main.telemetry.tf` at <https://github.com/Azure/terraform-azurerm-avm-template/blob/main/main.telemetry.tf>
+- The current `main_telemetry_tf.mptf.hcl` and `avm_headers_for_azapi.mptf.hcl` transforms in <https://github.com/Azure/azure-verified-modules-tools>
 - `aka.ms/avm/telemetry` (the consumer-facing page)
 
 ## The headline rule
 
 > Telemetry **MUST** be on/enabled by default. Consumers **MUST** be able to disable it by setting `enable_telemetry = false`. ([SFR4](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/shared/functional/SFR4.md))
 
-You don't get to opt your module out of telemetry; you only get to expose the opt-out to the consumer. Removing or defaulting `enable_telemetry` to `false` fails AVM linting.
+A module that deploys resources cannot opt out of telemetry; it exposes the opt-out to the consumer. Removing or defaulting `enable_telemetry` to `false` fails AVM linting.
 
 ## What `main.telemetry.tf` does
 
@@ -89,14 +89,14 @@ locals {
 |---|---|
 | `data.azapi_client_config.telemetry` | Reads the current subscription + tenant ID for the telemetry record. Same data source other places in the module use; the `telemetry` instance is independent so you can read it even if no AzAPI resource is created. |
 | `data.modtm_module_source.telemetry` | Inspects `path.module` and figures out where the module was loaded from (Registry, GitHub, OpenTofu Registry, etc.) and what version. |
-| `random_uuid.telemetry` | Generates a one-time random ID per `terraform apply` so the telemetry record is correlatable but not personally identifying. |
+| `random_uuid.telemetry` | Generates a random ID retained with the module instance's Terraform state so telemetry can be correlated without identifying a person. |
 | `modtm_telemetry.telemetry` | The actual telemetry "resource" — its lifecycle hooks send a HTTP POST to the AVM telemetry collector with the tags map. |
 | `local.fork_avm` | True if the module wasn't loaded from an official `Azure/*` source — i.e. someone forked the module. Telemetry still flows but is tagged differently. |
-| `local.avm_azapi_headers` / `avm_azapi_header` | The headers your module's `azapi_resource` blocks should pass on via `headers = { ... }` so ARM-side telemetry correlates with the modtm record. |
+| `local.avm_azapi_headers` / `avm_azapi_header` | Builds the `User-Agent` value that `avm transform` merges into the applicable AzAPI create, read, update, and delete header attributes. |
 
 ### What gets sent
 
-A single record per `terraform apply` containing:
+The telemetry record contains:
 
 - `subscription_id`, `tenant_id` (from the current ARM client context — not consumer's identity)
 - `module_source`, `module_version` (so AVM team knows which module + version)
@@ -128,10 +128,9 @@ variable "enable_telemetry" {
   default     = true
   nullable    = false
   description = <<DESCRIPTION
-(Optional) Controls whether or not telemetry is enabled for the module.
-For more information see <https://aka.ms/avm/telemetry>.
-If `true` (the default) the module will collect anonymous usage telemetry.
-Set to `false` to disable.
+This variable controls whether or not telemetry is enabled for the module.
+For more information see <https://aka.ms/avm/telemetryinfo>.
+If it is set to false, then no telemetry will be collected.
 DESCRIPTION
 }
 ```
@@ -169,7 +168,7 @@ The template ships `_footer.md` with this notice — don't delete it.
 
 ## When do you edit `main.telemetry.tf`?
 
-**Almost never.** The file is template-managed and meant to stay identical across modules. The only legitimate edit is to `local.main_location` if your module:
+**Almost never.** The file is governance-managed and meant to stay identical across modules. Run `avm sync` and `avm transform` rather than copying a potentially stale template. The only normal module-specific edit is to `local.main_location` if your module:
 
 - Doesn't accept a `location` variable (e.g. a global resource) — set `main_location = "unknown"`.
 - Sources its location from a collection or computed value — set `main_location = <the right expression>`.
@@ -187,5 +186,5 @@ Per SFR3, **utility modules that deploy no resources MUST NOT include telemetry.
 - **Editing the modtm logic to add custom tags.** Don't — telemetry shape is standardised. If you genuinely need richer telemetry (e.g. for a new module class), raise it with the AVM core team.
 - **Not passing `enable_telemetry` through to child AVM modules.** A consumer who sets `enable_telemetry = false` on the pattern module expects telemetry off for the whole graph; if you don't pass it through, child resource modules still emit telemetry.
 - **Forgetting the Data Collection notice in `_footer.md`.** Required by SFR3. The template includes it; deletions will fail review.
-- **Putting the Data Collection notice in `README.md` directly.** It gets overwritten on the next `./avm pre-commit` run. Put it in `_footer.md`.
+- **Putting the Data Collection notice in `README.md` directly.** It gets overwritten on the next `avm pre-commit` run. Put it in `_footer.md`.
 - **Using a `modtm` version other than `~> 0.3`.** Pinned by spec and validated by lint.

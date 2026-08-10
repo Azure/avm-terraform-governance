@@ -11,7 +11,7 @@ terraform {
   required_providers {
     azapi = {
       source  = "Azure/azapi"
-      version = ">= 2.0, < 3.0"
+      version = ">= 2.12, < 3.0"
     }
   }
 }
@@ -23,7 +23,7 @@ AzAPI resources use ARM resource types with explicit API versions. The primary r
 
 ```hcl
 resource "azapi_resource" "this" {
-  type      = var.resource_types.this   # TFFR6 — sourced from `resource_types`, never hard-coded
+  type      = var.resource_types.example_widgets   # TFFR6 — deterministic key, never hard-coded
   parent_id = var.parent_id             # TFRMFR1 — single fully-qualified ARM ID, validated via parse_resource_id
   name      = var.name
   location  = var.location
@@ -33,6 +33,9 @@ resource "azapi_resource" "this" {
       # Resource-specific properties as an HCL object (not a JSON string).
     }
   }
+
+  # TFFR8 — Empty lists MUST collapse to null.
+  ignore_body_changes = length(var.ignore_body_changes.example_widgets) > 0 ? var.ignore_body_changes.example_widgets : null
 
   # TFFR5 — MUST be specified. List body paths that force replacement on change.
   # `name` and `location` already trigger replacement and don't need to be listed.
@@ -73,6 +76,7 @@ Satellite resources (locks, role assignments, diagnostic settings, private endpo
 | `name`                      | Resource name                                                                                        |
 | `location`                  | Azure region                                                                                         |
 | `body`                      | Resource properties as an **HCL object** (not a JSON string)                                         |
+| `ignore_body_changes`       | Body-relative property paths omitted from requests. **MUST** be wired from the matching interface field, with `[]` collapsed to `null` — TFFR8 |
 | `replace_triggers_refs`     | Body paths that should force replacement when changed. **MUST** be specified, even if `[]` — TFFR5    |
 | `response_export_values`    | List or map of ARM property paths to export. **MUST** be specified, even if `[]` — TFFR4              |
 | `retry`                     | AVM `retry` interface attribute. MUST be wired from `var.retry` on every `azapi_resource` — TFFR7    |
@@ -81,7 +85,7 @@ Satellite resources (locks, role assignments, diagnostic settings, private endpo
 
 ### Child resources
 
-Implement subresources of the primary resource (ARM child resource types like `Microsoft.Example/widgets/parts`) as **submodules** under `modules/<singular-name>/`, per `TFRMNFR1`. Do not nest them inside the parent `body` and do not declare them inline in the parent module. Each submodule is a full AVM module with its own `this` primary resource, `parent_id`, `variables.tf`, `outputs.tf`, `terraform.tf`, `_header.md`, `_footer.md`, and tests.
+Implement subresources of the primary resource (ARM child resource types like `Microsoft.Example/widgets/parts`) as **submodules** under `modules/<singular-name>/`, per `TFRMNFR1`. Do not nest them inside the parent `body` and do not declare them inline in the parent module. Each submodule is a full AVM module with its own `this` primary resource, `parent_id`, standard Terraform files, managed telemetry, authored `_header.md` and `_footer.md` inputs, generated `README.md`, and tests.
 
 The parent typically wires submodules like this (using `for_each` for cardinality — a submodule's own primary resource **MUST NOT** use `count` or `for_each`):
 
@@ -92,7 +96,8 @@ module "part" {
 
   name           = each.value.name
   parent_id      = azapi_resource.this.id
-  resource_types = { this = var.resource_types.part }
+  resource_types      = var.resource_types.example_widgets_parts
+  ignore_body_changes = var.ignore_body_changes.example_widgets_parts
   retry          = var.retry
   timeouts       = var.timeouts
 }
@@ -141,7 +146,7 @@ DESCRIPTION
 - **MUST NOT** accept `resource_group_name`, `resource_group_resource_id`, or any other parent-scope-specific variable. The fully-qualified ARM ID supplied via `parent_id` is sufficient and works uniformly for every kind of Azure resource scope (subscription, management group, resource group, parent ARM resource).
 - **MUST NOT** create the parent scope inside the module (supersedes the Terraform clause of `RMFR3`).
 - Submodules also expose `parent_id`; the parent module typically passes `parent_id = azapi_resource.this.id` to each child.
-- The expected parent type passed to `parse_resource_id` **MUST** be a literal string. Hand-rolled `regex`, `startswith`, or `length` checks are not allowed.
+- The expected parent type passed to `parse_resource_id` **MUST** be a literal string. Hand-rolled `regex`, `startswith`, or `length` checks are not allowed except for the extension-resource case below.
 
 ### Extension-resource exception
 
@@ -172,9 +177,35 @@ data.azapi_client_config.current.tenant_id
 mock_provider "azapi" {}
 ```
 
-## Retry and timeouts
+## Resource types
 
-`retry` and `timeouts` are standard AVM Terraform interfaces (`TFFR7`; see also [`interfaces.md`](./interfaces.md) and the [Terraform Interfaces spec](https://azure.github.io/Azure-Verified-Modules/specs/tf/interfaces/)). Both **MUST** be applied to every `azapi_resource` the module declares — root resource and submodules — and **MUST** be cascaded unchanged into every submodule the parent instantiates.
+`TFFR6` requires every AzAPI resource type to come from a deterministic `resource_types` object. Drop `Microsoft.`, lowercase the provider token without splitting internal capitals, convert each resource path segment from camel case to snake case, and join the tokens with underscores. For example, `Microsoft.Example/widgets` becomes `example_widgets`, `Microsoft.Example/widgets/parts` becomes `example_widgets_parts`, and `Microsoft.KeyVault/vaults/secrets` becomes `keyvault_vaults_secrets`.
+
+Represent submodules as nested objects with the same shape as the child module. Do not invent a generic `this` key and do not hard-code a type string at a call site.
+
+```hcl
+variable "resource_types" {
+  type = object({
+    example_widgets = optional(string, "Microsoft.Example/widgets@2025-01-01")
+    example_widgets_parts = optional(object({
+      example_widgets_parts = optional(string)
+    }), {})
+  })
+  default     = {}
+  nullable    = false
+  description = <<DESCRIPTION
+API versions used by the AzAPI resources.
+
+- `example_widgets` - API version for the widget.
+- `example_widgets_parts` - API-version overrides passed to the part submodule.
+- `example_widgets_parts.example_widgets_parts` - API-version override for the part resource.
+DESCRIPTION
+}
+```
+
+## Retry, timeouts, and ignored body changes
+
+`retry` and `timeouts` are standard AVM Terraform interfaces (`TFFR7`; see also [`interfaces.md`](./interfaces.md) and the [Terraform Interfaces spec](https://azure.github.io/Azure-Verified-Modules/specs/tf/interfaces/)). Both **MUST** be applied to every `azapi_resource` the module declares and cascaded unchanged into every submodule the parent instantiates.
 
 ### `retry` variable
 
@@ -222,9 +253,48 @@ DESCRIPTION
 
 `timeouts` is a **block** on `azapi_resource` (not an attribute), so a `dynamic "timeouts"` block is required to honour the `null` default — see the resource pattern above.
 
+### `ignore_body_changes` variable
+
+`TFFR8` requires a list of ignored body paths for every owned AzAPI resource and a nested object for every submodule. The nested object must mirror the child module's interface so the parent can cascade it without reshaping.
+
+```hcl
+variable "ignore_body_changes" {
+  type = object({
+    example_widgets = optional(list(string), [])
+    example_widgets_parts = optional(object({
+      example_widgets_parts = optional(list(string), [])
+    }), {})
+  })
+  default     = {}
+  nullable    = false
+  description = <<DESCRIPTION
+Body-relative property paths that the AzAPI provider omits from requests.
+Use dot notation such as `properties.configuration.setting`; list indices are not supported.
+Changes take effect only after apply. Ignored configuration is not sent to Azure.
+
+- `example_widgets` - Paths ignored on the widget.
+- `example_widgets_parts` - Paths passed to the part submodule.
+- `example_widgets_parts.example_widgets_parts` - Paths ignored on part resources.
+DESCRIPTION
+}
+```
+
+Wire each field to its corresponding resource and collapse an empty list to `null`:
+
+```hcl
+ignore_body_changes = length(var.ignore_body_changes.example_widgets) > 0 ? var.ignore_body_changes.example_widgets : null
+```
+
+The provider argument is write-only:
+
+- Terraform stores it in provider-private state only after apply.
+- Ignored configuration is not sent to Azure.
+- Non-empty lists require Terraform 1.11+, but a module must not raise its Terraform floor solely for this feature.
+- Prefer a static `lifecycle.ignore_changes` reference when the path is known statically.
+
 ### Module-level defaults
 
-Module owners **MAY** ship sensible defaults (for example, longer create/delete timeouts for slow-provisioning resources). To do so, set the variable's overall `default` to `{}` (not `null`) and provide per-field defaults inside the `optional(...)` wrappers. Consumers **MUST** still be able to override any individual field.
+For `ignore_body_changes`, module owners **MAY** ship sensible defaults when a resource is known to be mutated outside Terraform. To do so, keep the variable's overall `default` as `{}` and provide per-field defaults inside the `optional(...)` wrappers. Consumers **MUST** still be able to override any individual field.
 
 ### Cascading to submodules
 
@@ -232,13 +302,15 @@ Module owners **MAY** ship sensible defaults (for example, longer create/delete 
 module "child" {
   source = "./modules/child"
 
-  retry    = var.retry
-  timeouts = var.timeouts
+  resource_types      = var.resource_types.example_widgets_parts
+  ignore_body_changes = var.ignore_body_changes.example_widgets_parts
+  retry               = var.retry
+  timeouts            = var.timeouts
   # ...other arguments...
 }
 ```
 
-Submodules **MUST** declare their own `retry` and `timeouts` variables with the same schemas and apply them to their own `azapi_resource` blocks (`TFFR7` / `TFRMNFR1`).
+Submodules **MUST** declare their own resource-shaped interfaces and apply them to their own AzAPI resources. The parent owns child cardinality; a submodule's primary resource remains a singleton (`TFRMNFR1`).
 
 ## Sensitive attributes
 

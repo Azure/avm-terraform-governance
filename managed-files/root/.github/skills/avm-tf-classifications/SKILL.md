@@ -7,7 +7,7 @@ description: Use this skill whenever a contributor is deciding what KIND of Azur
 
 Every AVM module is exactly one of three classes. The class drives the naming convention, the repo name, the spec set that applies, and the review process.
 
-Authoritative sources:
+Fetch <https://azure.github.io/Azure-Verified-Modules/llms.txt> and confirm the current versions of these sources:
 - <https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/module-classifications.md>
 - [RMNFR1 — Resource Module Naming](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/resource/non-functional/RMNFR1.md)
 - [PMNFR1 — Pattern Module Naming](https://raw.githubusercontent.com/Azure/Azure-Verified-Modules/refs/heads/main/docs/content/specs-defs/includes/shared/pattern/non-functional/PMNFR1.md)
@@ -86,11 +86,26 @@ Inside the module, the primary `azapi_resource` (or, legacy, `azurerm_*` resourc
 
 ```hcl
 resource "azapi_resource" "this" {
-  type      = "Microsoft.Search/searchServices@2024-06-01-preview"
+  type      = var.resource_types.search_search_services
   parent_id = var.parent_id
   name      = var.name
   location  = var.location
   body      = { properties = { ... } }
+
+  ignore_body_changes    = length(var.ignore_body_changes.search_search_services) > 0 ? var.ignore_body_changes.search_search_services : null
+  replace_triggers_refs  = []
+  response_export_values = []
+  retry                  = var.retry
+
+  dynamic "timeouts" {
+    for_each = var.timeouts == null ? [] : [var.timeouts]
+    content {
+      create = timeouts.value.create
+      read   = timeouts.value.read
+      update = timeouts.value.update
+      delete = timeouts.value.delete
+    }
+  }
 }
 ```
 

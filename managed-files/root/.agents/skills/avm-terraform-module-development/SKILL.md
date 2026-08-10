@@ -76,13 +76,14 @@ Before you claim a change is done, verify the module still satisfies these MUST-
 
 ### Resource implementation
 
-- `TFRMNFR2` — **Primary Resource Naming**: the primary `azapi_resource` (or equivalent AzAPI resource) **MUST** be named `this`. Every satellite resource (lock, role assignments, diagnostic settings, private endpoints, child resources required by the primary, etc.) **MUST NOT** be named `this` — it **MUST** be named after what it represents (e.g. `azapi_resource.lock`, `azapi_resource.role_assignments`, `azapi_resource.diagnostic_settings`). Each submodule has its own `this`. This is what lets consumers and the AVM interface utility module rely on `azapi_resource.this.id` and `azapi_resource.this.output`.
+- `TFRMNFR2` — **Primary Resource Naming**: the primary `azapi_resource` (or equivalent AzAPI resource) **MUST** be named `this`. Every satellite resource (lock, role assignments, diagnostic settings, private endpoints, etc.) **MUST NOT** be named `this` — it **MUST** be named after what it represents (e.g. `azapi_resource.lock`, `azapi_resource.role_assignments`, `azapi_resource.diagnostic_settings`). Each submodule has its own `this`. This is what lets consumers and the AVM interface utility module rely on `azapi_resource.this.id` and `azapi_resource.this.output`.
 - `TFRMNFR1` — **Subresources as submodules**: every ARM subresource (a child resource type in the API spec) **MUST** be implemented as a Terraform submodule under `modules/<singular-subresource-name>/`. Submodules are full AVM modules in their own right (same shared/RM/TF specs apply), each with their own `_header.md` and `_footer.md`. Submodules **MUST NOT** declare `count` / `for_each` on their primary `azapi_resource` — cardinality is the parent's responsibility. Parent modules **MUST** reference submodules by local relative path (`./modules/<name>`), not via the registry or git.
-- `TFFR3` — Resources are implemented with the **AzAPI provider** (`Azure/azapi` `>= 2.0, < 3.0`). Only fall back to `azurerm` (preferring data sources) when AzAPI genuinely lacks an equivalent; document the reason in code and in `README.md` per the exception requirements.
+- `TFFR3` — Resources are implemented with the **AzAPI provider** (`Azure/azapi` `>= 2.12, < 3.0`). Only fall back to `azurerm` when AzAPI genuinely lacks an equivalent across its resource forms. The exception requires `azurerm ~> 4.0`, README documentation, an upstream tracking link, and the prescribed TFLint exclusion.
 - `TFFR4` — Every `azapi_resource` **MUST** specify `response_export_values`, even if it is `[]`. Use it (list or map form) to surface read-only properties needed by the module's outputs.
 - `TFFR5` — Every `azapi_resource` **MUST** specify `replace_triggers_refs`, listing the body paths that should force replacement when changed. `name` and `location` already trigger replacement and don't need to be listed.
 - `TFFR6` — The `type` argument **MUST NOT** be hard-coded. Source it from a `resource_types` object variable with one `optional(string, "<provider>/<resource>@<api-version>")` field per AzAPI resource the module declares. Defaults must be stable (non-preview) API versions. Parent modules **MUST** cascade the relevant subset of `resource_types` to each submodule.
 - `TFFR7` — Expose `retry` and `timeouts` variables and apply them to every `azapi_resource`. `retry` is an attribute (assign directly); `timeouts` is a block (use `dynamic "timeouts"` so the `null` default works). Cascade unchanged into submodules. See [AzAPI.md](references/AzAPI.md).
+- `TFFR8` — Expose `ignore_body_changes` as one object field per owned AzAPI resource plus one nested child-shaped object per submodule. Apply the matching field to every AzAPI resource and collapse an empty list to `null`. Paths are body-relative dot notation; changes take effect after apply and ignored configuration is not sent to Azure.
 
 For full AzAPI patterns, the `parent_id` variable shape, the `Get-AzureSchema` lookup CLI, and provider configuration, read [AzAPI.md](references/AzAPI.md).
 
@@ -99,11 +100,11 @@ The `mapotf` pre-commit configs enforce the telemetry block and provider version
 AVM defines a fixed set of standard interfaces that resource modules expose where the underlying Azure resource supports them. They standardise variable names, types, and behaviour across every module:
 
 - **Resource features** (apply only when the underlying resource supports them): diagnostic settings (v2 schema), role assignments, locks, managed identities, private endpoints, customer-managed keys, tags.
-- **AzAPI mechanics** (apply to every module): `resource_types` (API-version pinning per `azapi_resource`, module-specific keys, cascaded to submodules), `retry` (assigned as an attribute), `timeouts` (emitted via a `dynamic "timeouts"` block).
+- **AzAPI mechanics** (apply to every module): `resource_types` (API-version pinning per `azapi_resource`, deterministic keys, nested child-shaped slots), `retry` (assigned as an attribute), `timeouts` (emitted via a `dynamic "timeouts"` block), and `ignore_body_changes` (a per-resource list with nested child-shaped slots and empty lists collapsed to `null`).
 
 The resource-feature interfaces are backed by the shared utility module `Azure/avm-utl-interfaces/azure` — compose it rather than redefining variable shapes by hand. The diagnostic-settings interface MUST use the v2 shape (`diagnostic_settings_v2` input / `diagnostic_settings_azapi_v2` output on the utility module).
 
-For variable shapes, defaults, the v2 diagnostic-settings details, and which interfaces apply to which resource, read [interfaces.md](references/interfaces.md). For the `retry` / `timeouts` variable schemas and the required `dynamic "timeouts"` wiring on `azapi_resource`, read [AzAPI.md](references/AzAPI.md).
+For variable shapes, defaults, the v2 diagnostic-settings details, and which interfaces apply to which resource, read [interfaces.md](references/interfaces.md). For `resource_types`, `retry`, `timeouts`, `ignore_body_changes`, and their resource and submodule wiring, read [AzAPI.md](references/AzAPI.md).
 
 ### Module composition reference
 
@@ -120,11 +121,12 @@ Every `avm` command below comes from the `Avm.Authoring` PowerShell module. Inst
 ```pwsh
 Install-PSResource -Name Avm.Authoring -Repository PSGallery -TrustRepository
 Import-Module Avm.Authoring
+avm version
 ```
 
 The module downloads and pins the tools it needs (terraform, tflint, terraform-docs, conftest, mapotf) on first use, so there is no separate install step. Set `AVM_NO_AUTO_INSTALL=1` in air-gapped environments and pre-warm the cache with `avm tool install <name>` instead.
 
-The repository-root `./avm` and `avm.bat` compatibility launchers remain temporarily, but only print migration guidance and exit with an error. The `avm.ps1` launcher has been removed. Run `avm` from an imported `Avm.Authoring` PowerShell module, and do not set `PORCH_NO_TUI`.
+If the version gate reports a stale installation, run `avm update`, re-import the module, and retry. Use the imported `avm` command directly on every operating system.
 
 ### Step 1: Start from a clean main branch
 
@@ -168,10 +170,10 @@ avm test integration
 If your change affects module usage or introduces new functionality, add or update examples in the `examples/` directory. Test only the pertinent example:
 
 ```pwsh
-avm test e2e -Example <ExampleDir>
+avm test e2e --example <ExampleDir>
 ```
 
-Run `avm test e2e -List` to see runnable examples; add an `.e2eignore` file to exclude one. When distributing tests across multiple Azure subscriptions or retaining deployed resources for manual validation, see [example-test.md](references/example-test.md).
+Run `avm test e2e --list` to see runnable examples; add an `.e2eignore` file to exclude one. When distributing tests across multiple Azure subscriptions or retaining deployed resources for manual validation, see [example-test.md](references/example-test.md).
 
 ### Step 7: Update documentation (if justified)
 
@@ -216,10 +218,10 @@ When creating the PR, include:
 
 ## Common mistakes to avoid
 
-- **Citing a spec from memory.** AVM specs change. Always fetch the current text via `llms.txt`. Several spec IDs are easy to mix up (e.g. `TFFR4` is `response_export_values`, `TFFR5` is `replace_triggers_refs`, `TFFR6` is `resource_types`, `TFFR7` is `retry`/`timeouts`).
+- **Citing a spec from memory.** AVM specs change. Always fetch the current text via `llms.txt`. Several spec IDs are easy to mix up (e.g. `TFFR4` is `response_export_values`, `TFFR5` is `replace_triggers_refs`, `TFFR6` is `resource_types`, `TFFR7` is `retry`/`timeouts`, and `TFFR8` is `ignore_body_changes`).
 - **Reaching for `azurerm`.** `TFFR3` requires AzAPI; only fall back to `azurerm` for genuinely missing capabilities, and document why.
 - **Naming the primary resource anything other than `this`** (`TFRMNFR2`), or naming a satellite resource `this`. The primary `azapi_resource` MUST be `this`; satellites MUST be named after what they represent (`lock`, `role_assignments`, `diagnostic_settings`, ...).
-- **Exposing `resource_group_name` (or any other parent-scope-specific variable) instead of `parent_id`** (`TFRMFR1`), or validating `parent_id` with hand-rolled regex/startswith instead of `can(provider::azapi::parse_resource_id("<ExpectedParentType>", var.parent_id))` (`TFNFR38`).
+- **Exposing `resource_group_name` (or any other parent-scope-specific variable) instead of `parent_id`** (`TFRMFR1`), or validating a single-type `parent_id` with hand-rolled regex/startswith instead of `can(provider::azapi::parse_resource_id("<ExpectedParentType>", var.parent_id))` (`TFNFR38`). Extension-resource modules use the documented polymorphic-parent exception instead.
 - **Creating the parent scope inside the module** (e.g. a `Microsoft.Resources/resourceGroups` `azapi_resource` for the resource group the module deploys into) — `TFRMFR1` forbids this; the consumer supplies an existing scope's ARM ID.
 - **Hard-coding the `type` argument on an `azapi_resource`** instead of sourcing it from `var.resource_types` (`TFFR6`), or forgetting to cascade the relevant subset to each submodule.
 - **Omitting `response_export_values` (`TFFR4`) or `replace_triggers_refs` (`TFFR5`)** — both are MUST on every `azapi_resource`, even when the value is `[]`.
@@ -229,8 +231,9 @@ When creating the PR, include:
 - **Implementing an ARM subresource inline in the parent module** instead of as a submodule under `modules/<singular-name>/` (`TFRMNFR1`), or declaring `count`/`for_each` on a submodule's primary resource.
 - **Adding a new interface (locks, diagnostic settings, role assignments, etc.) without re-using `Azure/avm-utl-interfaces/azure`**. See [interfaces.md](references/interfaces.md).
 - **Using the legacy `diagnostic_settings` shape** instead of the v2 schema. The utility module's `diagnostic_settings_v2` input is the required entry point.
-- **Omitting `retry`, `timeouts`, or `resource_types` from an `azapi_resource`** — or failing to cascade them unchanged into submodules. All three are MUST-level AVM interfaces.
+- **Omitting `retry`, `timeouts`, `resource_types`, or `ignore_body_changes` from an `azapi_resource`.** Cascade `retry` and `timeouts` unchanged. Pass the matching nested `resource_types` and `ignore_body_changes` child slots instead of repacking them or passing a parent's resource-specific path list.
 - **Treating `timeouts` as an attribute.** It is a block; use `dynamic "timeouts"` so the `null` default works.
+- **Passing `[]` directly to `ignore_body_changes`.** Collapse an empty list to `null` so consumers who do not use the write-only argument are not forced to Terraform 1.11.
 - **Skipping `avm pre-commit` before commit, or `avm pr-check` after commit.** Both are mandatory.
 - **Reaching for `./avm`, `make`, Porch, or the AVM container.** Use the `Avm.Authoring` PowerShell module instead.
 

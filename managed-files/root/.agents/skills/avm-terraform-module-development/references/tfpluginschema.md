@@ -39,7 +39,7 @@ Check latest version at: <https://github.com/matt-FFFFFF/tfpluginschema/releases
 |---|---|---|
 | `--namespace` | `-n` | Provider namespace (e.g., `Azure`, `hashicorp`) |
 | `--name` | `-p` | Provider name (e.g., `azapi`, `azurerm`, `aws`) |
-| `--provider-version` | `--pv` | Version or constraint (e.g., `2.5.0`, `~>2.4`). Empty for latest |
+| `--provider-version` | `--pv` | Version or constraint (e.g., `2.12.0`, `~>2.12`). Empty for latest |
 | `--registry` | `-r` | Registry: `opentofu` (default) or `terraform` |
 
 ## Commands
@@ -92,7 +92,7 @@ tfpluginschema -n Azure -p azapi provider schema
 ### Pin to a specific provider version
 
 ```sh
-tfpluginschema -n Azure -p azapi --pv 2.5.0 resource schema azapi_resource
+tfpluginschema -n Azure -p azapi --pv 2.12.0 resource schema azapi_resource
 ```
 
 ### Use a version constraint

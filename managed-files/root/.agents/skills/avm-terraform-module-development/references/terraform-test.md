@@ -361,7 +361,7 @@ Shell hooks are **not** supported: a `setup.sh` or `teardown.sh` under `tests/<t
 
 ## Running Tests
 
-Tests run via the `Avm.Authoring` PowerShell module. The temporary `./avm` and `avm.bat` compatibility launchers only print migration guidance and do not run tests.
+Tests run via the `Avm.Authoring` PowerShell module.
 
 ```pwsh
 # Unit tests

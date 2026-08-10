@@ -40,7 +40,7 @@ Exposes `tags` (map of strings). Required on every resource that supports tags. 
 
 ### AzAPI resource types
 
-Exposes `resource_types` (object) so consumers can pin the API version used for each `azapi_resource` the module owns. The keys are **module-specific** — declare one `optional(string, "<api-version>")` field per `azapi_resource` (or equivalent) the module declares, defaulting each to the latest tested API version. Defaults **MUST** be a stable (non-preview) API version unless the resource only ships preview.
+Exposes `resource_types` (object) so consumers can pin the API version used for each AzAPI resource the module owns. Keys are deterministic: lowercase the provider namespace without `Microsoft.` and append each resource-type path segment with underscores. Declare one `optional(string, "<resource-type>@<api-version>")` field per resource and nested child-shaped objects for submodules. Defaults **MUST** use stable API versions unless the resource only ships preview.
 
 Parent modules **MUST** cascade the relevant subset of `resource_types` to each submodule (see TFFR6 and TFRMNFR1). Submodules **MUST** declare their own `resource_types` variable using the same pattern.
 
@@ -52,7 +52,11 @@ Exposes `retry` (single object: `error_message_regex`, `interval_seconds`, `max_
 
 Exposes `timeouts` (single object: `create`, `read`, `update`, `delete`, all optional Go duration strings). MUST be applied to every `azapi_resource` (and equivalent AzAPI resources) declared by the module and cascaded unchanged into every submodule. `timeouts` is a **block** on `azapi_resource` (not an attribute), so a `dynamic "timeouts"` block is required to honour the variable's `null` default.
 
-For the full `retry` and `timeouts` variable schemas, the resource-side wiring (including the `dynamic` block), module-level defaults guidance, and submodule cascade pattern, read [AzAPI.md](./AzAPI.md#retry-and-timeouts).
+### AzAPI ignored body changes
+
+Exposes `ignore_body_changes` (object) with one `optional(list(string), [])` field per owned AzAPI resource and a nested child-shaped object per submodule. Apply the matching field to each resource and collapse an empty list to `null`. Paths use body-relative dot notation and do not support list indices.
+
+For the full `resource_types`, `retry`, `timeouts`, and `ignore_body_changes` schemas and wiring, read [AzAPI.md](./AzAPI.md#resource-types).
 
 ## Implementation pattern
 
@@ -64,9 +68,8 @@ For the full `retry` and `timeouts` variable schemas, the resource-side wiring (
      source  = "Azure/avm-utl-interfaces/azure"
      version = "~> 0.6"
 
-     diagnostic_settings_v2    = var.diagnostic_settings
-     diagnostic_settings_scope = azapi_resource.this.id
-     managed_identities        = var.managed_identities
+     diagnostic_settings_v2 = var.diagnostic_settings
+     managed_identities     = var.managed_identities
      # …
    }
    ```
@@ -77,14 +80,29 @@ For the full `retry` and `timeouts` variable schemas, the resource-side wiring (
    resource "azapi_resource" "diagnostic_settings" {
      for_each = module.avm_interfaces.diagnostic_settings_azapi_v2
 
-     type      = each.value.type
+     type      = var.resource_types.insights_diagnostic_settings
      name      = each.value.name
-     parent_id = each.value.parent_id
+     parent_id = azapi_resource.this.id
      body      = each.value.body
+
+     ignore_body_changes    = length(var.ignore_body_changes.insights_diagnostic_settings) > 0 ? var.ignore_body_changes.insights_diagnostic_settings : null
+     replace_triggers_refs  = []
+     response_export_values = []
+     retry                  = var.retry
+
+     dynamic "timeouts" {
+       for_each = var.timeouts == null ? [] : [var.timeouts]
+       content {
+         create = timeouts.value.create
+         read   = timeouts.value.read
+         update = timeouts.value.update
+         delete = timeouts.value.delete
+       }
+     }
    }
    ```
 
-4. Implement supporting child resources (private endpoints, diagnostic settings, role assignments, locks) as separate `azapi_resource` blocks driven by the same input maps — never collapse them into the parent `body` (TFRMNFR1).
+4. Implement supporting satellite and extension resources (private endpoints, diagnostic settings, role assignments, locks) as distinct, descriptively named resources. Use submodules wherever TFRMNFR1 applies, and never collapse a separate resource into the primary resource's `body`.
 
 ## When NOT to expose an interface
 

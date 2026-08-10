@@ -34,7 +34,7 @@ The root of every AVM Terraform module looks like this (TFNFR39):
 Rules of thumb:
 
 - One `azapi_resource` block per logical resource — never collapse parent + child into a single `body`.
-- Group related resources into `main.<feature>.tf` (e.g. `main.privateendpoint.tf`, `main.diagnostics.tf`) once `main.tf` exceeds ~200 lines.
+- Group related resources into `main.<feature>.tf` using the TFNFR39 feature names (for example, `main.private_endpoints.tf` or `main.diagnostic_settings.tf`).
 - Sub-modules in `modules/` are private to the module and must follow the same file layout in miniature.
 - Examples are independent root modules; each must `terraform init && terraform plan && terraform apply && terraform plan` cleanly (idempotency check).
 
@@ -45,6 +45,7 @@ A resource module deploys one **primary** Azure resource (RMFR1). Child resource
 Key obligations:
 
 - Implement the resource with the AzAPI provider (TFFR3).
+- Apply `response_export_values`, `replace_triggers_refs`, deterministic `resource_types`, configurable `retry` and `timeouts`, and per-resource `ignore_body_changes` to every AzAPI resource (TFFR4-TFFR8).
 - Expose standard interfaces where applicable (diagnostic settings, locks, role assignments, private endpoints, managed identities, customer-managed keys, tags) — see [interfaces.md](interfaces.md).
 - Outputs include the required AVM outputs (RMFR7). For Terraform-specific additional outputs, prefer discrete computed attributes over whole resource object outputs (TFFR2).
 - Provide at least a `default` example demonstrating the simplest valid usage.
@@ -68,7 +69,7 @@ Key obligations:
 
 `terraform.tf` pins `required_version` and `required_providers` (TFNFR26 / TFNFR27 / TFNFR39). At minimum:
 
-- `azapi` within the TFFR3-permitted major range (`>= 2.0, < 3.0`)
+- `azapi` within the TFFR3-permitted range (`>= 2.12, < 3.0`)
 - `modtm` if telemetry is implemented
 - `random` when the module directly uses it
 
